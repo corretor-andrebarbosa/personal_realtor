@@ -1,8 +1,24 @@
+# dependencies
+node_modules/
 
-node_modules
+# build output
+dist/
+
+# local env files
 .env
-dist
 .env.local
-.DS_Store
-.agent
+
+# logs
 *.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Vercel
+.vercel/
+
+# Generated optimized images (não versionar)
+public/_optimized/
