@@ -28,7 +28,9 @@
         "eslint-plugin-react": "^7.22.0",
         "eslint-plugin-react-hooks": "^4.6.2",
         "eslint-plugin-react-refresh": "^0.4.26",
+        "fast-glob": "^3.3.3",
         "postcss": "^8.5.6",
+        "sharp": "^0.34.5",
         "tailwindcss": "^3.4.1",
         "vite": "^7.3.1"
     }
