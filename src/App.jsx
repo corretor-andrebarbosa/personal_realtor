@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, useLocation, Navigate, useSearchParams } from 'react-router-dom'; // ✅ Adicionado useSearchParams
+import { Routes, Route, useLocation, Navigate, useSearchParams } from 'react-router-dom';
 import Navigation from './components/Navigation';
 import Dashboard from './components/Dashboard';
 import PropertyList from './components/PropertyList';
@@ -21,12 +21,11 @@ import { supabase } from './lib/supabaseClient';
 
 const App = () => {
     const location = useLocation();
-    const [searchParams] = useSearchParams(); // ✅ Hook para ler a URL
+    const [searchParams] = useSearchParams();
 
-    // ✅ Lógica: Se tiver ?preview=true na URL, ignoramos a manutenção
+    // Se tiver ?preview=true na URL, ignoramos a manutenção
     const isPreviewMode = searchParams.get('preview') === 'true';
 
-    // Auth and Session logic (30 minutes expiry)
     const [isAuthenticated, setIsAuthenticated] = React.useState(() => {
         const sessionStr = localStorage.getItem('ab-auth-session');
         if (!sessionStr) return false;
@@ -39,109 +38,20 @@ const App = () => {
     React.useEffect(() => {
         const checkLocalSession = () => {
             const sessionStr = localStorage.getItem('ab-auth-session');
-            if (!sessionStr) {
-                setIsAuthenticated(false);
-                return;
-            }
-
+            if (!sessionStr) { setIsAuthenticated(false); return; }
             try {
                 const session = JSON.parse(sessionStr);
                 const now = Date.now();
-                const thirtyMinutes = 30 * 60 * 1000;
-
-                if (now - session.timestamp > thirtyMinutes) {
+                if (now - session.timestamp > 30 * 60 * 1000) {
                     localStorage.removeItem('ab-auth-session');
                     localStorage.removeItem('authToken');
                     setIsAuthenticated(false);
                 } else {
-                    const updatedSession = { ...session, timestamp: now };
-                    localStorage.setItem('ab-auth-session', JSON.stringify(updatedSession));
+                    localStorage.setItem('ab-auth-session', JSON.stringify({ ...session, timestamp: now }));
                     setIsAuthenticated(true);
                 }
-            } catch (e) {
-                setIsAuthenticated(false);
-            }
+            } catch (e) { setIsAuthenticated(false); }
         };
-
         checkLocalSession();
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' && session) {
-                localStorage.setItem('ab-auth-session', JSON.stringify({ timestamp: Date.now() }));
-                localStorage.setItem('authToken', session.access_token);
-                setIsAuthenticated(true);
-            }
-            if (event === 'SIGNED_OUT') {
-                localStorage.removeItem('ab-auth-session');
-                localStorage.removeItem('authToken');
-                setIsAuthenticated(false);
-            }
-        });
-
-        return () => {
-            subscription.unsubscribe();
-        };
-    }, [location.pathname]);
-
-    const adminPrefixes = ['/admin', '/kaleb', '/leads', '/people', '/settings'];
-
-    const isAdminPropertyRoute =
-        location.pathname === '/properties' ||
-        location.pathname.startsWith('/properties/new') ||
-        location.pathname.startsWith('/properties/edit');
-
-    const isAdminPath =
-        adminPrefixes.some((p) => location.pathname.startsWith(p)) ||
-        isAdminPropertyRoute;
-
-    if (isAdminPath && !isAuthenticated) {
-        return <Navigate to="/login" replace />;
-    }
-
-    const hideNavPaths = ['/properties/new', '/website', '/login'];
-    const showNav = isAuthenticated
-        && location.pathname !== '/'
-        && !hideNavPaths.some(p => location.pathname.includes(p))
-        && !location.pathname.match(/\/properties\/\d+/)
-        && !location.pathname.includes('/properties/edit/');
-
-    return (
-        <ErrorBoundary>
-            <PropertyProvider>
-                <LeadProvider>
-                    <div className="font-['Manrope'] antialiased text-slate-900 bg-slate-50 min-h-screen">
-                        <Routes>
-                            {/* Public routes */}
-                            <Route
-                                path="/"
-                                element={
-                                    // ✅ CORREÇÃO: Só mostra manutenção se estiver habilitado E NÃO for preview
-                                    (config.maintenance.enabled && !isPreviewMode) 
-                                        ? <Maintenance expectedReturnDate={config.maintenance.returnDate} /> 
-                                        : <PublicHome />
-                                }
-                            />
-                            <Route path="/website" element={<Navigate to="/" replace />} />
-                            <Route path="/login" element={<Login />} />
-
-                            {/* Admin routes */}
-                            <Route path="/admin" element={<Dashboard />} />
-                            <Route path="/properties" element={<PropertyList />} />
-                            <Route path="/properties/new" element={<PropertyForm />} />
-                            <Route path="/properties/edit/:id" element={<PropertyForm />} />
-                            <Route path="/properties/:id" element={<PropertyDetails />} />
-                            <Route path="/kaleb" element={<LLMAssistant />} />
-                            <Route path="/leads" element={<Leads />} />
-                            <Route path="/people" element={<People />} />
-                            <Route path="/settings" element={<Settings />} />
-                        </Routes>
-
-                        {showNav && <Navigation />}
-                    </div>
-                </LeadProvider>
-            </PropertyProvider>
-        </ErrorBoundary>
-    );
-};
-
-export default App;
+        const { data: { subscription } } = supabase.auth
