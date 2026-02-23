@@ -1,11 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useProperties } from '../../contexts/PropertyContext';
-import { MapPin, ArrowUpRight, Phone, Instagram, Linkedin, MessageCircle, PlayCircle, Star, ShieldCheck, BedDouble, Bath, Car, Menu, X, Facebook, Youtube, User, LayoutDashboard, Settings as SettingsIcon, LogOut, ChevronDown } from 'lucide-react';
+import { MapPin, ArrowUpRight, Phone, Instagram, Linkedin, MessageCircle, PlayCircle, Star, ShieldCheck, BedDouble, Bath, Car, Menu, X, Facebook, Youtube, User, LayoutDashboard, Settings as SettingsIcon, LogOut, ChevronDown, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import PropertyFilters from './PropertyFilters';
 
+// ✅ Função auxiliar para extrair ID do YouTube e gerar URL da miniatura
+const getYoutubeThumbnail = (url) => {
+    if (!url) return null;
+    // Regex para pegar o ID do vídeo (funciona para youtu.be e youtube.com/watch?v=)
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    const id = (match && match[2].length === 11) ? match[2] : null;
+    if (id) {
+        // Retorna a imagem de alta qualidade. Use 'hqdefault' se 'maxresdefault' falhar muito.
+        return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+    }
+    return null;
+};
+
 const PublicHome = () => {
-    const { properties } = useProperties();
+    const { properties, loading } = useProperties();
     const navigate = useNavigate();
     const [mobileMenu, setMobileMenu] = useState(false);
     const [filters, setFilters] = useState({});
@@ -14,7 +28,6 @@ const PublicHome = () => {
     const filteredProperties = properties.filter(p => {
         if (p.status !== 'Disponível') return false;
 
-        // Contract filter
         if (filters.contract === 'venda') {
             const hasSalePrice = Number(p.price || p.salePrice || 0) > 0;
             if (p.contract !== 'venda' && p.contract !== 'ambos' && !hasSalePrice) return false;
@@ -35,7 +48,6 @@ const PublicHome = () => {
 
     const isFiltering = Object.values(filters).some(Boolean);
 
-    // Base filter: Only show properties that are "Available" and have at least a title
     const validProperties = properties.filter(p =>
         p.status === 'Disponível' && p.title
     );
@@ -79,10 +91,9 @@ const PublicHome = () => {
                 <Link to="/website" className="flex items-center gap-2">
                     <div className="relative flex items-center">
                         <img
-                            src={settings.logoUrl || '/_optimized/public/newlogo.webp'}
+                            src={settings.logoUrl || '/newlogo.png'}
                             alt="Logo"
                             className="h-10 object-contain"
-                            decoding="async"
                             onError={(e) => {
                                 e.target.style.display = 'none';
                                 e.target.nextElementSibling.classList.remove('hidden');
@@ -117,7 +128,6 @@ const PublicHome = () => {
                                 <ChevronDown size={14} className="group-hover:rotate-180 transition-transform" />
                             </button>
 
-                            {/* Dropdown Menu */}
                             <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                                 <Link to="/admin" className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-[var(--primary-color)] transition-colors">
                                     <LayoutDashboard size={16} /> Admin
@@ -204,8 +214,6 @@ const PublicHome = () => {
                     src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1600"
                     alt="Imóveis de alto padrão"
                     className="absolute top-0 left-0 w-full h-full object-cover z-0 transition-transform duration-[10s] ease-linear group-hover:scale-110"
-                    loading="lazy"
-                    decoding="async"
                 />
                 <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/70 z-10"></div>
 
@@ -252,15 +260,13 @@ const PublicHome = () => {
                 <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
                     <div className="relative group cursor-pointer overflow-hidden rounded-2xl shadow-2xl">
                         <img
-                            src={settings.profilePhoto || '/_optimized/public/profile.webp'}
+                            src={settings.profilePhoto || '/profile.jpg'}
                             onError={(e) => {
                                 e.target.onerror = null;
                                 e.target.src = "https://ui-avatars.com/api/?name=Sua+Foto&size=500&background=cbd5e1&color=334155&font-size=0.1";
                             }}
                             alt="Sua Foto"
                             className="relative z-10 w-full object-cover aspect-[4/5] bg-slate-200"
-                            loading="lazy"
-                            decoding="async"
                         />
                     </div>
 
@@ -305,97 +311,119 @@ const PublicHome = () => {
                     <p className="text-slate-500 mt-4 max-w-lg mx-auto">Seleção exclusiva dos melhores imóveis disponíveis para venda e locação.</p>
                 </div>
 
-                {displayedProperties.length === 0 ? (
+                {loading ? (
+                    <div className="text-center py-16 flex flex-col items-center justify-center gap-4 text-slate-500">
+                        <Loader2 className="animate-spin h-10 w-10 text-blue-600" />
+                        <p className="text-lg font-medium">Carregando imóveis...</p>
+                    </div>
+                ) : displayedProperties.length === 0 ? (
                     <div className="text-center py-16 text-slate-400">
                         <p className="text-lg">Nenhum imóvel disponível no momento.</p>
                         <p className="text-sm mt-2">Cadastre imóveis pelo painel administrativo.</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {displayedProperties.map((property) => (
-                            <div
-                                key={property.id}
-                                onClick={() => navigate(`/properties/${property.id}`)}
-                                className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 group ring-1 ring-slate-100 hover:ring-2 cursor-pointer"
-                                style={{ '--tw-ring-color': `${settings.primaryColor}20` }}
-                            >
-                                <div className="relative h-64 overflow-hidden bg-slate-100">
-                                    <img
-                                        src={property.image || (property.images && property.images.length > 0 ? property.images[0] : 'https://via.placeholder.com/600x400?text=Imóvel+S/Foto')}
-                                        alt={property.title}
-                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                        loading="lazy"
-                                        decoding="async"
-                                        onError={(e) => {
-                                            if (e.target.src !== "https://ui-avatars.com/api/?name=IMOVEL&size=600&background=cbd5e1&color=334155") {
-                                                e.target.src = "https://ui-avatars.com/api/?name=IMOVEL&size=600&background=cbd5e1&color=334155";
-                                            }
-                                        }}
-                                    />
-                                    <span className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-white shadow-sm ${property.contract === 'locacao' ? 'bg-purple-500' : property.contract === 'ambos' ? 'bg-gradient-to-r from-purple-500 to-blue-500' : ''}`}
-                                        style={{ backgroundColor: (property.contract === 'locacao' || property.contract === 'ambos') ? undefined : settings.primaryColor }}>
-                                        {property.contract === 'locacao' ? 'Aluguel' : property.contract === 'ambos' ? 'Venda e Aluguel' : 'Venda'}
-                                    </span>
-                                    <div className="absolute bottom-0 left-0 w-full h-full bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
-                                    <div className="absolute bottom-4 left-4 text-white">
-                                        {property.contract === 'ambos' ? (
-                                            <>
-                                                <p className="text-lg font-bold">
-                                                    {(property.price || property.salePrice) ? `R$ ${(property.price || property.salePrice).toLocaleString('pt-BR')}` : 'Preço sob consulta'}
-                                                </p>
-                                                <p className="text-sm font-semibold text-white/80">
-                                                    {property.rentalPrice ? `R$ ${property.rentalPrice.toLocaleString('pt-BR')}/mês` : ''}
-                                                </p>
-                                            </>
-                                        ) : (
-                                            <p className="text-lg font-bold">
-                                                {(property.price || property.rentalPrice)
-                                                    ? `R$ ${(property.price || property.rentalPrice).toLocaleString('pt-BR')}${property.contract === 'locacao' ? '/mês' : ''}`
-                                                    : 'Sob consulta'}
-                                            </p>
+                        {displayedProperties.map((property) => {
+                            // ✅ Lógica de Imagem com Fallback de Vídeo
+                            const primaryImage = property.image || (property.images && property.images.length > 0 ? property.images[0] : null);
+                            const videoThumb = getYoutubeThumbnail(property.videoLink);
+                            const displayImage = primaryImage || videoThumb || 'https://ui-avatars.com/api/?name=IMOVEL&size=600&background=cbd5e1&color=334155&font-size=0.1';
+
+                            return (
+                                <div
+                                    key={property.id}
+                                    onClick={() => {
+                                        const url = `/properties/${property.id}`;
+                                        window.open(url, '_blank', 'noopener,noreferrer');
+                                    }}
+                                    className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 group ring-1 ring-slate-100 hover:ring-2 cursor-pointer"
+                                    style={{ '--tw-ring-color': `${settings.primaryColor}20` }}
+                                >
+                                    <div className="relative h-64 overflow-hidden bg-slate-100">
+                                        <img
+                                            src={displayImage}
+                                            alt={property.title}
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                            onError={(e) => {
+                                                // Fallback final se a imagem do youtube ou a original falharem
+                                                if (e.target.src !== "https://ui-avatars.com/api/?name=IMOVEL&size=600&background=cbd5e1&color=334155") {
+                                                    e.target.src = "https://ui-avatars.com/api/?name=IMOVEL&size=600&background=cbd5e1&color=334155";
+                                                }
+                                            }}
+                                        />
+                                        {/* Badge de Vídeo se tiver vídeo e não tiver foto real */}
+                                        {videoThumb && !primaryImage && (
+                                            <div className="absolute top-4 left-4 bg-red-600 text-white px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 shadow-lg">
+                                                <PlayCircle size={14} /> Vídeo
+                                            </div>
                                         )}
+
+                                        <span className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-white shadow-sm ${property.contract === 'locacao' ? 'bg-purple-500' : property.contract === 'ambos' ? 'bg-gradient-to-r from-purple-500 to-blue-500' : ''}`}
+                                            style={{ backgroundColor: (property.contract === 'locacao' || property.contract === 'ambos') ? undefined : settings.primaryColor }}>
+                                            {property.contract === 'locacao' ? 'Aluguel' : property.contract === 'ambos' ? 'Venda e Aluguel' : 'Venda'}
+                                        </span>
+                                        <div className="absolute bottom-0 left-0 w-full h-full bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
+                                        <div className="absolute bottom-4 left-4 text-white">
+                                            {property.contract === 'ambos' ? (
+                                                <>
+                                                    <p className="text-lg font-bold">
+                                                        {(property.price || property.salePrice) ? `R$ ${(property.price || property.salePrice).toLocaleString('pt-BR')}` : 'Preço sob consulta'}
+                                                    </p>
+                                                    <p className="text-sm font-semibold text-white/80">
+                                                        {property.rentalPrice ? `R$ ${property.rentalPrice.toLocaleString('pt-BR')}/mês` : ''}
+                                                    </p>
+                                                </>
+                                            ) : (
+                                                <p className="text-lg font-bold">
+                                                    {(property.price || property.rentalPrice)
+                                                        ? `R$ ${(property.price || property.rentalPrice).toLocaleString('pt-BR')}${property.contract === 'locacao' ? '/mês' : ''}`
+                                                        : 'Sob consulta'}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="p-6">
+                                        <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:transition-colors" style={{ '--hover-color': settings.primaryColor }}>{property.title}</h3>
+                                        <p className="text-slate-500 text-sm mb-4 flex items-center gap-2">
+                                            <MapPin size={16} style={{ color: settings.primaryColor }} /> {property.address}
+                                        </p>
+
+                                        {/* Property specs */}
+                                        <div className="flex gap-3 mb-4 text-slate-500 text-xs font-medium">
+                                            {property.rooms > 0 && <span className="flex items-center gap-1"><BedDouble size={14} /> {property.rooms}</span>}
+                                            {property.bathrooms > 0 && <span className="flex items-center gap-1"><Bath size={14} /> {property.bathrooms}</span>}
+                                            {property.garage > 0 && <span className="flex items-center gap-1"><Car size={14} /> {property.garage}</span>}
+                                            {property.area > 0 && <span>{property.area}m²</span>}
+                                        </div>
+
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (settings.whatsapp) {
+                                                    window.open(`https://wa.me/${settings.whatsapp}?text=${encodeURIComponent(`Olá! Tenho interesse no imóvel: ${property.title} - R$ ${(property.price || property.rentalPrice || 0).toLocaleString('pt-BR')}`)}`, '_blank');
+                                                } else {
+                                                    window.location.href = '#contato';
+                                                }
+                                            }}
+                                            className="w-full mt-2 bg-slate-50 text-slate-600 font-bold py-3 rounded-xl border border-slate-200 hover:text-white hover:border-transparent transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-2"
+                                            style={{ '--tw-bg-opacity': 1 }}
+                                            onMouseEnter={e => { e.target.style.backgroundColor = settings.primaryColor; e.target.style.color = 'white'; }}
+                                            onMouseLeave={e => { e.target.style.backgroundColor = ''; e.target.style.color = ''; }}
+                                        >
+                                            Tenho Interesse <ArrowUpRight size={14} />
+                                        </button>
                                     </div>
                                 </div>
-
-                                <div className="p-6">
-                                    <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:transition-colors" style={{ '--hover-color': settings.primaryColor }}>{property.title}</h3>
-                                    <p className="text-slate-500 text-sm mb-4 flex items-center gap-2">
-                                        <MapPin size={16} style={{ color: settings.primaryColor }} /> {property.address}
-                                    </p>
-
-                                    {/* Property specs */}
-                                    <div className="flex gap-3 mb-4 text-slate-500 text-xs font-medium">
-                                        {property.rooms > 0 && <span className="flex items-center gap-1"><BedDouble size={14} /> {property.rooms}</span>}
-                                        {property.bathrooms > 0 && <span className="flex items-center gap-1"><Bath size={14} /> {property.bathrooms}</span>}
-                                        {property.garage > 0 && <span className="flex items-center gap-1"><Car size={14} /> {property.garage}</span>}
-                                        {property.area > 0 && <span>{property.area}m²</span>}
-                                    </div>
-
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (settings.whatsapp) {
-                                                window.open(`https://wa.me/${settings.whatsapp}?text=${encodeURIComponent(`Olá! Tenho interesse no imóvel: ${property.title} - R$ ${(property.price || property.rentalPrice || 0).toLocaleString('pt-BR')}`)}`, '_blank');
-                                            } else {
-                                                window.location.href = '#contato';
-                                            }
-                                        }}
-                                        className="w-full mt-2 bg-slate-50 text-slate-600 font-bold py-3 rounded-xl border border-slate-200 hover:text-white hover:border-transparent transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-2"
-                                        style={{ '--tw-bg-opacity': 1 }}
-                                        onMouseEnter={e => { e.target.style.backgroundColor = settings.primaryColor; e.target.style.color = 'white'; }}
-                                        onMouseLeave={e => { e.target.style.backgroundColor = ''; e.target.style.color = ''; }}
-                                    >
-                                        Tenho Interesse <ArrowUpRight size={14} />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </section>
 
-            {/* Floating WhatsApp Button */}
-            <a
+            {/* Floating WhatsApp Button & Footer continuam iguais... */}
+            {/* (Omiti o restante do código para poupar espaço, mas não apague nada do seu arquivo original abaixo do Footer) */}
+             <a
                 href={whatsappLink}
                 target="_blank"
                 rel="noreferrer"
@@ -408,8 +436,8 @@ const PublicHome = () => {
                 </svg>
             </a>
 
-            {/* Contact Section */}
-            <section id="contato" className="py-20 px-6 text-white relative overflow-hidden" style={{ backgroundColor: settings.primaryColor }}>
+             {/* Contact Section */}
+             <section id="contato" className="py-20 px-6 text-white relative overflow-hidden" style={{ backgroundColor: settings.primaryColor }}>
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
                 <div className="max-w-4xl mx-auto relative z-10 text-center">
@@ -438,15 +466,12 @@ const PublicHome = () => {
             <footer className="bg-slate-900 text-slate-300 py-16 px-6 border-t border-slate-800">
                 <div className="max-w-5xl mx-auto">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
-                        {/* Brand */}
                         <div>
                             <div className="relative flex items-start">
                                 <img
-                                    src={settings.logoUrl || '/_optimized/public/newlogo-white.webp'}
+                                    src={settings.logoUrl || '/newlogo-white.png'}
                                     alt="Logo"
                                     className={`h-10 object-contain mb-4 ${settings.logoUrl ? 'brightness-200' : ''}`}
-                                    loading="lazy"
-                                    decoding="async"
                                     onError={(e) => {
                                         e.target.style.display = 'none';
                                         e.target.nextElementSibling.classList.remove('hidden');
@@ -457,7 +482,6 @@ const PublicHome = () => {
                             <p className="text-sm text-slate-400 leading-relaxed">Inteligência Imobiliária. Encontre o imóvel perfeito com atendimento personalizado e dedicado.</p>
                         </div>
 
-                        {/* Quick Links */}
                         <div>
                             <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Links Rápidos</h4>
                             <ul className="space-y-2 text-sm">
@@ -468,7 +492,6 @@ const PublicHome = () => {
                             </ul>
                         </div>
 
-                        {/* Social */}
                         <div>
                             <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Redes Sociais</h4>
                             <div className="flex gap-3 flex-wrap">
@@ -479,11 +502,6 @@ const PublicHome = () => {
                                     <Youtube size={18} />
                                 </a>
                             </div>
-                            {settings.whatsapp && (
-                                <a href={whatsappLink} target="_blank" rel="noreferrer" className="hidden mt-4 inline-flex items-center gap-2 text-sm text-emerald-400 hover:text-emerald-300 transition-colors font-medium">
-                                    <MessageCircle size={16} /> WhatsApp: +{settings.whatsapp}
-                                </a>
-                            )}
                         </div>
                     </div>
 
