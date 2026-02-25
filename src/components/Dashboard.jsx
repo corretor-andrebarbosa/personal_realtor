@@ -17,6 +17,7 @@ import { useProperties } from '../contexts/PropertyContext';
 
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Settings as SettingsIcon, User } from 'lucide-react';
+import { systemConfig } from '../system-config';
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -26,6 +27,7 @@ const Dashboard = () => {
 
     const handleLogout = () => {
         localStorage.removeItem('authToken');
+        localStorage.removeItem('ab-auth-session');
         navigate('/login');
     };
 
@@ -92,13 +94,13 @@ const Dashboard = () => {
                                 onClick={() => setShowProfileMenu(!showProfileMenu)}
                                 className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border-2 border-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-color)] transition-all active:scale-95"
                             >
-                                <img src="https://ui-avatars.com/api/?name=Andre+Barbosa&background=0D8ABC&color=fff" alt="Profile" />
+                                <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(systemConfig.brokerName)}&background=0D8ABC&color=fff`} alt="Profile" />
                             </button>
 
                             {showProfileMenu && (
                                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
                                     <div className="px-4 py-3 border-b border-slate-50">
-                                        <p className="text-sm font-bold text-slate-800">André Barbosa</p>
+                                        <p className="text-sm font-bold text-slate-800">{systemConfig.brokerName}</p>
                                         <p className="text-xs text-slate-500">Corretor de Imóveis</p>
                                     </div>
                                     <div className="py-1">

@@ -23,7 +23,7 @@ const App = () => {
     const location = useLocation();
     const [searchParams] = useSearchParams();
 
-    // Se tiver ?preview=true na URL, ignoramos a manutenção
+    // ✅ Se tiver ?preview=true na URL, ignoramos a manutenção
     const isPreviewMode = searchParams.get('preview') === 'true';
 
     const [isAuthenticated, setIsAuthenticated] = React.useState(() => {
@@ -38,20 +38,112 @@ const App = () => {
     React.useEffect(() => {
         const checkLocalSession = () => {
             const sessionStr = localStorage.getItem('ab-auth-session');
-            if (!sessionStr) { setIsAuthenticated(false); return; }
+            if (!sessionStr) {
+                setIsAuthenticated(false);
+                return;
+            }
+
             try {
                 const session = JSON.parse(sessionStr);
                 const now = Date.now();
-                if (now - session.timestamp > 30 * 60 * 1000) {
+                const thirtyMinutes = 30 * 60 * 1000;
+
+                if (now - session.timestamp > thirtyMinutes) {
                     localStorage.removeItem('ab-auth-session');
                     localStorage.removeItem('authToken');
                     setIsAuthenticated(false);
                 } else {
-                    localStorage.setItem('ab-auth-session', JSON.stringify({ ...session, timestamp: now }));
+                    const updatedSession = { ...session, timestamp: now };
+                    localStorage.setItem('ab-auth-session', JSON.stringify(updatedSession));
                     setIsAuthenticated(true);
                 }
-            } catch (e) { setIsAuthenticated(false); }
+            } catch (e) {
+                setIsAuthenticated(false);
+            }
         };
+
         checkLocalSession();
 
-        const { data: { subscription } } = supabase.auth
+        // ✅ CORREÇÃO: Só tenta usar o Supabase se ele existir
+        if (supabase) {
+            const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN' && session) {
+                    localStorage.setItem('ab-auth-session', JSON.stringify({ timestamp: Date.now() }));
+                    localStorage.setItem('authToken', session.access_token);
+                    setIsAuthenticated(true);
+                }
+                if (event === 'SIGNED_OUT') {
+                    localStorage.removeItem('ab-auth-session');
+                    localStorage.removeItem('authToken');
+                    setIsAuthenticated(false);
+                }
+            });
+
+            return () => {
+                subscription.unsubscribe();
+            };
+        }
+    }, [location.pathname]);
+
+    const adminPrefixes = ['/admin', '/kaleb', '/leads', '/people', '/settings'];
+
+    const isAdminPropertyRoute =
+        location.pathname === '/properties' ||
+        location.pathname.startsWith('/properties/new') ||
+        location.pathname.startsWith('/properties/edit');
+
+    const isAdminPath =
+        adminPrefixes.some((p) => location.pathname.startsWith(p)) ||
+        isAdminPropertyRoute;
+
+    if (isAdminPath && !isAuthenticated) {
+        return <Navigate to="/login" replace />;
+    }
+
+    const hideNavPaths = ['/properties/new', '/website', '/login'];
+    const showNav = isAuthenticated
+        && location.pathname !== '/'
+        && !hideNavPaths.some(p => location.pathname.includes(p))
+        && !location.pathname.match(/\/properties\/\d+/)
+        && !location.pathname.includes('/properties/edit/');
+
+    return (
+        <ErrorBoundary>
+            <PropertyProvider>
+                <LeadProvider>
+                    <div className="font-['Manrope'] antialiased text-slate-900 bg-slate-50 min-h-screen">
+                        <Routes>
+                            {/* Public routes */}
+                            <Route
+                                path="/"
+                                element={
+                                    // ✅ LÓGICA DO PREVIEW
+                                    (config.maintenance.enabled && !isPreviewMode) 
+                                        ? <Maintenance expectedReturnDate={config.maintenance.returnDate} /> 
+                                        : <PublicHome />
+                                }
+                            />
+                            <Route path="/website" element={<Navigate to="/" replace />} />
+                            <Route path="/login" element={<Login />} />
+
+                            {/* Admin routes */}
+                            <Route path="/admin" element={<Dashboard />} />
+                            <Route path="/properties" element={<PropertyList />} />
+                            <Route path="/properties/new" element={<PropertyForm />} />
+                            <Route path="/properties/edit/:id" element={<PropertyForm />} />
+                            <Route path="/properties/:id" element={<PropertyDetails />} />
+                            <Route path="/kaleb" element={<LLMAssistant />} />
+                            <Route path="/leads" element={<Leads />} />
+                            <Route path="/people" element={<People />} />
+                            <Route path="/settings" element={<Settings />} />
+                        </Routes>
+
+                        {showNav && <Navigation />}
+                    </div>
+                </LeadProvider>
+            </PropertyProvider>
+        </ErrorBoundary>
+    );
+};
+
+export default App;

@@ -1,13 +1,14 @@
 import React, { useState, useRef } from 'react';
 import { Settings as SettingsIcon, Upload, Database, PaintBucket, Brain, Globe, Save, Image, CheckCircle, Share2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { systemConfig } from '../system-config';
 
 const Settings = () => {
     const [primaryColor, setPrimaryColor] = useState(localStorage.getItem('ab-primary-color') || '#166b9c');
     const [logoUrl, setLogoUrl] = useState(localStorage.getItem('ab-logo-url') || '');
     const [whatsapp, setWhatsapp] = useState(localStorage.getItem('ab-whatsapp') || '');
     const [socials, setSocials] = useState(JSON.parse(localStorage.getItem('ab-socials') || '{"instagram":"","linkedin":"","facebook":"","youtube":"","tiktok":""}'));
-    const [systemPrompt, setSystemPrompt] = useState(localStorage.getItem('ab-system-prompt') || 'Você é Kaleb, um assistente especializado em vendas de imóveis de alto padrão. Seu objetivo é ajudar o corretor André Barbosa a fechar mais negócios. Utilize uma linguagem profissional, proativa e direta. Sempre pergunte sobre o próximo passo.');
+    const [systemPrompt, setSystemPrompt] = useState(localStorage.getItem('ab-system-prompt') || `Você é Kaleb, um assistente especializado em vendas de imóveis de alto padrão. Seu objetivo é ajudar o corretor ${systemConfig.brokerName} a fechar mais negócios. Utilize uma linguagem profissional, proativa e direta. Sempre pergunte sobre o próximo passo.`);
     const [geminiKey, setGeminiKey] = useState(localStorage.getItem('ab-gemini-key') || '');
     const [groqKey, setGroqKey] = useState(localStorage.getItem('ab-groq-key') || '');
     const [supabaseUrl, setSupabaseUrl] = useState(localStorage.getItem('ab-supabase-url') || '');
@@ -128,7 +129,7 @@ const Settings = () => {
                                     </button>
                                 )}
                             </div>
-                            <p className="text-[10px] text-slate-400 mt-1">Essa logo vai substituir o texto "André Barbosa" no canto superior esquerdo do site.</p>
+                            <p className="text-[10px] text-slate-400 mt-1">Essa logo vai substituir o texto "{systemConfig.brokerName}" no canto superior esquerdo do site.</p>
                         </div>
 
                         <div>
@@ -222,7 +223,7 @@ const Settings = () => {
                                 onClick={() => {
                                     const baseUrl = window.location.origin;
                                     const syncLink = `${baseUrl}/login?syncUrl=${encodeURIComponent(supabaseUrl)}&syncKey=${encodeURIComponent(supabaseKey)}`;
-                                    const waLink = `https://wa.me/?text=${encodeURIComponent('Para sincronizar seu celular com o Corretor André Barbosa, clique aqui: ' + syncLink)}`;
+                                    const waLink = `https://wa.me/?text=${encodeURIComponent(`Para sincronizar seu celular com o Corretor ${systemConfig.brokerName}, clique aqui: ` + syncLink)}`;
                                     window.open(waLink, '_blank');
                                 }}
                                 className="text-[10px] font-bold bg-emerald-500 text-white px-3 py-1.5 rounded-full shadow-lg hover:bg-emerald-600 transition-all flex items-center gap-1"

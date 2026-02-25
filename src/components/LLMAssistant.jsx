@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Upload, Sparkles, Loader2 } from 'lucide-react';
 import { useProperties } from '../contexts/PropertyContext';
+import { systemConfig } from '../system-config';
 
 const LLMAssistant = () => {
     const { properties } = useProperties();
@@ -69,7 +70,7 @@ const LLMAssistant = () => {
         setIsTyping(true);
 
         // Prepare Context
-        const systemPrompt = localStorage.getItem('ab-system-prompt') || 'Você é Kaleb, assistente do corretor André Barbosa.';
+        const systemPrompt = localStorage.getItem('ab-system-prompt') || `Você é Kaleb, assistente do corretor ${systemConfig.brokerName}.`;
         const geminiKey = localStorage.getItem('ab-gemini-key');
         const groqKey = localStorage.getItem('ab-groq-key');
         const lastProvider = localStorage.getItem('ab-last-llm-provider') || 'gemini';

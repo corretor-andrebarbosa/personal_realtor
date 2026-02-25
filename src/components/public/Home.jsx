@@ -3,6 +3,8 @@ import { useProperties } from '../../contexts/PropertyContext';
 import { MapPin, ArrowUpRight, Phone, Instagram, Linkedin, MessageCircle, PlayCircle, Star, ShieldCheck, BedDouble, Bath, Car, Menu, X, Facebook, Youtube, User, LayoutDashboard, Settings as SettingsIcon, LogOut, ChevronDown, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import PropertyFilters from './PropertyFilters';
+import { systemConfig } from '../../system-config';
+import { openWhatsApp } from '../../whatsapp';
 
 // ✅ Função auxiliar para extrair ID do YouTube e gerar URL da miniatura
 const getYoutubeThumbnail = (url) => {
@@ -66,9 +68,9 @@ const PublicHome = () => {
         setSettings({
             primaryColor: localStorage.getItem('ab-primary-color') || '#166b9c',
             logoUrl: localStorage.getItem('ab-logo-url') || '',
-            whatsapp: localStorage.getItem('ab-whatsapp') || '',
+            whatsapp: localStorage.getItem('ab-whatsapp') || systemConfig.whatsappNumber,
             profilePhoto: localStorage.getItem('ab-profile-photo') || '',
-            socials: JSON.parse(localStorage.getItem('ab-socials') || '{"instagram":"","linkedin":"","facebook":"","youtube":"","tiktok":""}')
+            socials: JSON.parse(localStorage.getItem('ab-socials') || JSON.stringify(systemConfig.socialLinks || { instagram: '', linkedin: '', facebook: '', youtube: '', tiktok: '' }))
         });
     }, []);
 
@@ -77,9 +79,7 @@ const PublicHome = () => {
     const handleContactSubmit = (e) => {
         e.preventDefault();
         const phone = e.target.querySelector('input').value;
-        if (settings.whatsapp) {
-            window.open(`https://wa.me/${settings.whatsapp}?text=${encodeURIComponent(`Olá! Meu número é ${phone}. Gostaria de saber mais sobre seus imóveis.`)}`, '_blank');
-        }
+        openWhatsApp(`Olá! Meu número é ${phone}. Gostaria de saber mais sobre seus imóveis.`, settings.whatsapp);
         e.target.querySelector('input').value = '';
     };
 
@@ -100,7 +100,7 @@ const PublicHome = () => {
                             }}
                         />
                         <span className="text-xl font-extrabold tracking-tight hidden" style={{ color: settings.primaryColor }}>
-                            André Barbosa
+                            {systemConfig.brokerName}
                         </span>
                     </div>
                 </Link>
@@ -400,11 +400,7 @@ const PublicHome = () => {
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                if (settings.whatsapp) {
-                                                    window.open(`https://wa.me/${settings.whatsapp}?text=${encodeURIComponent(`Olá! Tenho interesse no imóvel: ${property.title} - R$ ${(property.price || property.rentalPrice || 0).toLocaleString('pt-BR')}`)}`, '_blank');
-                                                } else {
-                                                    window.location.href = '#contato';
-                                                }
+                                                openWhatsApp(`Olá! Tenho interesse no imóvel: ${property.title} - R$ ${(property.price || property.rentalPrice || 0).toLocaleString('pt-BR')}`, settings.whatsapp);
                                             }}
                                             className="w-full mt-2 bg-slate-50 text-slate-600 font-bold py-3 rounded-xl border border-slate-200 hover:text-white hover:border-transparent transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-2"
                                             style={{ '--tw-bg-opacity': 1 }}
@@ -423,7 +419,7 @@ const PublicHome = () => {
 
             {/* Floating WhatsApp Button & Footer continuam iguais... */}
             {/* (Omiti o restante do código para poupar espaço, mas não apague nada do seu arquivo original abaixo do Footer) */}
-             <a
+            <a
                 href={whatsappLink}
                 target="_blank"
                 rel="noreferrer"
@@ -436,8 +432,8 @@ const PublicHome = () => {
                 </svg>
             </a>
 
-             {/* Contact Section */}
-             <section id="contato" className="py-20 px-6 text-white relative overflow-hidden" style={{ backgroundColor: settings.primaryColor }}>
+            {/* Contact Section */}
+            <section id="contato" className="py-20 px-6 text-white relative overflow-hidden" style={{ backgroundColor: settings.primaryColor }}>
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
                 <div className="max-w-4xl mx-auto relative z-10 text-center">
@@ -477,7 +473,7 @@ const PublicHome = () => {
                                         e.target.nextElementSibling.classList.remove('hidden');
                                     }}
                                 />
-                                <h3 className="text-xl font-extrabold text-white mb-4 hidden">André Barbosa</h3>
+                                <h3 className="text-xl font-extrabold text-white mb-4 hidden">{systemConfig.brokerName}</h3>
                             </div>
                             <p className="text-sm text-slate-400 leading-relaxed">Inteligência Imobiliária. Encontre o imóvel perfeito com atendimento personalizado e dedicado.</p>
                         </div>
@@ -506,7 +502,7 @@ const PublicHome = () => {
                     </div>
 
                     <div className="border-t border-slate-800 pt-6 text-center text-xs text-slate-500">
-                        <p>&copy; {new Date().getFullYear()} André Barbosa Inteligência Imobiliária. Powered by <span className="text-slate-400 font-bold">Kaleb</span>.</p>
+                        <p>&copy; {new Date().getFullYear()} {systemConfig.brandName}. Powered by <span className="text-slate-400 font-bold">Kaleb</span>.</p>
                     </div>
                 </div>
             </footer>

@@ -19,6 +19,8 @@ import {
   X
 } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { systemConfig } from '../system-config';
+import { openWhatsApp } from '../whatsapp';
 
 const isValidSession = () => {
   try {
@@ -284,18 +286,14 @@ const PropertyDetails = () => {
 
   const handleWhatsApp = () => {
     if (!property) return;
-    const whatsapp = localStorage.getItem('ab-whatsapp') || '';
     const price = Number(property.price || property.rentalPrice || 0);
     const text = `Olá! Tenho interesse no imóvel: ${property.title} - R$ ${price.toLocaleString('pt-BR')}`;
-    if (whatsapp) {
-      window.open(`https://wa.me/${whatsapp}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
-    } else {
-      alert('Número de WhatsApp não configurado. Vá em Configurações para definir.');
-    }
+    const whatsapp = localStorage.getItem('ab-whatsapp') || systemConfig.whatsappNumber;
+    openWhatsApp(text, whatsapp);
   };
 
   const handleCall = () => {
-    const whatsapp = localStorage.getItem('ab-whatsapp') || '';
+    const whatsapp = localStorage.getItem('ab-whatsapp') || systemConfig.whatsappNumber;
     if (whatsapp) {
       window.open(`tel:+${whatsapp}`);
     } else {

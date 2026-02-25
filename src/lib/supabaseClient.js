@@ -27,7 +27,7 @@ export const setKeys = ({ supabaseUrl, supabaseAnonKey }) => {
   if (typeof window === 'undefined') return false;
   if (!supabaseUrl || !supabaseAnonKey) return false;
   localStorage.setItem('ab-supabase-url', supabaseUrl);
-  localStorage.setItem('ab-supabase-anon', supabaseAnon);
+  localStorage.setItem('ab-supabase-anon', supabaseAnonKey);
   return true;
 };
 
@@ -42,10 +42,10 @@ if (source === 'none') {
 // ✅ Exporta cliente ou null (tratado nos componentes)
 export const supabase = (supabaseUrl && supabaseAnonKey)
   ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-      }
-    })
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
+    }
+  })
   : null;
