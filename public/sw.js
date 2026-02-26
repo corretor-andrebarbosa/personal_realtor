@@ -1,5 +1,5 @@
-// Simple Service Worker for PWA offline shell - v2.2
-const CACHE_NAME = 'ab-imoveis-v2';
+// Simple Service Worker for PWA offline shell - v2.3
+const CACHE_NAME = 'ab-imoveis-v3';
 const urlsToCache = ['/'];
 
 self.addEventListener('install', (event) => {
