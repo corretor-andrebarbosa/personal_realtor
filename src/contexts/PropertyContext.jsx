@@ -139,7 +139,12 @@ export const PropertyProvider = ({ children }) => {
                         };
                     });
 
-                    setProperties(fullyNormalized);
+                    setProperties(prev => {
+                        const localOnly = prev.filter(p => String(p.id).startsWith('local-') || p._isLocal);
+                        // Evita duplicatas se algum já estiver no cloud
+                        const filteredLocal = localOnly.filter(lp => !fullyNormalized.find(fp => fp.id === lp.id));
+                        return [...fullyNormalized, ...filteredLocal];
+                    });
                 } else if (error) {
                     console.error("Erro ao carregar propriedades:", error);
                 }
@@ -263,10 +268,10 @@ export const PropertyProvider = ({ children }) => {
             try {
                 // Filtra strings base64 muito grandes antes de salvar
                 const lightProps = properties.map(p => {
-                    const cleanImages = (p.images || []).map(img => 
+                    const cleanImages = (p.images || []).map(img =>
                         (img && img.length > 500 && img.startsWith('data:image')) ? '[CACHE_REMOVED]' : img
                     ).filter(img => img !== '[CACHE_REMOVED]'); // Remove base64 do cache
-                
+
                     return {
                         ...p,
                         images: cleanImages.length > 0 ? cleanImages : undefined,
@@ -312,7 +317,20 @@ export const PropertyProvider = ({ children }) => {
             console.error('Erro de Rede:', e);
         }
         return false;
-    }, [dbSchema, discoverSchema]);
+    }, [dbSchema, discoverSchema, properties]);
+
+    const syncAllLocal = useCallback(async () => {
+        const localProps = properties.filter(p => String(p.id).startsWith('local-') || p._isLocal);
+        if (localProps.length === 0) return { success: true, count: 0 };
+
+        let successCount = 0;
+        for (const prop of localProps) {
+            const ok = await syncItem(prop);
+            if (ok) successCount++;
+        }
+
+        return { success: successCount === localProps.length, count: successCount };
+    }, [properties, syncItem]);
 
     const addProperty = async (property) => {
         const tempId = `local-${Date.now()}`;
@@ -327,7 +345,7 @@ export const PropertyProvider = ({ children }) => {
         setProperties(prev => prev.map(p => p.id === id ? { ...p, ...updated } : p));
 
         if (String(id).startsWith('local-')) {
-             return await syncItem({ ...prevItem, ...updated });
+            return await syncItem({ ...prevItem, ...updated });
         }
 
         if (supabase && !String(id).startsWith('local-')) {
@@ -358,7 +376,7 @@ export const PropertyProvider = ({ children }) => {
     };
 
     return (
-        <PropertyContext.Provider value={{ properties, loading, isSyncing, dbSchema, addProperty, updateProperty, deleteProperty, refreshProperties: loadProperties, syncItem }}>
+        <PropertyContext.Provider value={{ properties, loading, isSyncing, dbSchema, addProperty, updateProperty, deleteProperty, refreshProperties: loadProperties, syncItem, syncAllLocal }}>
             {children}
         </PropertyContext.Provider>
     );

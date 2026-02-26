@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Settings as SettingsIcon, Upload, Database, PaintBucket, Brain, Globe, Save, Image, CheckCircle, Share2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { systemConfig } from '../system-config';
+import { useProperties } from '../contexts/PropertyContext';
 
 const Settings = () => {
     const [primaryColor, setPrimaryColor] = useState(localStorage.getItem('ab-primary-color') || '#166b9c');
@@ -14,6 +15,9 @@ const Settings = () => {
     const [supabaseUrl, setSupabaseUrl] = useState(localStorage.getItem('ab-supabase-url') || '');
     const [supabaseKey, setSupabaseKey] = useState(localStorage.getItem('ab-supabase-key') || '');
     const [saved, setSaved] = useState(false);
+    const { properties, syncAllLocal, isSyncing } = useProperties();
+    const [syncStatus, setSyncStatus] = useState(null);
+    const pendingCount = properties.filter(p => String(p.id).startsWith('local-') || p._isLocal).length;
     const logoInputRef = useRef(null);
     const profileInputRef = useRef(null);
 
@@ -56,6 +60,18 @@ const Settings = () => {
 
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
+    };
+
+    const handleSync = async () => {
+        setSyncStatus('syncing');
+        const result = await syncAllLocal();
+        if (result.success) {
+            setSyncStatus('success');
+            setTimeout(() => setSyncStatus(null), 3000);
+        } else {
+            setSyncStatus('error');
+            setTimeout(() => setSyncStatus(null), 3000);
+        }
     };
 
     return (
@@ -259,6 +275,30 @@ const Settings = () => {
                         </div>
                         <a href="https://supabase.com" target="_blank" rel="noreferrer" className="text-[10px] text-blue-500 hover:underline block">Criar banco de dados gratuito no Supabase</a>
                     </div>
+
+                    {pendingCount > 0 && (
+                        <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <p className="text-sm font-bold text-blue-800">{pendingCount} Imóveis Pendentes</p>
+                                    <p className="text-xs text-blue-600">Estes imóveis estão apenas no seu navegador atual.</p>
+                                </div>
+                                <button
+                                    onClick={handleSync}
+                                    disabled={isSyncing || syncStatus === 'syncing'}
+                                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${syncStatus === 'success' ? 'bg-emerald-500 text-white' :
+                                            syncStatus === 'error' ? 'bg-red-500 text-white' :
+                                                'bg-blue-600 text-white hover:bg-blue-700 shadow-md'
+                                        }`}
+                                >
+                                    {syncStatus === 'syncing' ? 'Sincronizando...' :
+                                        syncStatus === 'success' ? 'Sincronizado!' :
+                                            syncStatus === 'error' ? 'Erro na Conexão' :
+                                                'Sincronizar Agora'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </section>
 
                 {/* Kaleb LLM Training */}
