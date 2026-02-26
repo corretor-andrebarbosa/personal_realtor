@@ -65,10 +65,11 @@ const PublicHome = () => {
     });
 
     useEffect(() => {
+        const storedWhatsapp = localStorage.getItem('ab-whatsapp');
         setSettings({
             primaryColor: localStorage.getItem('ab-primary-color') || '#166b9c',
             logoUrl: localStorage.getItem('ab-logo-url') || '',
-            whatsapp: localStorage.getItem('ab-whatsapp') || systemConfig.whatsappNumber,
+            whatsapp: (storedWhatsapp && storedWhatsapp.trim()) ? storedWhatsapp : systemConfig.whatsappNumber,
             profilePhoto: localStorage.getItem('ab-profile-photo') || '',
             socials: JSON.parse(localStorage.getItem('ab-socials') || JSON.stringify(systemConfig.socialLinks || { instagram: '', linkedin: '', facebook: '', youtube: '', tiktok: '' }))
         });

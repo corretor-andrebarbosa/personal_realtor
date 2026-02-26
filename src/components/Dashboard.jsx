@@ -18,6 +18,7 @@ import { useProperties } from '../contexts/PropertyContext';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Settings as SettingsIcon, User } from 'lucide-react';
 import { systemConfig } from '../system-config';
+import { supabase } from '../lib/supabaseClient';
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -25,7 +26,15 @@ const Dashboard = () => {
     const { properties } = useProperties();
     const [showProfileMenu, setShowProfileMenu] = useState(false);
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        try {
+            if (supabase) {
+                await supabase.auth.signOut();
+            }
+        } catch (error) {
+            console.error("Logout error:", error);
+        }
+
         localStorage.removeItem('authToken');
         localStorage.removeItem('ab-auth-session');
         navigate('/login');

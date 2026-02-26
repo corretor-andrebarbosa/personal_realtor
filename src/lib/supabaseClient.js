@@ -9,6 +9,7 @@ export const getKeys = () => {
   const envAnon = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
   // Verifica se a chave do env parece um token do Vercel (erro comum) ou placeholder
+  // Agora aceita tanto o formato antigo (HS256) quanto o novo (sb_publishable_)
   const isInvalidEnv = !envAnon || envAnon.includes("COLE_AQUI") || envAnon.includes("RS256");
 
   // Se o ENV for válido, usa ele
@@ -21,8 +22,10 @@ export const getKeys = () => {
     const lsUrl = localStorage.getItem('ab-supabase-url') || envUrl;
     const lsAnon = localStorage.getItem('ab-supabase-anon');
 
-    // Só retorna se a chave do LS parecer minimamente válida
-    if (lsUrl && lsAnon && lsAnon.length > 50 && !lsAnon.includes("RS256")) {
+    // Validação atualizada: aceita chaves longas (>50) ou com o novo prefixo sb_publishable_
+    const isValidLS = lsAnon && (lsAnon.length > 50 || lsAnon.startsWith("sb_publishable_")) && !lsAnon.includes("RS256");
+
+    if (lsUrl && isValidLS) {
       return { supabaseUrl: lsUrl, supabaseAnonKey: lsAnon, source: 'localStorage' };
     }
   }
@@ -53,7 +56,7 @@ if (!supabaseAnonKey) {
 }
 
 // ✅ Exporta cliente ou null
-export const supabase = (supabaseUrl && supabaseAnonKey && supabaseAnonKey.length > 50)
+export const supabase = (supabaseUrl && supabaseAnonKey && (supabaseAnonKey.length > 50 || supabaseAnonKey.startsWith("sb_publishable_")))
   ? createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       persistSession: true,

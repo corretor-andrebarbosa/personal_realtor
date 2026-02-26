@@ -10,7 +10,7 @@ export const systemConfig = {
     brokerName: "André Barbosa",
 
     // WhatsApp no formato E.164 SEM +  (ex: 5583999999999)
-    whatsappNumber: "558399682-8008",
+    whatsappNumber: "5583996828008",
 
     // Mensagem padrão ao abrir WhatsApp genérico
     whatsappDefaultMessage: "Olá! Gostaria de saber mais sobre seus imóveis.",

@@ -5,8 +5,8 @@ import { Lock, Mail, ArrowRight, ShieldAlert, CheckCircle2, Database, Globe, Ref
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("cap.barbosa@yahoo.com");
-  const [password, setPassword] = useState("4ever10565");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [showConfig, setShowConfig] = useState(false);
@@ -144,6 +144,7 @@ export default function Login() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="username"
                     className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-blue-500 transition-all font-semibold text-sm"
                     required
                   />
@@ -158,6 +159,7 @@ export default function Login() {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
                     className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-blue-500 transition-all font-semibold text-sm"
                     required
                   />
