@@ -21,6 +21,9 @@ import {
 import jsPDF from 'jspdf';
 import { systemConfig } from '../system-config';
 import { openWhatsApp } from '../whatsapp';
+import { translations } from '../translations';
+import TranslatedText from './common/TranslatedText';
+import PriceDisplay from './common/PriceDisplay';
 
 const isValidSession = () => {
   try {
@@ -143,6 +146,9 @@ const PropertyDetails = () => {
   const { properties, deleteProperty } = useProperties();
   const navigate = useNavigate();
 
+  const [lang, setLang] = useState(localStorage.getItem('ab-user-lang') || 'pt');
+  const t = (key) => translations[lang][key] || translations['pt'][key] || key;
+
   const [property, setProperty] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -213,43 +219,43 @@ const PropertyDetails = () => {
     doc.setFontSize(12);
     doc.setTextColor(0);
     doc.setFont("helvetica", "normal");
-    doc.text(`Endereço: ${property.address || 'N/D'}`, 20, 35);
-    doc.text(`Tipo: ${property.type || 'N/D'}`, 20, 45);
+    doc.text(`${t('pdf_address')}: ${property.address || 'N/D'}`, 20, 35);
+    doc.text(`${t('pdf_type')}: ${property.type || 'N/D'}`, 20, 45);
 
     const contract =
       property.contract === 'locacao'
-        ? 'Locação'
+        ? t('filter_rent')
         : property.contract === 'ambos'
-          ? 'Venda e Locação'
-          : 'Venda';
+          ? t('filter_both')
+          : t('filter_sale');
 
-    doc.text(`Contrato: ${contract}`, 20, 55);
+    doc.text(`${t('pdf_contract')}: ${contract}`, 20, 55);
 
     const sale = Number(property.price || property.salePrice || 0);
     const rent = Number(property.rentalPrice || 0);
 
     if (property.contract === 'ambos') {
-      doc.text(`Preço de Venda: R$ ${sale.toLocaleString('pt-BR')}`, 20, 65);
-      doc.text(`Aluguel: R$ ${rent.toLocaleString('pt-BR')}/mês`, 20, 75);
-      doc.text(`Área: ${Number(property.area || 0)}m²`, 20, 85);
+      doc.text(`${t('pdf_sale_price')}: R$ ${sale.toLocaleString('pt-BR')}`, 20, 65);
+      doc.text(`${t('pdf_rent_price')}: R$ ${rent.toLocaleString('pt-BR')}${t('prop_month')}`, 20, 75);
+      doc.text(`${t('pdf_area')}: ${Number(property.area || 0)}m²`, 20, 85);
     } else {
       const val = Number(property.price || property.rentalPrice || 0);
       doc.text(
-        `Preço: R$ ${val.toLocaleString('pt-BR')}${property.contract === 'locacao' ? '/mês' : ''}`,
+        `${t('pdf_price')}: R$ ${val.toLocaleString('pt-BR')}${property.contract === 'locacao' ? t('prop_month') : ''}`,
         20,
         65
       );
-      doc.text(`Área: ${Number(property.area || 0)}m²`, 20, 75);
+      doc.text(`${t('pdf_area')}: ${Number(property.area || 0)}m²`, 20, 75);
     }
 
     doc.text(
-      `Quartos: ${Number(property.rooms || 0)} | Banheiros: ${Number(property.bathrooms || 0)} | Vagas: ${Number(property.garage || 0)}`,
+      `${t('prop_rooms')}: ${Number(property.rooms || 0)} | ${t('prop_baths')}: ${Number(property.bathrooms || 0)} | ${t('prop_garage')}: ${Number(property.garage || 0)}`,
       20,
       95
     );
 
     if (property.description) {
-      doc.text('Descrição:', 20, 110);
+      doc.text(`${t('details_description')}:`, 20, 110);
       const lines = doc.splitTextToSize(String(property.description), 170);
       doc.text(lines, 20, 120);
     }
@@ -272,7 +278,7 @@ const PropertyDetails = () => {
         await navigator.share(shareData);
       } else {
         await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
-        alert('Link copiado para a área de transferência!');
+        // alert(t('link_copied')); // I can skip alert if it creates noise, but let's just keep it simple
       }
     } catch {
       // usuário cancelou share, ok
@@ -301,7 +307,7 @@ const PropertyDetails = () => {
     }
   };
 
-  if (!property) return <div className="p-10 text-center text-slate-400">Carregando...</div>;
+  if (!property) return <div className="p-10 text-center text-slate-400">{t('loading')}</div>;
 
   const coverSrc = allImages[currentImageIndex];
 
@@ -313,7 +319,7 @@ const PropertyDetails = () => {
         <Link
           to={backHref}
           className="absolute top-4 left-4 z-10 bg-white/80 p-2 rounded-full shadow-sm backdrop-blur"
-          title="Voltar"
+          title={t('details_back')}
         >
           <ArrowLeft size={20} className="text-slate-800" />
         </Link>
@@ -367,18 +373,18 @@ const PropertyDetails = () => {
             </span>
           </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate-400">Sem imagem</div>
+          <div className="w-full h-full flex items-center justify-center text-slate-400">{t('no_images') || 'Sem imagem'}</div>
         )}
       </div>
 
       {/* Action buttons on image */}
       <div className="absolute top-[240px] right-4 flex gap-2 z-10">
         <button onClick={handleShare} className="bg-white/90 backdrop-blur px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm">
-          <Share2 size={14} /> Compartilhar
+          <Share2 size={14} /> {t('details_share')}
         </button>
         {youtubeId && (
           <button onClick={() => setShowVideoModal(true)} className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm">
-            <Video size={14} /> Vídeo
+            <Video size={14} /> {t('details_video')}
           </button>
         )}
       </div>
@@ -388,7 +394,9 @@ const PropertyDetails = () => {
         <div className="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-6"></div>
 
         <div className="flex justify-between items-start mb-2">
-          <h1 className="text-2xl font-bold text-slate-800 w-3/4 leading-tight">{property.title}</h1>
+          <h1 className="text-2xl font-bold text-slate-800 w-3/4 leading-tight">
+            <TranslatedText lang={lang}>{property.title}</TranslatedText>
+          </h1>
 
           {/* Só mostra ações de editar/excluir no admin */}
           {authed && (
@@ -419,7 +427,8 @@ const PropertyDetails = () => {
         </div>
 
         <p className="text-slate-500 text-sm mb-6 flex items-center gap-1">
-          <MapPin size={16} className="text-[var(--primary-color)]" /> {property.address}
+          <MapPin size={16} className="text-[var(--primary-color)]" />
+          <TranslatedText lang={lang}>{property.address}</TranslatedText>
         </p>
 
         {/* Badges */}
@@ -432,10 +441,10 @@ const PropertyDetails = () => {
                 : 'bg-red-100 text-red-700'
               }`}
           >
-            {property.status}
+            <TranslatedText lang={lang}>{property.status}</TranslatedText>
           </span>
           <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 uppercase">
-            {property.contract === 'locacao' ? 'Locação' : property.contract === 'ambos' ? 'Venda e Locação' : 'Venda'}
+            {property.contract === 'locacao' ? t('filter_rent') : property.contract === 'ambos' ? t('filter_both') : t('filter_sale')}
           </span>
           {property.type && (
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 uppercase">
@@ -448,28 +457,30 @@ const PropertyDetails = () => {
         <div className="flex gap-4 mb-6 overflow-x-auto pb-2 no-scrollbar">
           <div className="min-w-[80px] p-3 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center gap-1">
             <span className="text-slate-400"><BedDouble size={20} /></span>
-            <span className="font-bold text-slate-800 text-sm">{Number(property.rooms || 0)} <span className="text-[10px] font-normal text-slate-400">Quartos</span></span>
+            <span className="font-bold text-slate-800 text-sm">{Number(property.rooms || 0)} <span className="text-[10px] font-normal text-slate-400">{t('prop_rooms')}</span></span>
           </div>
           <div className="min-w-[80px] p-3 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center gap-1">
             <span className="text-slate-400"><Bath size={20} /></span>
-            <span className="font-bold text-slate-800 text-sm">{Number(property.bathrooms || 0)} <span className="text-[10px] font-normal text-slate-400">Banheiros</span></span>
+            <span className="font-bold text-slate-800 text-sm">{Number(property.bathrooms || 0)} <span className="text-[10px] font-normal text-slate-400">{t('prop_baths')}</span></span>
           </div>
           <div className="min-w-[80px] p-3 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center gap-1">
             <span className="text-slate-400"><Car size={20} /></span>
-            <span className="font-bold text-slate-800 text-sm">{Number(property.garage || 0)} <span className="text-[10px] font-normal text-slate-400">Vagas</span></span>
+            <span className="font-bold text-slate-800 text-sm">{Number(property.garage || 0)} <span className="text-[10px] font-normal text-slate-400">{t('prop_garage')}</span></span>
           </div>
           <div className="min-w-[80px] p-3 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center gap-1">
             <span className="text-slate-400 font-serif font-bold text-lg">M²</span>
-            <span className="font-bold text-slate-800 text-sm">{Number(property.area || 0)} <span className="text-[10px] font-normal text-slate-400">Área</span></span>
+            <span className="font-bold text-slate-800 text-sm">{Number(property.area || 0)} <span className="text-[10px] font-normal text-slate-400">{t('prop_area')}</span></span>
           </div>
         </div>
 
         {/* Description */}
         <div className="mb-8">
-          <h3 className="font-bold text-slate-800 mb-2">Descrição</h3>
+          <h3 className="font-bold text-slate-800 mb-2">{t('details_description')}</h3>
           <p className="text-slate-500 text-sm leading-relaxed whitespace-pre-wrap">
-            {property.description ||
-              `Este imóvel incrível localizado em ${String(property.address || '').split('-')[1] || 'João Pessoa - PB'} oferece todo o conforto e exclusividade. Com acabamento de alto padrão e localização privilegiada.`}
+            <TranslatedText lang={lang}>
+              {property.description ||
+                `Este imóvel incrível localizado em ${String(property.address || '').split('-')[1] || 'João Pessoa - PB'} oferece todo o conforto e exclusividade. Com acabamento de alto padrão e localização privilegiada.`}
+            </TranslatedText>
           </p>
         </div>
 
@@ -477,7 +488,7 @@ const PropertyDetails = () => {
         {youtubeId && (
           <div className="mb-8">
             <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2">
-              <Video size={18} className="text-red-500" /> Vídeo do Imóvel
+              <Video size={18} className="text-red-500" /> {t('details_video_title')}
             </h3>
             <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-md">
               <iframe
@@ -492,7 +503,7 @@ const PropertyDetails = () => {
         )}
 
         <div className="mb-24">
-          <h3 className="font-bold text-slate-800 mb-2">Localização</h3>
+          <h3 className="font-bold text-slate-800 mb-2">{t('details_location')}</h3>
           <div className="h-40 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 font-bold border-2 border-dashed border-slate-200">
             📍 {property.address}
           </div>
@@ -503,24 +514,30 @@ const PropertyDetails = () => {
       <div className="fixed bottom-0 left-0 w-full bg-white p-4 border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex items-center justify-between gap-4 z-20">
         <div>
           {property.contract === 'ambos' ? (
-            <>
-              <p className="text-xs font-bold text-slate-400 uppercase">Venda / Locação</p>
-              <p className="text-lg font-bold text-[var(--primary-color)]">
-                {(property.price || property.salePrice) ? `R$ ${Number(property.price || property.salePrice || 0).toLocaleString('pt-BR')}` : 'Sob consulta'}
-              </p>
-              <p className="text-sm font-bold text-emerald-600">
-                {property.rentalPrice ? `R$ ${Number(property.rentalPrice || 0).toLocaleString('pt-BR')}/mês` : ''}
-              </p>
-            </>
+            <div className="flex flex-col">
+              <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">{t('filter_both')}</p>
+              <PriceDisplay
+                brlValue={property.price || property.salePrice}
+                lang={lang}
+                propertyConsultText={t('property_consult')}
+              />
+              <PriceDisplay
+                brlValue={property.rentalPrice}
+                lang={lang}
+                propertyConsultText=""
+                isRent={true}
+              />
+            </div>
           ) : (
-            <>
-              <p className="text-xs font-bold text-slate-400 uppercase">Valor Total</p>
-              <p className="text-xl font-bold text-[var(--primary-color)]">
-                {(property.price || property.rentalPrice)
-                  ? `R$ ${Number(property.price || property.rentalPrice || 0).toLocaleString('pt-BR')}${property.contract === 'locacao' ? '/mês' : ''}`
-                  : 'Sob consulta'}
-              </p>
-            </>
+            <div className="flex flex-col">
+              <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">{t('details_total_value')}</p>
+              <PriceDisplay
+                brlValue={property.contract === 'locacao' ? property.rentalPrice : (property.price || property.salePrice)}
+                lang={lang}
+                propertyConsultText={t('property_consult')}
+                isRent={property.contract === 'locacao'}
+              />
+            </div>
           )}
         </div>
 
@@ -530,13 +547,13 @@ const PropertyDetails = () => {
             className="bg-[#25D366] text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-emerald-500/30 hover:bg-[#128C7E] transition-all flex items-center gap-2 group"
           >
             <MessageCircle size={20} className="group-hover:scale-110 transition-transform" />
-            WhatsApp
+            {t('details_whatsapp')}
           </button>
           <button
             onClick={handleCall}
             className="bg-[var(--primary-color)] text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-500/30 hover:bg-[var(--primary-dark)] transition-colors flex items-center gap-2"
           >
-            <Phone size={18} /> Ligar
+            <Phone size={18} /> {t('details_call')}
           </button>
         </div>
       </div>
@@ -545,14 +562,14 @@ const PropertyDetails = () => {
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowDeleteModal(false)}>
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-slate-800 mb-2">Excluir Imóvel?</h3>
-            <p className="text-sm text-slate-500 mb-6">Esta ação é irreversível. O imóvel "{property.title}" será removido permanentemente.</p>
+            <h3 className="text-lg font-bold text-slate-800 mb-2">{t('details_delete_title')}</h3>
+            <p className="text-sm text-slate-500 mb-6">{t('details_delete_confirm')}</p>
             <div className="flex gap-3">
               <button onClick={() => setShowDeleteModal(false)} className="flex-1 py-2 rounded-xl font-bold text-slate-500 border border-slate-200 hover:bg-slate-50">
-                Cancelar
+                {t('details_cancel')}
               </button>
               <button onClick={handleDelete} className="flex-1 py-2 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600 transition-colors">
-                Excluir
+                {t('details_delete_button')}
               </button>
             </div>
           </div>

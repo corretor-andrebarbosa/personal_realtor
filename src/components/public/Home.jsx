@@ -3,8 +3,11 @@ import { useProperties } from '../../contexts/PropertyContext';
 import { MapPin, ArrowUpRight, Phone, Instagram, Linkedin, MessageCircle, PlayCircle, Star, ShieldCheck, BedDouble, Bath, Car, Menu, X, Facebook, Youtube, User, LayoutDashboard, Settings as SettingsIcon, LogOut, ChevronDown, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import PropertyFilters from './PropertyFilters';
-import { systemConfig } from '../../system-config';
 import { openWhatsApp } from '../../whatsapp';
+import { translations } from '../../translations';
+import { systemConfig } from '../../system-config';
+import TranslatedText from '../common/TranslatedText';
+import PriceDisplay from '../common/PriceDisplay';
 
 // ✅ Função auxiliar para extrair ID do YouTube e gerar URL da miniatura
 const getYoutubeThumbnail = (url) => {
@@ -25,6 +28,57 @@ const PublicHome = () => {
     const navigate = useNavigate();
     const [mobileMenu, setMobileMenu] = useState(false);
     const [filters, setFilters] = useState({});
+    const [lang, setLang] = useState('pt');
+    const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+
+    // Language Detection
+    useEffect(() => {
+        const detectLanguage = async () => {
+            // Priority 1: User selection in LocalStorage
+            const savedLang = localStorage.getItem('ab-user-lang');
+            if (savedLang && translations[savedLang]) {
+                setLang(savedLang);
+                return;
+            }
+
+            // Priority 2: Browser Language
+            const browserLang = navigator.language.split('-')[0];
+            if (translations[browserLang]) {
+                setLang(browserLang);
+                return;
+            }
+
+            // Priority 3: Geolocation (Simple fallback check for non-PT context)
+            try {
+                const res = await fetch('https://ipapi.co/json/');
+                const data = await res.json();
+                const countryCode = data.country_code;
+
+                if (countryCode !== 'BR') {
+                    // If not in Brazil, default to English if browser is not PT
+                    if (browserLang !== 'pt') setLang('en');
+                }
+            } catch (e) {
+                console.error("Geo-detection failed", e);
+            }
+        };
+        detectLanguage();
+    }, []);
+
+    const t = (key) => translations[lang][key] || translations['pt'][key] || key;
+
+    const handleLangChange = (newLang) => {
+        setLang(newLang);
+        localStorage.setItem('ab-user-lang', newLang);
+        setIsLangMenuOpen(false);
+    };
+
+    const languages = [
+        { code: 'pt', label: 'Português', flag: 'https://flagcdn.com/w20/br.png' },
+        { code: 'en', label: 'English', flag: 'https://flagcdn.com/w20/us.png' },
+        { code: 'es', label: 'Español', flag: 'https://flagcdn.com/w20/es.png' },
+        { code: 'de', label: 'Deutsch', flag: 'https://flagcdn.com/w20/de.png' },
+    ];
 
     // Filter Logic
     const filteredProperties = properties.filter(p => {
@@ -108,9 +162,9 @@ const PublicHome = () => {
 
                 {/* Desktop Nav */}
                 <div className="hidden md:flex gap-8 text-sm font-medium text-slate-600 items-center">
-                    <a href="#imoveis" className="hover:text-[#166b9c] transition-colors">Imóveis</a>
-                    <a href="#sobre" className="hover:text-[#166b9c] transition-colors">Sobre</a>
-                    <a href="#contato" className="hover:text-[#166b9c] transition-colors">Contato</a>
+                    <a href="#imoveis" className="hover:text-[#166b9c] transition-colors">{t('nav_properties')}</a>
+                    <a href="#sobre" className="hover:text-[#166b9c] transition-colors">{t('nav_about')}</a>
+                    <a href="#contato" className="hover:text-[#166b9c] transition-colors">{t('nav_contact')}</a>
 
                     <div className="flex items-center gap-4 pl-4 border-l border-slate-200">
                         {settings.socials.instagram && (
@@ -118,6 +172,33 @@ const PublicHome = () => {
                         )}
                         {settings.socials.youtube && (
                             <a href={`https://${settings.socials.youtube}`} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-[#FF0000] transition-colors"><Youtube size={20} /></a>
+                        )}
+                    </div>
+
+                    {/* Language Selector */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-full hover:bg-slate-100 transition-all text-xs font-bold text-slate-600"
+                        >
+                            <img src={languages.find(l => l.code === lang)?.flag} alt={lang} className="w-4 h-3 object-cover rounded-sm" />
+                            <span className="uppercase">{lang}</span>
+                            <ChevronDown size={12} className={`transition-transform ${isLangMenuOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {isLangMenuOpen && (
+                            <div className="absolute right-0 top-full mt-2 w-36 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in zoom-in-95">
+                                {languages.map((l) => (
+                                    <button
+                                        key={l.code}
+                                        onClick={() => handleLangChange(l.code)}
+                                        className={`w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 transition-colors ${lang === l.code ? 'text-[var(--primary-color)] font-bold' : 'text-slate-600'}`}
+                                    >
+                                        <img src={l.flag} alt={l.label} className="w-5 h-3.5 object-cover rounded-sm shadow-sm" />
+                                        {l.label}
+                                    </button>
+                                ))}
+                            </div>
                         )}
                     </div>
 
@@ -145,18 +226,18 @@ const PublicHome = () => {
                                     }}
                                     className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors"
                                 >
-                                    <LogOut size={16} /> Sair
+                                    <LogOut size={16} /> {t('nav_logout')}
                                 </button>
                             </div>
                         </div>
                     ) : (
                         <Link to="/login" className="text-slate-500 hover:text-[#166b9c] font-bold transition-colors">
-                            Login
+                            {t('nav_login')}
                         </Link>
                     )}
 
                     <a href={whatsappLink} target="_blank" rel="noreferrer" className="text-white px-5 py-2 rounded-full hover:opacity-90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-2" style={{ backgroundColor: settings.primaryColor }}>
-                        <MessageCircle size={18} /> Fale Comigo
+                        <MessageCircle size={18} /> {t('nav_fale_comigo')}
                     </a>
                 </div>
 
@@ -170,13 +251,13 @@ const PublicHome = () => {
             {
                 mobileMenu && (
                     <div className="md:hidden fixed inset-0 top-[65px] bg-white z-40 p-6 flex flex-col gap-4">
-                        <a href="#imoveis" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">Imóveis</a>
-                        <a href="#sobre" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">Sobre</a>
-                        <a href="#contato" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">Contato</a>
+                        <a href="#imoveis" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">{t('nav_properties')}</a>
+                        <a href="#sobre" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">{t('nav_about')}</a>
+                        <a href="#contato" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">{t('nav_contact')}</a>
                         {localStorage.getItem('ab-auth-session') ? (
                             <>
                                 <Link to="/admin" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100 flex items-center gap-2">
-                                    <LayoutDashboard size={20} /> Painel Admin
+                                    <LayoutDashboard size={20} /> {t('nav_admin')}
                                 </Link>
                                 <button
                                     onClick={() => {
@@ -186,12 +267,27 @@ const PublicHome = () => {
                                     }}
                                     className="text-lg font-bold text-red-500 py-2 border-b border-slate-100 flex items-center gap-2 text-left"
                                 >
-                                    <LogOut size={20} /> Sair
+                                    <LogOut size={20} /> {t('nav_logout')}
                                 </button>
                             </>
                         ) : (
-                            <Link to="/login" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">Login</Link>
+                            <Link to="/login" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">{t('nav_login')}</Link>
                         )}
+
+                        {/* Mobile Language Selector */}
+                        <div className="flex gap-4 py-4 border-b border-slate-100">
+                            {languages.map((l) => (
+                                <button
+                                    key={l.code}
+                                    onClick={() => handleLangChange(l.code)}
+                                    className={`flex items-center gap-1 p-2 rounded-lg border ${lang === l.code ? 'border-[var(--primary-color)] bg-blue-50 text-[var(--primary-color)]' : 'border-slate-100 bg-slate-50'}`}
+                                >
+                                    <img src={l.flag} alt={l.label} className="w-5 h-3.5 object-cover rounded-sm" />
+                                    <span className="text-xs font-bold uppercase">{l.code}</span>
+                                </button>
+                            ))}
+                        </div>
+
                         <a
                             href={whatsappLink}
                             target="_blank"
@@ -199,7 +295,7 @@ const PublicHome = () => {
                             className="text-white text-center px-6 py-3 rounded-full font-bold shadow-lg mt-4 flex items-center justify-center gap-2"
                             style={{ backgroundColor: settings.primaryColor }}
                         >
-                            <MessageCircle size={20} /> Fale Comigo
+                            <MessageCircle size={20} /> {t('nav_fale_comigo')}
                         </a>
                         <div className="flex gap-4 justify-center mt-4">
                             {settings.socials.instagram && <a href={`https://${settings.socials.instagram}`} target="_blank" rel="noreferrer"><Instagram size={24} className="text-slate-400" /></a>}
@@ -220,38 +316,38 @@ const PublicHome = () => {
 
                 <div className="relative z-20 max-w-3xl">
                     <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-6 drop-shadow-lg leading-tight">
-                        Exclusividade e Alto Padrão em Cada Detalhe
+                        {t('hero_title')}
                     </h1>
                     <p className="text-lg md:text-xl text-slate-100 mb-8 font-light leading-relaxed max-w-2xl mx-auto">
-                        Sua jornada para encontrar o imóvel perfeito começa aqui. Atendimento personalizado em João Pessoa e região.
+                        {t('hero_subtitle')}
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <a href="#imoveis" className="text-white px-8 py-4 rounded-full font-bold text-lg hover:opacity-90 transition-all shadow-lg hover:shadow-cyan-500/50 hover:-translate-y-1" style={{ backgroundColor: settings.primaryColor }}>
-                            Ver Oportunidades
+                            {t('hero_cta_properties')}
                         </a>
                         <a href={whatsappLink} target="_blank" rel="noreferrer" className="bg-white/10 backdrop-blur border border-white/30 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-slate-800 transition-all flex items-center gap-2 justify-center">
-                            <PlayCircle size={20} /> Agendar Visita
+                            <PlayCircle size={20} /> {t('hero_cta_visit')}
                         </a>
                     </div>
                 </div>
             </header>
 
-            <PropertyFilters onFilterChange={setFilters} />
+            <PropertyFilters onFilterChange={setFilters} t={t} />
 
             {/* Trust badges */}
             <div className="bg-white py-6 px-4 border-b border-slate-100">
                 <div className="max-w-5xl mx-auto flex flex-wrap justify-center gap-8 md:gap-16 text-center">
                     <div>
                         <p className="text-2xl font-extrabold text-slate-800">{properties.length}+</p>
-                        <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Imóveis Cadastrados</p>
+                        <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">{t('stats_count')}</p>
                     </div>
                     <div>
                         <p className="text-2xl font-extrabold text-slate-800">100%</p>
-                        <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Atendimento Personalizado</p>
+                        <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">{t('stats_service')}</p>
                     </div>
                     <div>
                         <p className="text-2xl font-extrabold text-slate-800">⭐ 5.0</p>
-                        <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Avaliação dos Clientes</p>
+                        <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">{t('stats_rating')}</p>
                     </div>
                 </div>
             </div>
@@ -273,31 +369,29 @@ const PublicHome = () => {
 
                     <div>
                         <h2 className="text-sm font-bold uppercase tracking-wider mb-2 flex items-center gap-2" style={{ color: settings.primaryColor }}>
-                            <ShieldCheck size={18} /> Sobre Mim
+                            <ShieldCheck size={18} /> {t('about_title')}
                         </h2>
                         <h3 className="text-4xl font-extrabold text-slate-800 mb-6 leading-tight">
-                            Compromisso com a sua conquista e satisfação.
+                            {t('about_subtitle')}
                         </h3>
                         <div className="space-y-4 text-slate-600 leading-relaxed text-lg">
                             <p className="font-bold text-slate-800">
-                                Corretor de Imóveis de Alto Padrão | Atendimento Internacional
+                                {t('about_lead')}
                             </p>
                             <p>
-                                Especialista em imóveis de luxo, com atendimento exclusivo a clientes nacionais e internacionais.
-                                Fala <strong>Inglês, Alemão e Espanhol</strong>, oferece comunicação clara, segura e personalizada em negociações de alto valor.
+                                {t('about_desc_1')}
                             </p>
                             <p>
-                                Com sólido conhecimento jurídico aplicado ao mercado imobiliário, garante segurança contratual,
-                                confidencialidade e estruturação estratégica de investimentos, proporcionando total tranquilidade em cada etapa da operação.
+                                {t('about_desc_2')}
                             </p>
                             <p>
-                                Atua com discrição, excelência e foco em resultados, entregando uma experiência sofisticada, eficiente e orientada a investidores exigentes.
+                                {t('about_desc_3')}
                             </p>
                         </div>
 
                         <div className="mt-8">
                             <a href={whatsappLink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 font-bold hover:underline" style={{ color: settings.primaryColor }}>
-                                Entre em contato agora <ArrowUpRight size={16} />
+                                {t('about_cta')} <ArrowUpRight size={16} />
                             </a>
                         </div>
                     </div>
@@ -307,20 +401,19 @@ const PublicHome = () => {
             {/* Featured Properties */}
             <section id="imoveis" className="py-20 px-6 max-w-7xl mx-auto w-full">
                 <div className="text-center mb-16">
-                    <h2 className="text-3xl font-bold text-slate-800 mb-4">{isFiltering ? `Resultados da Busca (${displayedProperties.length})` : 'Imóveis em Destaque'}</h2>
+                    <h2 className="text-3xl font-bold text-slate-800 mb-4">{isFiltering ? `${t('featured_results')} (${displayedProperties.length})` : t('featured_title')}</h2>
                     <div className="w-20 h-1 mx-auto rounded-full" style={{ backgroundColor: settings.primaryColor }}></div>
-                    <p className="text-slate-500 mt-4 max-w-lg mx-auto">Seleção exclusiva dos melhores imóveis disponíveis para venda e locação.</p>
+                    <p className="text-slate-500 mt-4 max-w-lg mx-auto">{t('featured_subtitle')}</p>
                 </div>
 
                 {loading ? (
                     <div className="text-center py-16 flex flex-col items-center justify-center gap-4 text-slate-500">
                         <Loader2 className="animate-spin h-10 w-10 text-blue-600" />
-                        <p className="text-lg font-medium">Carregando imóveis...</p>
+                        <p className="text-lg font-medium">{t('loading')}</p>
                     </div>
                 ) : displayedProperties.length === 0 ? (
                     <div className="text-center py-16 text-slate-400">
-                        <p className="text-lg">Nenhum imóvel disponível no momento.</p>
-                        <p className="text-sm mt-2">Cadastre imóveis pelo painel administrativo.</p>
+                        <p className="text-lg">{t('no_properties')}</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -361,40 +454,48 @@ const PublicHome = () => {
 
                                         <span className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-white shadow-sm ${property.contract === 'locacao' ? 'bg-purple-500' : property.contract === 'ambos' ? 'bg-gradient-to-r from-purple-500 to-blue-500' : ''}`}
                                             style={{ backgroundColor: (property.contract === 'locacao' || property.contract === 'ambos') ? undefined : settings.primaryColor }}>
-                                            {property.contract === 'locacao' ? 'Aluguel' : property.contract === 'ambos' ? 'Venda e Aluguel' : 'Venda'}
+                                            {property.contract === 'locacao' ? t('filter_rent') : property.contract === 'ambos' ? t('filter_both') : t('filter_sale')}
                                         </span>
                                         <div className="absolute bottom-0 left-0 w-full h-full bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
                                         <div className="absolute bottom-4 left-4 text-white">
                                             {property.contract === 'ambos' ? (
-                                                <>
-                                                    <p className="text-lg font-bold">
-                                                        {(property.price || property.salePrice) ? `R$ ${(property.price || property.salePrice).toLocaleString('pt-BR')}` : 'Preço sob consulta'}
-                                                    </p>
-                                                    <p className="text-sm font-semibold text-white/80">
-                                                        {property.rentalPrice ? `R$ ${property.rentalPrice.toLocaleString('pt-BR')}/mês` : ''}
-                                                    </p>
-                                                </>
+                                                <div className="flex flex-col gap-1">
+                                                    <PriceDisplay
+                                                        brlValue={property.price || property.salePrice}
+                                                        lang={lang}
+                                                        propertyConsultText={t('property_consult')}
+                                                    />
+                                                    <PriceDisplay
+                                                        brlValue={property.rentalPrice}
+                                                        lang={lang}
+                                                        propertyConsultText=""
+                                                        isRent={true}
+                                                    />
+                                                </div>
                                             ) : (
-                                                <p className="text-lg font-bold">
-                                                    {(property.price || property.rentalPrice)
-                                                        ? `R$ ${(property.price || property.rentalPrice).toLocaleString('pt-BR')}${property.contract === 'locacao' ? '/mês' : ''}`
-                                                        : 'Sob consulta'}
-                                                </p>
+                                                <PriceDisplay
+                                                    brlValue={property.contract === 'locacao' ? property.rentalPrice : (property.price || property.salePrice)}
+                                                    lang={lang}
+                                                    propertyConsultText={t('property_consult')}
+                                                    isRent={property.contract === 'locacao'}
+                                                />
                                             )}
                                         </div>
                                     </div>
 
                                     <div className="p-6">
-                                        <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:transition-colors" style={{ '--hover-color': settings.primaryColor }}>{property.title}</h3>
+                                        <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:transition-colors" style={{ '--hover-color': settings.primaryColor }}>
+                                            <TranslatedText lang={lang}>{property.title}</TranslatedText>
+                                        </h3>
                                         <p className="text-slate-500 text-sm mb-4 flex items-center gap-2">
-                                            <MapPin size={16} style={{ color: settings.primaryColor }} /> {property.address}
+                                            <MapPin size={16} style={{ color: settings.primaryColor }} /> <TranslatedText lang={lang}>{property.address}</TranslatedText>
                                         </p>
 
                                         {/* Property specs */}
                                         <div className="flex gap-3 mb-4 text-slate-500 text-xs font-medium">
-                                            {property.rooms > 0 && <span className="flex items-center gap-1"><BedDouble size={14} /> {property.rooms}</span>}
-                                            {property.bathrooms > 0 && <span className="flex items-center gap-1"><Bath size={14} /> {property.bathrooms}</span>}
-                                            {property.garage > 0 && <span className="flex items-center gap-1"><Car size={14} /> {property.garage}</span>}
+                                            {property.rooms > 0 && <span className="flex items-center gap-1"><BedDouble size={14} /> {property.rooms} {t('prop_rooms')}</span>}
+                                            {property.bathrooms > 0 && <span className="flex items-center gap-1"><Bath size={14} /> {property.bathrooms} {t('prop_baths')}</span>}
+                                            {property.garage > 0 && <span className="flex items-center gap-1"><Car size={14} /> {property.garage} {t('prop_garage')}</span>}
                                             {property.area > 0 && <span>{property.area}m²</span>}
                                         </div>
 
@@ -408,7 +509,7 @@ const PublicHome = () => {
                                             onMouseEnter={e => { e.target.style.backgroundColor = settings.primaryColor; e.target.style.color = 'white'; }}
                                             onMouseLeave={e => { e.target.style.backgroundColor = ''; e.target.style.color = ''; }}
                                         >
-                                            Tenho Interesse <ArrowUpRight size={14} />
+                                            {t('property_interest')} <ArrowUpRight size={14} />
                                         </button>
                                     </div>
                                 </div>
@@ -438,9 +539,9 @@ const PublicHome = () => {
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
                 <div className="max-w-4xl mx-auto relative z-10 text-center">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-6">Pronto para encontrar seu novo lar?</h2>
+                    <h2 className="text-3xl md:text-4xl font-bold mb-6">{t('contact_title')}</h2>
                     <p className="text-white/80 text-lg mb-10 max-w-2xl mx-auto font-light leading-relaxed">
-                        Entre em contato agora mesmo. Atendimento personalizado em João Pessoa e região.
+                        {t('contact_subtitle')}
                     </p>
 
                     <form onSubmit={handleContactSubmit} className="max-w-md mx-auto bg-white/10 backdrop-blur-md p-2 rounded-2xl md:rounded-full flex flex-col md:flex-row border border-white/20 shadow-2xl hover:bg-white/20 transition-all focus-within:ring-4 focus-within:ring-white/30 gap-2">
@@ -448,13 +549,13 @@ const PublicHome = () => {
                             <MessageCircle className="text-blue-400 mr-2 shrink-0" size={20} />
                             <input
                                 type="text"
-                                placeholder="Seu WhatsApp (com DDD)..."
+                                placeholder={t('contact_placeholder')}
                                 className="bg-transparent border-none text-white placeholder-white/50 focus:ring-0 w-full text-sm md:text-base outline-none"
                                 required
                             />
                         </div>
                         <button className="bg-white text-slate-900 px-8 py-3 rounded-xl md:rounded-full font-bold hover:bg-blue-50 transition-colors shadow-lg">
-                            Falar com André
+                            {t('contact_button')}
                         </button>
                     </form>
                 </div>
@@ -476,21 +577,21 @@ const PublicHome = () => {
                                 />
                                 <h3 className="text-xl font-extrabold text-white mb-4 hidden">{systemConfig.brokerName}</h3>
                             </div>
-                            <p className="text-sm text-slate-400 leading-relaxed">Inteligência Imobiliária. Encontre o imóvel perfeito com atendimento personalizado e dedicado.</p>
+                            <p className="text-sm text-slate-400 leading-relaxed">{t('footer_desc')}</p>
                         </div>
 
                         <div>
-                            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Links Rápidos</h4>
+                            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">{t('footer_links')}</h4>
                             <ul className="space-y-2 text-sm">
-                                <li><a href="#imoveis" className="hover:text-white transition-colors">Imóveis</a></li>
-                                <li><a href="#sobre" className="hover:text-white transition-colors">Sobre</a></li>
-                                <li><a href="#contato" className="hover:text-white transition-colors">Contato</a></li>
-                                <li><Link to="/login" className="hover:text-white transition-colors">Área do Corretor</Link></li>
+                                <li><a href="#imoveis" className="hover:text-white transition-colors">{t('nav_properties')}</a></li>
+                                <li><a href="#sobre" className="hover:text-white transition-colors">{t('nav_about')}</a></li>
+                                <li><a href="#contato" className="hover:text-white transition-colors">{t('nav_contact')}</a></li>
+                                <li><Link to="/login" className="hover:text-white transition-colors">{t('nav_login')}</Link></li>
                             </ul>
                         </div>
 
                         <div>
-                            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Redes Sociais</h4>
+                            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">{t('footer_social')}</h4>
                             <div className="flex gap-3 flex-wrap">
                                 <a href={settings.socials.instagram ? `https://${settings.socials.instagram}` : '#'} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center hover:bg-[#E1306C] hover:text-white transition-all" title="Instagram">
                                     <Instagram size={18} />

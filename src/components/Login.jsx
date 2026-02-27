@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { useNavigate } from "react-router-dom";
 import { Lock, Mail, ArrowRight, ShieldAlert, Globe, Trash2 } from "lucide-react";
+import { translations } from "../translations";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -11,8 +12,11 @@ export default function Login() {
   const [err, setErr] = useState("");
   const [logoError, setLogoError] = useState(false);
 
+  const [lang] = useState(localStorage.getItem('ab-user-lang') || 'pt');
+  const t = (key) => translations[lang][key] || translations['pt'][key] || key;
+
   const handleClearCache = () => {
-    if (confirm("Deseja limpar todas as configurações e reiniciar?")) {
+    if (confirm(t('login_confirm_reset'))) {
       localStorage.clear();
       window.location.reload();
     }
@@ -23,7 +27,7 @@ export default function Login() {
     setErr("");
 
     if (!supabase) {
-      setErr("Erro de Conexão: O banco de dados não está configurado corretamente. Por favor, verifique as variáveis de ambiente ou entre em contato com o suporte.");
+      setErr(t('login_err_connection'));
       return;
     }
 
@@ -37,7 +41,7 @@ export default function Login() {
 
       if (error) {
         if (error.message.includes("Failed to fetch") || error.message.includes("network")) {
-          setErr("Falha na Conexão: Verifique se sua internet está OK e se o Brave Shield (o leãozinho) está DESATIVADO para este site.");
+          setErr(t('login_err_network'));
         } else {
           setErr(error.message);
         }
@@ -50,7 +54,7 @@ export default function Login() {
         navigate("/admin");
       }
     } catch (e2) {
-      setErr("Erro inesperado ao tentar logar.");
+      setErr(t('login_err_unexpected'));
     } finally {
       setLoading(false);
     }
@@ -87,8 +91,8 @@ export default function Login() {
           </div>
 
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-extrabold text-slate-900 mb-1">Área do Corretor</h1>
-            <p className="text-slate-400 text-sm font-medium">Controle total da sua imobiliária</p>
+            <h1 className="text-2xl font-extrabold text-slate-900 mb-1">{t('login_title')}</h1>
+            <p className="text-slate-400 text-sm font-medium">{t('login_subtitle')}</p>
           </div>
 
           {err && (
@@ -100,7 +104,7 @@ export default function Login() {
 
           <form onSubmit={onSubmit} className="space-y-5">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">E-mail</label>
+              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">{t('login_email')}</label>
               <div className="relative group">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={18} />
                 <input
@@ -115,7 +119,7 @@ export default function Login() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">Senha</label>
+              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">{t('login_password')}</label>
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={18} />
                 <input
@@ -134,7 +138,7 @@ export default function Login() {
               disabled={loading}
               className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
             >
-              {loading ? "Verificando..." : <>Acessar Painel <ArrowRight size={18} /></>}
+              {loading ? t('login_loading') : <>{t('login_button')} <ArrowRight size={18} /></>}
             </button>
           </form>
 
@@ -143,11 +147,11 @@ export default function Login() {
               onClick={handleClearCache}
               className="text-[10px] font-bold text-slate-300 hover:text-red-400 transition-colors flex items-center justify-center gap-2"
             >
-              <Trash2 size={10} /> Resetar Aplicação (Limpar Cache)
+              <Trash2 size={10} /> {t('login_reset')}
             </button>
 
             <a href="/" className="text-xs font-bold text-slate-400 hover:text-blue-500 transition-colors inline-flex items-center justify-center gap-2">
-              <Globe size={14} /> Ver Site Comercial
+              <Globe size={14} /> {t('login_view_site')}
             </a>
           </div>
         </div>

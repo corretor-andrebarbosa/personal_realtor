@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Search, Filter, Home, DollarSign, MapPin, BedDouble } from 'lucide-react';
 
-const PropertyFilters = ({ onFilterChange, neighborhoods = [] }) => {
+const PropertyFilters = ({ onFilterChange, neighborhoods = [], t = (k) => k }) => {
     const [filters, setFilters] = useState({
         neighborhood: '',
         type: '',
@@ -25,23 +25,23 @@ const PropertyFilters = ({ onFilterChange, neighborhoods = [] }) => {
 
                 {/* Contract Type */}
                 <div className="col-span-1">
-                    <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Finalidade</label>
+                    <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">{t('filter_contract') || 'Finalidade'}</label>
                     <select
                         name="contract"
                         value={filters.contract}
                         onChange={handleChange}
                         className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[var(--primary-color)] outline-none"
                     >
-                        <option value="">Todos</option>
-                        <option value="venda">Comprar</option>
-                        <option value="locacao">Alugar</option>
+                        <option value="">{t('filter_all') || 'Todos'}</option>
+                        <option value="venda">{t('filter_sale') || 'Comprar'}</option>
+                        <option value="locacao">{t('filter_rent') || 'Alugar'}</option>
                     </select>
                 </div>
 
                 {/* Location */}
                 <div className="col-span-1 md:col-span-2">
                     <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider flex items-center gap-1">
-                        <MapPin size={12} /> Localização
+                        <MapPin size={12} /> {t('filter_neighborhood') || 'Localização'}
                     </label>
                     <div className="relative">
                         <input
@@ -58,7 +58,7 @@ const PropertyFilters = ({ onFilterChange, neighborhoods = [] }) => {
                 {/* Type */}
                 <div className="col-span-1">
                     <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider flex items-center gap-1">
-                        <Home size={12} /> Tipo
+                        <Home size={12} /> {t('filter_type') || 'Tipo'}
                     </label>
                     <select
                         name="type"
@@ -66,18 +66,18 @@ const PropertyFilters = ({ onFilterChange, neighborhoods = [] }) => {
                         onChange={handleChange}
                         className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[var(--primary-color)] outline-none"
                     >
-                        <option value="">Qualquer</option>
-                        <option value="Apartamento">Apartamento</option>
-                        <option value="Casa">Casa</option>
-                        <option value="Cobertura">Cobertura</option>
-                        <option value="Flat">Flat</option>
+                        <option value="">{t('filter_any') || 'Qualquer'}</option>
+                        <option value="Apartamento">{t('type_apartment') || 'Apartamento'}</option>
+                        <option value="Casa">{t('type_house') || 'Casa'}</option>
+                        <option value="Cobertura">{t('type_penthouse') || 'Cobertura'}</option>
+                        <option value="Flat">{t('type_flat') || 'Flat'}</option>
                     </select>
                 </div>
 
                 {/* Bedrooms */}
                 <div className="col-span-1">
                     <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider flex items-center gap-1">
-                        <BedDouble size={12} /> Quartos
+                        <BedDouble size={12} /> {t('filter_beds') || 'Quartos'}
                     </label>
                     <select
                         name="bedrooms"
@@ -85,7 +85,7 @@ const PropertyFilters = ({ onFilterChange, neighborhoods = [] }) => {
                         onChange={handleChange}
                         className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[var(--primary-color)] outline-none"
                     >
-                        <option value="">Qualquer</option>
+                        <option value="">{t('filter_any') || 'Qualquer'}</option>
                         <option value="1">1+</option>
                         <option value="2">2+</option>
                         <option value="3">3+</option>
@@ -96,7 +96,7 @@ const PropertyFilters = ({ onFilterChange, neighborhoods = [] }) => {
                 {/* Price */}
                 <div className="col-span-1">
                     <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider flex items-center gap-1">
-                        <DollarSign size={12} /> Preço até
+                        <DollarSign size={12} /> {t('filter_max_price') || 'Preço até'}
                     </label>
                     <input
                         type="number"
@@ -114,7 +114,7 @@ const PropertyFilters = ({ onFilterChange, neighborhoods = [] }) => {
                         className="w-full h-[46px] bg-[var(--primary-color)] text-white font-bold rounded-xl shadow-lg hover:opacity-90 transition-all flex items-center justify-center gap-2"
                         onClick={() => onFilterChange(filters)}
                     >
-                        <Search size={18} /> Buscar
+                        <Search size={18} /> {t('filter_search') || 'Buscar'}
                     </button>
                 </div>
             </div>
