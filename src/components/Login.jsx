@@ -1,247 +1,244 @@
-
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Lock, Mail, ArrowRight, Database } from 'lucide-react';
-import { supabase } from '../lib/supabaseClient';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { supabase, getKeys } from '../lib/supabaseClient';
 
 const Login = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [dbStatus, setDbStatus] = useState('checking');
-    const [showConfig, setShowConfig] = useState(false);
-    const [manualUrl, setManualUrl] = useState('');
-    const [manualKey, setManualKey] = useState('');
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    React.useEffect(() => {
-        // Auto-config via URL (Mágica para sincronizar celular)
-        const params = new URLSearchParams(window.location.search);
-        const syncUrl = params.get('syncUrl');
-        const syncKey = params.get('syncKey');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-        if (syncUrl && syncKey) {
-            localStorage.setItem('ab-supabase-url', syncUrl);
-            localStorage.setItem('ab-supabase-key', syncKey);
-            // Limpa a URL para ficar bonito
-            window.history.replaceState({}, document.title, window.location.pathname);
-            window.location.reload();
-            return;
-        }
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
-        const checkDB = async () => {
-            if (!supabase) {
-                setDbStatus('error');
-                return;
-            }
-            try {
-                // Tenta uma consulta simples
-                const { error } = await supabase.from('properties').select('id').limit(1);
+  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
 
-                if (!error) {
-                    setDbStatus('connected');
-                } else {
-                    // Se o banco respondeu com erro (ex: problema de RLS ou permissão)
-                    // mas as chaves estão lá, marcamos como "limbo" pra não ficar vermelho
-                    console.error('Erro de permissão no banco:', error);
-                    setDbStatus('connected'); // Forçamos verde se a chave é válida
-                }
-            } catch (e) {
-                // Se der erro de rede (Failed to fetch), mas temos chaves, 
-                // mostramos como "online" porque o sistema já está configurado.
-                console.warn('Erro de rede (CORS/Bloqueio):', e.message);
-                setDbStatus('connected'); // Forçamos verde se a chave foi configurada
-            }
-        };
-        checkDB();
-    }, []);
-
-    const handleLogin = (e) => {
-        e.preventDefault();
-        const cleanEmail = email.trim().toLowerCase();
-        const cleanPass = password.trim();
-
-        if (cleanEmail === 'andre@barbosa.com' && cleanPass === 'admin') {
-            const sessionData = {
-                token: 'valid-token',
-                timestamp: Date.now()
-            };
-            localStorage.setItem('ab-auth-session', JSON.stringify(sessionData));
-            // Mantendo para compatibilidade com rotas antigas
-            localStorage.setItem('authToken', 'valid-token');
-            navigate('/admin');
-        } else {
-            setError('Credenciais inválidas. Use andre@barbosa.com e senha admin');
-        }
+  useEffect(() => {
+    const onOnline = () => setIsOnline(true);
+    const onOffline = () => setIsOnline(false);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    return () => {
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
     };
+  }, []);
 
-    const saveEmergencyConfig = () => {
-        if (manualUrl && manualKey) {
-            localStorage.setItem('ab-supabase-url', manualUrl.trim());
-            localStorage.setItem('ab-supabase-key', manualKey.trim());
-            alert('Configuração salva! O site irá recarregar para conectar.');
-            window.location.reload();
-        } else {
-            alert('Por favor, preencha a URL e a Chave do Supabase.');
-        }
+  const supabaseReady = useMemo(() => {
+    const { supabaseUrl, supabaseAnonKey } = getKeys();
+    return Boolean(supabase && supabaseUrl && supabaseAnonKey);
+  }, []);
+
+  // Se já estiver autenticado (app session), pula pro admin
+  useEffect(() => {
+    const sessionStr = localStorage.getItem('ab-auth-session');
+    if (!sessionStr) return;
+    try {
+      const session = JSON.parse(sessionStr);
+      if (session?.timestamp && (Date.now() - session.timestamp < 30 * 60 * 1000)) {
+        navigate('/admin', { replace: true });
+      }
+    } catch {
+      // ignora
+    }
+  }, [navigate]);
+
+  const persistAppSession = (user, accessToken) => {
+    // Mantém compatibilidade com o App.jsx atual (30min rolling)
+    const payload = {
+      timestamp: Date.now(),
+      userId: user?.id || null,
+      email: user?.email || null
     };
+    localStorage.setItem('ab-auth-session', JSON.stringify(payload));
+    if (accessToken) localStorage.setItem('authToken', accessToken);
+  };
 
-    return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-            <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-100 relative">
-                {/* Status Indicator */}
-                <div
-                    onClick={() => dbStatus === 'error' && setShowConfig(!showConfig)}
-                    className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 cursor-pointer hover:bg-slate-200 transition-colors"
-                >
-                    <div className={`w-2 h-2 rounded-full ${dbStatus === 'connected' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' :
-                        dbStatus === 'error' ? 'bg-red-500' : 'bg-amber-400 animate-pulse'
-                        }`}></div>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
-                        {dbStatus === 'connected' ? 'Banco Online' : dbStatus === 'error' ? 'Banco Offline' : 'Verificando...'}
-                    </span>
-                </div>
-                {showConfig ? (
-                    <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
-                        <div className="text-center mb-6">
-                            <h2 className="text-xl font-bold flex items-center justify-center gap-2 text-[#166b9c]">
-                                <Database size={20} /> Configuração de Sincronia
-                            </h2>
-                            <p className="text-[10px] text-slate-500 mt-2 leading-relaxed px-4">
-                                Para o celular ver o que o PC faz, ambos precisam usar as mesmas chaves abaixo:
-                            </p>
-                        </div>
+  const clearAllAndRestart = async () => {
+    try {
+      // limpa sessão do supabase
+      if (supabase) {
+        await supabase.auth.signOut();
+      }
+    } catch {
+      // ignora
+    }
 
-                        <div className="bg-blue-50 p-3 rounded-xl border border-blue-100 mb-4 mx-4">
-                            <p className="text-[10px] font-bold text-blue-800 uppercase mb-1">Fonte Atual:</p>
-                            <p className="text-xs text-blue-600 font-medium">
-                                {import.meta.env.VITE_SUPABASE_URL ? '✅ Sistema (Vercel ENV)' : '⚠️ Manual (LocalStorage)'}
-                            </p>
-                        </div>
+    // limpa dados locais do app
+    const keysToRemove = [
+      'ab-auth-session',
+      'authToken',
+      'ab-properties',
+      'ab-db-schema',
+      'ab-primary-color',
+      'ab-logo-url',
+      'ab-whatsapp',
+      'ab-profile-photo',
+      'ab-socials'
+    ];
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
 
-                        <div>
-                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Supabase URL</label>
-                            <input
-                                type="text"
-                                value={manualUrl}
-                                onChange={(e) => setManualUrl(e.target.value)}
-                                className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono"
-                                placeholder="https://xyz.supabase.co"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Anon API Key</label>
-                            <input
-                                type="password"
-                                value={manualKey}
-                                onChange={(e) => setManualKey(e.target.value)}
-                                className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono"
-                                placeholder="eyJhbG..."
-                            />
-                        </div>
+    window.location.href = '/login';
+  };
 
-                        <div className="flex gap-2 pt-2">
-                            <button
-                                onClick={() => setShowConfig(false)}
-                                className="flex-1 py-3 text-xs font-bold text-slate-500 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
-                            >
-                                Voltar
-                            </button>
-                            <button
-                                onClick={saveEmergencyConfig}
-                                className="flex-[2] py-3 text-xs font-bold text-white bg-[#166b9c] rounded-xl shadow-lg shadow-blue-500/20 hover:bg-[#0f4a6d] transition-all"
-                            >
-                                Salvar e Sincronizar
-                            </button>
-                        </div>
-                    </div>
-                ) : (
-                    <>
-                        <div className="text-center mb-8">
-                            <h1 className="text-2xl font-extrabold text-[#166b9c] mb-2">Área do Corretor</h1>
-                            <p className="text-slate-500 text-sm">Acesse o painel administrativo para gerenciar seus imóveis e leads.</p>
-                        </div>
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMsg('');
 
-                        {error && (
-                            <div className="bg-red-50 text-red-500 text-xs p-3 rounded-lg mb-4 text-center font-bold border border-red-100 italic animate-shake">
-                                {error}
-                            </div>
-                        )}
+    if (!supabaseReady) {
+      setErrorMsg('Supabase não configurado no projeto (URL/ANON KEY).');
+      return;
+    }
 
-                        <form onSubmit={handleLogin} className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Email</label>
-                                <div className="relative">
-                                    <Mail className="absolute left-3 top-3 text-slate-400" size={18} />
-                                    <input
-                                        type="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full pl-10 p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#166b9c] transition-colors text-sm"
-                                        placeholder="seu@email.com"
-                                        required
-                                    />
-                                </div>
-                            </div>
+    if (!isOnline) {
+      setErrorMsg('Sem internet no momento. Conecte-se para entrar.');
+      return;
+    }
 
-                            <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Senha</label>
-                                <div className="relative">
-                                    <Lock className="absolute left-3 top-3 text-slate-400" size={18} />
-                                    <input
-                                        type="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full pl-10 p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#166b9c] transition-colors text-sm"
-                                        placeholder="••••••••"
-                                        required
-                                    />
-                                </div>
-                            </div>
+    const safeEmail = (email || '').trim();
+    const safePassword = password || '';
 
-                            <button
-                                type="submit"
-                                className="w-full bg-[#166b9c] text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-500/30 hover:bg-[#0f4a6d] transition-all flex items-center justify-center gap-2 mt-6"
-                            >
-                                Entrar no Sistema <ArrowRight size={18} />
-                            </button>
-                        </form>
+    if (!safeEmail || !safePassword) {
+      setErrorMsg('Informe email e senha.');
+      return;
+    }
 
-                        <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col items-center gap-4 text-center">
-                            <div className="flex flex-col items-center gap-1">
-                                <span className="text-[9px] font-bold text-[#166b9c] uppercase tracking-tighter">Versão 1.8 - Universal Sync Ativada</span>
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: safeEmail,
+        password: safePassword,
+      });
 
-                                <button
-                                    onClick={() => {
-                                        if (confirm("Deseja limpar o cache e reiniciar o aplicativo? Isso resolve problemas de sincronia no celular.")) {
-                                            const url = localStorage.getItem('ab-supabase-url');
-                                            const key = localStorage.getItem('ab-supabase-key');
-                                            localStorage.clear();
-                                            if (url) localStorage.setItem('ab-supabase-url', url);
-                                            if (key) localStorage.setItem('ab-supabase-key', key);
-                                            window.location.reload();
-                                        }
-                                    }}
-                                    className="text-[9px] text-slate-500 font-bold hover:text-red-500 transition-colors py-2 px-4 border border-slate-200 rounded-lg bg-white mt-1 mb-2 shadow-sm active:scale-95"
-                                >
-                                    LIMPAR TUDO E REINICIAR
-                                </button>
+      if (error) {
+        // Mensagens mais amigáveis
+        const msg = (error.message || '').toLowerCase();
+        if (msg.includes('invalid login credentials')) {
+          setErrorMsg('Credenciais inválidas. Verifique email e senha.');
+        } else if (msg.includes('email not confirmed')) {
+          setErrorMsg('Seu email ainda não foi confirmado no Supabase. Confirme o email ou desative confirmação temporariamente no painel.');
+        } else {
+          setErrorMsg(error.message || 'Erro ao autenticar.');
+        }
+        return;
+      }
 
-                                {/* Schema Debug Info */}
-                                <div className="mt-2 p-2 bg-slate-100 rounded border border-slate-200 w-full max-w-[250px]">
-                                    <p className="text-[8px] font-bold text-slate-400 uppercase mb-1">Diagnóstico do Banco:</p>
-                                    <p className="text-[7px] text-slate-500 break-words leading-tight text-left font-mono">
-                                        {localStorage.getItem('ab-db-schema') || 'Scanner em Execução...'}
-                                    </p>
-                                </div>
-                            </div>
-                            <a href="/" className="text-xs text-slate-400 hover:text-[#166b9c] transition-colors">Voltar para o Site</a>
-                        </div>
-                    </>
-                )}
-            </div>
+      // sucesso
+      const user = data?.user;
+      const accessToken = data?.session?.access_token;
+
+      persistAppSession(user, accessToken);
+      navigate('/admin', { replace: true });
+    } catch (err) {
+      setErrorMsg('Falha de rede ao autenticar. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-100 p-8 relative">
+
+        {/* Badge topo */}
+        <div className="absolute top-4 right-4">
+          <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${
+            (isOnline && supabaseReady) ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'
+          }`}>
+            {(isOnline && supabaseReady) ? 'ONLINE' : 'BANCO/OFFLINE'}
+          </span>
         </div>
-    );
+
+        <h1 className="text-2xl font-extrabold text-slate-800 text-center mb-2">Área do Corretor</h1>
+        <p className="text-slate-500 text-sm text-center mb-6">
+          Acesse o painel administrativo para gerenciar seus imóveis e leads.
+        </p>
+
+        {/* Erro */}
+        {errorMsg && (
+          <div className="bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl p-3 mb-4 text-center">
+            {errorMsg}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1">EMAIL</label>
+            <div className="relative">
+              <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[var(--primary-color)]"
+                placeholder="seu@email.com"
+                autoComplete="email"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1">SENHA</label>
+            <div className="relative">
+              <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[var(--primary-color)]"
+                placeholder="••••••••"
+                autoComplete="current-password"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full py-3 rounded-xl font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2 ${
+              loading ? 'bg-slate-400 cursor-not-allowed' : 'bg-[var(--primary-color)] hover:bg-[var(--primary-dark)]'
+            }`}
+          >
+            {loading ? 'Entrando...' : <>Entrar no Sistema <ArrowRight size={18} /></>}
+          </button>
+        </form>
+
+        <div className="my-6 h-px bg-slate-100" />
+
+        <div className="text-center">
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">
+            Versão 0.1.8 - UniversalSync ativada
+          </p>
+
+          <button
+            type="button"
+            onClick={clearAllAndRestart}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
+          >
+            Limpar tudo e reiniciar
+          </button>
+
+          <div className="mt-4">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-[10px] text-slate-500">
+              <p className="font-bold mb-1">DIAGNÓSTICO DO BANCO:</p>
+              <p>
+                {supabaseReady
+                  ? (isOnline ? 'OK (Supabase configurado e online)' : 'Sem internet (offline)')
+                  : 'Supabase NÃO configurado (verifique URL e ANON KEY no .env)'}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <Link to="/" className="text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors">
+              Voltar para o Site
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default Login;

@@ -79,10 +79,9 @@ const PublicHome = () => {
                 <Link to="/website" className="flex items-center gap-2">
                     <div className="relative flex items-center">
                         <img
-                            src={settings.logoUrl || '/_optimized/public/newlogo.webp'}
+                            src={settings.logoUrl || '/newlogo.png'}
                             alt="Logo"
                             className="h-10 object-contain"
-                            decoding="async"
                             onError={(e) => {
                                 e.target.style.display = 'none';
                                 e.target.nextElementSibling.classList.remove('hidden');
@@ -204,8 +203,6 @@ const PublicHome = () => {
                     src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1600"
                     alt="Imóveis de alto padrão"
                     className="absolute top-0 left-0 w-full h-full object-cover z-0 transition-transform duration-[10s] ease-linear group-hover:scale-110"
-                    loading="lazy"
-                    decoding="async"
                 />
                 <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/70 z-10"></div>
 
@@ -252,15 +249,13 @@ const PublicHome = () => {
                 <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
                     <div className="relative group cursor-pointer overflow-hidden rounded-2xl shadow-2xl">
                         <img
-                            src={settings.profilePhoto || '/_optimized/public/profile.webp'}
+                            src={settings.profilePhoto || '/profile.jpg'}
                             onError={(e) => {
                                 e.target.onerror = null;
                                 e.target.src = "https://ui-avatars.com/api/?name=Sua+Foto&size=500&background=cbd5e1&color=334155&font-size=0.1";
                             }}
                             alt="Sua Foto"
                             className="relative z-10 w-full object-cover aspect-[4/5] bg-slate-200"
-                            loading="lazy"
-                            decoding="async"
                         />
                     </div>
 
@@ -315,7 +310,10 @@ const PublicHome = () => {
                         {displayedProperties.map((property) => (
                             <div
                                 key={property.id}
-                                onClick={() => navigate(`/properties/${property.id}`)}
+                                onClick={() => {
+                                    const url = `/properties/${property.id}`;
+                                    window.open(url, '_blank', 'noopener,noreferrer');
+                                }}
                                 className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 group ring-1 ring-slate-100 hover:ring-2 cursor-pointer"
                                 style={{ '--tw-ring-color': `${settings.primaryColor}20` }}
                             >
@@ -324,8 +322,6 @@ const PublicHome = () => {
                                         src={property.image || (property.images && property.images.length > 0 ? property.images[0] : 'https://via.placeholder.com/600x400?text=Imóvel+S/Foto')}
                                         alt={property.title}
                                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                        loading="lazy"
-                                        decoding="async"
                                         onError={(e) => {
                                             if (e.target.src !== "https://ui-avatars.com/api/?name=IMOVEL&size=600&background=cbd5e1&color=334155") {
                                                 e.target.src = "https://ui-avatars.com/api/?name=IMOVEL&size=600&background=cbd5e1&color=334155";
@@ -442,11 +438,9 @@ const PublicHome = () => {
                         <div>
                             <div className="relative flex items-start">
                                 <img
-                                    src={settings.logoUrl || '/_optimized/public/newlogo-white.webp'}
+                                    src={settings.logoUrl || '/newlogo-white.png'}
                                     alt="Logo"
                                     className={`h-10 object-contain mb-4 ${settings.logoUrl ? 'brightness-200' : ''}`}
-                                    loading="lazy"
-                                    decoding="async"
                                     onError={(e) => {
                                         e.target.style.display = 'none';
                                         e.target.nextElementSibling.classList.remove('hidden');

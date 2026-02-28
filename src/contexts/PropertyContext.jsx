@@ -130,10 +130,27 @@ export const PropertyProvider = ({ children }) => {
                         image: p.image ?? p.image_url ?? p.main_image ?? p.capa ?? p.foto_principal ?? ''
                     }));
 
-                    const fullyNormalized = normalized.map(p => ({
-                        ...p,
-                        image: p.image || (p.images.length > 0 ? p.images[0] : '')
-                    }));
+                    const optimizeImageUrl = (url) => {
+    if (!url) return '';
+
+    // Se for imagem do Supabase Storage
+    if (url.includes('/storage/v1/object/public/')) {
+        // Adiciona transformação automática de tamanho
+        return `${url}?width=1200&quality=70`;
+    }
+
+    return url;
+};
+
+const fullyNormalized = normalized.map(p => {
+    const mainImage = p.image || (p.images.length > 0 ? p.images[0] : '');
+
+    return {
+        ...p,
+        image: optimizeImageUrl(mainImage),
+        images: p.images.map(optimizeImageUrl)
+    };
+});
 
                     // Preserva itens locais ou que estão em processo de edição
                     setProperties(prev => {

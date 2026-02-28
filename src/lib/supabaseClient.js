@@ -1,41 +1,56 @@
-
+// src/lib/supabaseClient.js
 import { createClient } from '@supabase/supabase-js';
 
-// As chaves podem vir de variáveis de ambiente do Vite ou LocalStorage
-const getKeys = () => {
-    // Pegamos ambos
-    const envUrl = import.meta.env.VITE_SUPABASE_URL;
-    const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    const localUrl = localStorage.getItem('ab-supabase-url');
-    const localKey = localStorage.getItem('ab-supabase-key');
+/**
+ * ✔️ Vite: variáveis precisam começar com VITE_
+ * Coloque no seu .env (ou .env.local):
+ *   VITE_SUPABASE_URL=...
+ *   VITE_SUPABASE_ANON_KEY=...
+ *
+ * Depois: pare e rode o dev server de novo (npm run dev)
+ */
 
-    // Função rigorosa de validação
-    const isValid = (val) => {
-        if (!val || val === 'undefined' || val === 'null' || val === '') return false;
-        if (val.includes('COLOCAR_') || val.includes('YOUR_')) return false;
-        return val.length > 10;
-    };
+export const getKeys = () => {
+  // Vite (frontend)
+  const supabaseUrl =
+    (import.meta?.env?.VITE_SUPABASE_URL || '').trim();
 
-    // PRIORIDADE: Se o usuário sincronizou manualmente (local), usamos isso. 
-    // Se não, usamos o que veio do sistema (env).
-    const finalUrl = isValid(localUrl) ? localUrl : (isValid(envUrl) ? envUrl : null);
-    const finalKey = isValid(localKey) ? localKey : (isValid(envKey) ? envKey : null);
+  const supabaseAnonKey =
+    (import.meta?.env?.VITE_SUPABASE_ANON_KEY || '').trim();
 
-    return { supabaseUrl: finalUrl, supabaseAnonKey: finalKey };
+  return { supabaseUrl, supabaseAnonKey };
 };
 
-const { supabaseUrl, supabaseAnonKey } = getKeys();
-let supabase = null;
+export const isSupabaseConfigured = () => {
+  const { supabaseUrl, supabaseAnonKey } = getKeys();
+  return Boolean(supabaseUrl && supabaseAnonKey);
+};
 
-if (supabaseUrl && supabaseAnonKey) {
-    try {
-        supabase = createClient(supabaseUrl, supabaseAnonKey);
-        console.log('🌐 Conexão Supabase preparada.');
-    } catch (e) {
-        console.error('❌ Erro na criação do cliente:', e);
+// Bucket padrão que você criou no Storage
+// (mantém em um lugar só para evitar nomes diferentes espalhados no projeto)
+export const STORAGE_BUCKET = 'property-images';
+
+let client = null;
+
+export const supabase = (() => {
+  const { supabaseUrl, supabaseAnonKey } = getKeys();
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    // Mantém o app funcionando em modo offline
+    // (o Login e os Providers já lidam com isso)
+    return null;
+  }
+
+  // Singleton
+  if (client) return client;
+
+  client = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
     }
-} else {
-    console.warn('⚠️ Aguardando chaves de sincronização...');
-}
+  });
 
-export { supabase, getKeys };
+  return client;
+})();

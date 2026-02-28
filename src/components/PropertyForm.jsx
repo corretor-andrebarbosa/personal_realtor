@@ -1,8 +1,10 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useProperties } from '../contexts/PropertyContext';
-import { ArrowLeft, MapPin, Youtube, Upload, Save, X, Image, Trash2, RefreshCcw } from 'lucide-react';
+import { ArrowLeft, MapPin, Youtube, Upload, Save, Image, Trash2, RefreshCcw } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { supabase } from '../lib/supabaseClient';
+
+const STORAGE_BUCKET = 'property-images'; // você vai criar esse bucket no Supabase (passo a passo abaixo)
 
 const PropertyForm = () => {
     const { addProperty, updateProperty, properties } = useProperties();
@@ -41,7 +43,7 @@ const PropertyForm = () => {
         setFormData(prev => ({
             ...prev,
             images: [...prev.images, imageUrlInput],
-            image: prev.image || imageUrlInput // first image becomes cover if none exists
+            image: prev.image || imageUrlInput
         }));
         setImageUrlInput('');
     };
@@ -80,58 +82,158 @@ const PropertyForm = () => {
         setFormData(prev => ({ ...prev, contract: type }));
     };
 
-    const compressImage = (dataUrl, maxWidth = 600, quality = 0.4) => { // Reduzi DRASTICAMENTE para garantir salvamento
-        return new Promise((resolve) => {
-            const img = document.createElement('img');
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-                if (width > maxWidth) {
-                    height = (height * maxWidth) / width;
-                    width = maxWidth;
-                }
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                resolve(canvas.toDataURL('image/jpeg', quality));
-            };
-            img.onerror = () => resolve(dataUrl);
-            img.src = dataUrl;
-        });
+    // ---------- Helpers (upload + compress) ----------
+    const sanitizeFileName = (name = 'image') => {
+        return name
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-zA-Z0-9._-]/g, '-')
+            .replace(/-+/g, '-')
+            .slice(0, 80);
     };
 
-    const handleImageUpload = (e) => {
-        const files = Array.from(e.target.files);
+    const randomId = () => {
+        try {
+            return crypto.randomUUID();
+        } catch {
+            return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        }
+    };
+
+    const isDataUrl = (s) => typeof s === 'string' && s.startsWith('data:image/');
+    const isHttpUrl = (s) => typeof s === 'string' && /^https?:\/\//i.test(s);
+
+    // Compressão leve no navegador (sem libs, grátis)
+    // Saída: Blob (webp se possível, senão jpeg)
+    const compressFileToBlob = async (file, maxWidth = 1600, quality = 0.78) => {
+        // Se já for muito pequeno, manda direto
+        if (file.size <= 250 * 1024) return file;
+
+        const url = URL.createObjectURL(file);
+
+        try {
+            const img = document.createElement('img');
+            img.decoding = 'async';
+
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = reject;
+                img.src = url;
+            });
+
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+
+            if (width > maxWidth) {
+                height = Math.round((height * maxWidth) / width);
+                width = maxWidth;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // tenta webp
+            const blob = await new Promise((resolve) => {
+                canvas.toBlob((b) => resolve(b), 'image/webp', quality);
+            });
+
+            if (blob) return blob;
+
+            // fallback jpeg
+            const jpg = await new Promise((resolve) => {
+                canvas.toBlob((b) => resolve(b), 'image/jpeg', quality);
+            });
+
+            return jpg || file;
+        } catch {
+            return file;
+        } finally {
+            URL.revokeObjectURL(url);
+        }
+    };
+
+    const extractStoragePathFromPublicUrl = (publicUrl) => {
+        // padrão: .../storage/v1/object/public/<bucket>/<path>
+        if (!publicUrl || typeof publicUrl !== 'string') return null;
+        const marker = `/storage/v1/object/public/${STORAGE_BUCKET}/`;
+        const idx = publicUrl.indexOf(marker);
+        if (idx === -1) return null;
+        return publicUrl.slice(idx + marker.length);
+    };
+
+    const uploadOneToStorage = async (file) => {
+        if (!supabase) throw new Error('Supabase indisponível.');
+
+        const extFromName = (file.name.split('.').pop() || 'jpg').toLowerCase();
+        const safeName = sanitizeFileName(file.name || `foto.${extFromName}`);
+        const folder = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+        const path = `${folder}/${randomId()}-${safeName}`;
+
+        const blob = await compressFileToBlob(file, 1600, 0.78);
+
+        const { error: uploadError } = await supabase
+            .storage
+            .from(STORAGE_BUCKET)
+            .upload(path, blob, {
+                cacheControl: '31536000',
+                upsert: false,
+                contentType: blob.type || file.type || 'image/jpeg'
+            });
+
+        if (uploadError) throw uploadError;
+
+        const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+        const url = data?.publicUrl || null;
+        if (!url) throw new Error('Falha ao gerar URL pública.');
+        return url;
+    };
+
+    const handleImageUpload = async (e) => {
+        const files = Array.from(e.target.files || []);
         if (files.length === 0) return;
 
         setUploading(true);
-        // Limite de 15 fotos para segurança total de payload
+        setSaveError('');
+
+        // Limite 15
         const limitedFiles = files.slice(0, 15);
 
-        const readers = limitedFiles.map(file => {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = async (ev) => {
-                    const compressed = await compressImage(ev.target.result);
-                    resolve(compressed);
-                };
-                reader.readAsDataURL(file);
-            });
-        });
+        try {
+            // upload sequencial = mais estável (menos chance de falhar)
+            const uploadedUrls = [];
+            for (const file of limitedFiles) {
+                const url = await uploadOneToStorage(file);
+                uploadedUrls.push(url);
+            }
 
-        Promise.all(readers).then(results => {
-            setFormData(prev => ({
-                ...prev,
-                images: [...prev.images.slice(0, 15 - results.length), ...results],
-                image: prev.image || results[0]
-            }));
+            setFormData(prev => {
+                const current = Array.isArray(prev.images) ? prev.images : [];
+                const merged = [...current, ...uploadedUrls].slice(0, 15);
+                return {
+                    ...prev,
+                    images: merged,
+                    image: prev.image || uploadedUrls[0] || ''
+                };
+            });
+        } catch (err) {
+            console.error('Erro upload:', err);
+            setSaveError(
+                `Falha ao subir imagens. Verifique se o bucket "${STORAGE_BUCKET}" existe no Supabase Storage e está como Público, com política permitindo upload. Mensagem: ${err?.message || 'erro desconhecido'}`
+            );
+        } finally {
             setUploading(false);
-        });
+            // permite selecionar o MESMO arquivo de novo depois
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
     };
 
-    const removeImage = (index) => {
+    const removeImage = async (index) => {
+        // remove da tela
+        const imgToRemove = formData.images?.[index];
+
         setFormData(prev => {
             const newImages = prev.images.filter((_, i) => i !== index);
             return {
@@ -140,6 +242,19 @@ const PropertyForm = () => {
                 image: newImages.length > 0 ? newImages[0] : ''
             };
         });
+
+        // tenta remover do storage (se for url do supabase storage)
+        try {
+            if (supabase && isHttpUrl(imgToRemove)) {
+                const path = extractStoragePathFromPublicUrl(imgToRemove);
+                if (path) {
+                    await supabase.storage.from(STORAGE_BUCKET).remove([path]);
+                }
+            }
+        } catch (e) {
+            // best-effort: não quebra o fluxo
+            console.warn('Não consegui remover do storage (ok):', e?.message || e);
+        }
     };
 
     const setCoverImage = (index) => {
@@ -155,6 +270,13 @@ const PropertyForm = () => {
         setSaveError('');
 
         try {
+            // PROTEÇÃO: se ainda tiver base64 no formData, bloqueia (evita quebrar tudo)
+            if ((formData.images || []).some(isDataUrl) || isDataUrl(formData.image)) {
+                setSaveError('Ainda existem imagens em base64 (data:image/...). Remova e reenvie as fotos para o Storage.');
+                setSaving(false);
+                return;
+            }
+
             const salePrice = Number(formData.salePrice || 0);
             const rentalPrice = Number(formData.rentalPrice || 0);
             let finalContract = formData.contract;
@@ -164,21 +286,27 @@ const PropertyForm = () => {
             const propertyData = {
                 title: formData.title,
                 type: formData.type,
+
                 price: (finalContract === 'venda' || finalContract === 'ambos') ? Number(formData.salePrice || 0) : 0,
                 salePrice: (finalContract === 'venda' || finalContract === 'ambos') ? Number(formData.salePrice || 0) : 0,
                 sale_price: (finalContract === 'venda' || finalContract === 'ambos') ? Number(formData.salePrice || 0) : 0,
+
                 rentalPrice: (finalContract === 'locacao' || finalContract === 'ambos') ? Number(formData.rentalPrice || 0) : 0,
                 rental_price: (finalContract === 'locacao' || finalContract === 'ambos') ? Number(formData.rentalPrice || 0) : 0,
+
                 contract: finalContract,
-                area: Number(formData.area),
+                area: Number(formData.area || 0),
                 rooms: formData.rooms,
                 bathrooms: formData.bathrooms,
                 garage: formData.garage,
                 address: formData.address,
                 description: formData.description,
                 videoLink: formData.videoLink,
-                images: formData.images,
+
+                // AGORA: somente URLs
+                images: Array.isArray(formData.images) ? formData.images.slice(0, 15).filter(Boolean) : [],
                 image: formData.image || (formData.images.length > 0 ? formData.images[0] : ''),
+
                 status: 'Disponível'
             };
 
@@ -191,15 +319,13 @@ const PropertyForm = () => {
 
             if (success) {
                 setSaved(true);
-                // Aumentamos o tempo para 3 segundos para garantir que o sync rode um pouco
-                setTimeout(() => navigate('/properties'), 3000);
+                setTimeout(() => navigate('/properties'), 1500);
             } else {
-                setSaveError('Erro ao enviar para a nuvem. O pacote de dados (fotos/vídeo) pode estar muito pesado ou o banco de dados não aceitou as colunas extras. Tente reduzir as fotos.');
-                // NÃO redireciona no erro para o usuário não perder o que digitou
+                setSaveError('Erro ao salvar no banco. Verifique se a tabela aceita o campo images (array/text) e se o schema cache está ok.');
             }
         } catch (error) {
             console.error('Erro ao salvar imóvel:', error);
-            setSaveError('Erro crítico no salvamento.');
+            setSaveError(`Erro crítico no salvamento: ${error?.message || 'desconhecido'}`);
         } finally {
             setSaving(false);
         }
@@ -225,10 +351,10 @@ const PropertyForm = () => {
             {saveError && (
                 <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center" onClick={() => setSaveError('')}>
                     <div className="bg-white rounded-2xl p-8 text-center shadow-2xl animate-bounce-in max-w-sm" onClick={e => e.stopPropagation()}>
-                        <div className="text-5xl mb-4">⏳</div>
-                        <h3 className="text-lg font-bold text-amber-600">Salvamento em Processo</h3>
+                        <div className="text-5xl mb-4">⚠️</div>
+                        <h3 className="text-lg font-bold text-amber-600">Atenção</h3>
                         <p className="text-xs text-slate-500 mt-2 leading-relaxed">{saveError}</p>
-                        <button onClick={() => navigate('/properties')} className="mt-6 w-full py-3 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 transition-colors shadow-lg shadow-amber-500/20">Entendido</button>
+                        <button onClick={() => setSaveError('')} className="mt-6 w-full py-3 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 transition-colors shadow-lg shadow-amber-500/20">Entendido</button>
                     </div>
                 </div>
             )}
@@ -421,7 +547,7 @@ const PropertyForm = () => {
                             value={imageUrlInput}
                             onChange={(e) => setImageUrlInput(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddImageUrl())}
-                            placeholder="Cole a URL de alta resolução aqui..."
+                            placeholder="Cole a URL aqui..."
                             className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[var(--primary-color)] outline-none text-sm"
                         />
                         <button
@@ -450,7 +576,9 @@ const PropertyForm = () => {
                         className="w-full h-20 bg-blue-50 border-2 border-dashed border-blue-200 rounded-xl flex flex-col items-center justify-center text-[var(--primary-color)] hover:bg-blue-100 transition-colors mb-4"
                     >
                         <Upload size={24} className="mb-1" />
-                        <span className="text-xs font-bold">{uploading ? 'Processando...' : 'Clique para Adicionar Fotos'}</span>
+                        <span className="text-xs font-bold">
+                            {uploading ? 'Enviando para o Storage...' : 'Clique para Adicionar Fotos'}
+                        </span>
                     </button>
 
                     {/* Image preview grid */}
@@ -506,10 +634,14 @@ const PropertyForm = () => {
 
                 <div className="fixed bottom-0 left-0 w-full bg-white p-4 border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20">
                     <div className="flex gap-4 max-w-lg mx-auto">
-                        <button type="button" onClick={() => navigate('/properties')} className="flex-1 py-3 rounded-xl font-bold text-slate-500 border border-slate-200 hover:bg-slate-50">Cancelar</button>
-                        <button type="submit" disabled={saving} className={`flex-1 py-3 rounded-xl font-bold text-white shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2 ${saving ? 'bg-slate-400 cursor-not-allowed' : 'bg-[var(--primary-color)] hover:bg-[var(--primary-dark)]'}`}>
+                        <button type="button" onClick={() => navigate('/properties')} className="flex-1 py-3 rounded-xl font-bold text-slate-500 border border-slate-200 hover:bg-slate-50">
+                            Cancelar
+                        </button>
+                        <button type="submit" disabled={saving || uploading} className={`flex-1 py-3 rounded-xl font-bold text-white shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2 ${(saving || uploading) ? 'bg-slate-400 cursor-not-allowed' : 'bg-[var(--primary-color)] hover:bg-[var(--primary-dark)]'}`}>
                             {saving ? (
                                 <><RefreshCcw size={18} className="animate-spin" /> Salvando...</>
+                            ) : uploading ? (
+                                <><RefreshCcw size={18} className="animate-spin" /> Enviando...</>
                             ) : (
                                 <><Save size={18} /> {isEditing ? 'Salvar Alterações' : 'Cadastrar Imóvel'}</>
                             )}

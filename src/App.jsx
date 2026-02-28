@@ -64,10 +64,21 @@ const App = () => {
     }, [location.pathname]);
 
     // Redirect to login if trying to access admin pages while unauthenticated
-    const isAdminPath = ['/admin', '/properties', '/kaleb', '/leads', '/people', '/settings'].some(path => location.pathname.startsWith(path));
-    if (isAdminPath && !isAuthenticated) {
-        return <Navigate to="/login" replace />;
-    }
+   const adminPrefixes = ['/admin', '/kaleb', '/leads', '/people', '/settings'];
+
+// Protege apenas rotas administrativas de properties (não protege /properties/:id)
+const isAdminPropertyRoute =
+  location.pathname === '/properties' ||
+  location.pathname.startsWith('/properties/new') ||
+  location.pathname.startsWith('/properties/edit');
+
+const isAdminPath =
+  adminPrefixes.some((p) => location.pathname.startsWith(p)) ||
+  isAdminPropertyRoute;
+
+if (isAdminPath && !isAuthenticated) {
+  return <Navigate to="/login" replace />;
+} 
 
     // Hide bottom nav on specific pages
     const hideNavPaths = ['/properties/new', '/website', '/login'];
