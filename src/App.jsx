@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate, useSearchParams } from 'react-router-dom';
 import Navigation from './components/Navigation';
 import Dashboard from './components/Dashboard';
 import PropertyList from './components/PropertyList';
@@ -18,11 +17,15 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 import { config } from './config';
 import Maintenance from './components/public/Maintenance';
+import { supabase } from './lib/supabaseClient';
 
 const App = () => {
     const location = useLocation();
+    const [searchParams] = useSearchParams();
 
-    // Auth and Session logic (30 minutes expiry)
+    // ✅ Se tiver ?preview=true na URL, ignoramos a manutenção
+    const isPreviewMode = searchParams.get('preview') === 'true';
+
     const [isAuthenticated, setIsAuthenticated] = React.useState(() => {
         const sessionStr = localStorage.getItem('ab-auth-session');
         if (!sessionStr) return false;
@@ -33,7 +36,7 @@ const App = () => {
     });
 
     React.useEffect(() => {
-        const checkAuth = () => {
+        const checkLocalSession = () => {
             const sessionStr = localStorage.getItem('ab-auth-session');
             if (!sessionStr) {
                 setIsAuthenticated(false);
@@ -50,7 +53,6 @@ const App = () => {
                     localStorage.removeItem('authToken');
                     setIsAuthenticated(false);
                 } else {
-                    // Update timestamp to extend session
                     const updatedSession = { ...session, timestamp: now };
                     localStorage.setItem('ab-auth-session', JSON.stringify(updatedSession));
                     setIsAuthenticated(true);
@@ -60,9 +62,30 @@ const App = () => {
             }
         };
 
-        checkAuth();
+        checkLocalSession();
+
+        // ✅ CORREÇÃO: Só tenta usar o Supabase se ele existir
+        if (supabase) {
+            const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN' && session) {
+                    localStorage.setItem('ab-auth-session', JSON.stringify({ timestamp: Date.now() }));
+                    localStorage.setItem('authToken', session.access_token);
+                    setIsAuthenticated(true);
+                }
+                if (event === 'SIGNED_OUT') {
+                    localStorage.removeItem('ab-auth-session');
+                    localStorage.removeItem('authToken');
+                    setIsAuthenticated(false);
+                }
+            });
+
+            return () => {
+                subscription.unsubscribe();
+            };
+        }
     }, [location.pathname]);
 
+<<<<<<< HEAD
     // Redirect to login if trying to access admin pages while unauthenticated
    const adminPrefixes = ['/admin', '/kaleb', '/leads', '/people', '/settings'];
 
@@ -79,8 +102,23 @@ const isAdminPath =
 if (isAdminPath && !isAuthenticated) {
   return <Navigate to="/login" replace />;
 } 
+=======
+    const adminPrefixes = ['/admin', '/kaleb', '/leads', '/people', '/settings'];
 
-    // Hide bottom nav on specific pages
+    const isAdminPropertyRoute =
+        location.pathname === '/properties' ||
+        location.pathname.startsWith('/properties/new') ||
+        location.pathname.startsWith('/properties/edit');
+
+    const isAdminPath =
+        adminPrefixes.some((p) => location.pathname.startsWith(p)) ||
+        isAdminPropertyRoute;
+
+    if (isAdminPath && !isAuthenticated) {
+        return <Navigate to="/login" replace />;
+    }
+>>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
+
     const hideNavPaths = ['/properties/new', '/website', '/login'];
     const showNav = isAuthenticated
         && location.pathname !== '/'
@@ -97,7 +135,12 @@ if (isAdminPath && !isAuthenticated) {
                             {/* Public routes */}
                             <Route
                                 path="/"
-                                element={config.maintenance.enabled ? <Maintenance expectedReturnDate={config.maintenance.returnDate} /> : <PublicHome />}
+                                element={
+                                    // ✅ LÓGICA DO PREVIEW
+                                    (config.maintenance.enabled && !isPreviewMode) 
+                                        ? <Maintenance expectedReturnDate={config.maintenance.returnDate} /> 
+                                        : <PublicHome />
+                                }
                             />
                             <Route path="/website" element={<Navigate to="/" replace />} />
                             <Route path="/login" element={<Login />} />

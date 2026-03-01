@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Clock, Hammer, AlertTriangle } from 'lucide-react';
+import { systemConfig } from '../../system-config';
 
 const Maintenance = ({ expectedReturnDate }) => {
     const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
@@ -83,7 +84,7 @@ const Maintenance = ({ expectedReturnDate }) => {
 
                 <div className="mt-10 text-sm text-slate-400 flex items-center justify-center gap-2">
                     <AlertTriangle size={14} />
-                    <span>Equipe Técnica André Barbosa</span>
+                    <span>Equipe Técnica {systemConfig.brokerName}</span>
                 </div>
             </div>
         </div>

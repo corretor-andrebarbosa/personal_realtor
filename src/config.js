@@ -1,4 +1,6 @@
 
+import { systemConfig } from './system-config';
+
 export const config = {
     // Configurações de Manutenção
     maintenance: {
@@ -6,9 +8,9 @@ export const config = {
         returnDate: "2026-02-18T18:00:00" // Data prevista de retorno (ISO string)
     },
 
-    // Configurações do Site
-    siteName: "André Barbosa Imóveis",
-    contactEmail: "contato@andrebarbosa.com.br",
+    // Configurações do Site (lidas do system-config centralizado)
+    siteName: systemConfig.brandName,
+    contactEmail: systemConfig.email,
 
     // Se precisar de chaves de API, coloque aqui (mas cuidado com dados sensíveis no frontend)
     features: {
