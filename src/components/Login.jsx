@@ -55,33 +55,6 @@ const Login = () => {
     if (accessToken) localStorage.setItem('authToken', accessToken);
   };
 
-  const clearAllAndRestart = async () => {
-    try {
-      // limpa sessão do supabase
-      if (supabase) {
-        await supabase.auth.signOut();
-      }
-    } catch {
-      // ignora
-    }
-
-    // limpa dados locais do app
-    const keysToRemove = [
-      'ab-auth-session',
-      'authToken',
-      'ab-properties',
-      'ab-db-schema',
-      'ab-primary-color',
-      'ab-logo-url',
-      'ab-whatsapp',
-      'ab-profile-photo',
-      'ab-socials'
-    ];
-    keysToRemove.forEach((k) => localStorage.removeItem(k));
-
-    window.location.href = '/login';
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
@@ -112,7 +85,6 @@ const Login = () => {
       });
 
       if (error) {
-        // Mensagens mais amigáveis
         const msg = (error.message || '').toLowerCase();
         if (msg.includes('invalid login credentials')) {
           setErrorMsg('Credenciais inválidas. Verifique email e senha.');
@@ -124,7 +96,6 @@ const Login = () => {
         return;
       }
 
-      // sucesso
       const user = data?.user;
       const accessToken = data?.session?.access_token;
 
@@ -141,11 +112,14 @@ const Login = () => {
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-100 p-8 relative">
 
-        {/* Badge topo */}
+        {/* Badge topo (opcional manter) */}
         <div className="absolute top-4 right-4">
-          <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${
-            (isOnline && supabaseReady) ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'
-          }`}>
+          <span
+            className={`text-[10px] font-bold px-2 py-1 rounded-full border ${(isOnline && supabaseReady)
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : 'bg-rose-50 text-rose-700 border-rose-200'
+              }`}
+          >
             {(isOnline && supabaseReady) ? 'ONLINE' : 'BANCO/OFFLINE'}
           </span>
         </div>
@@ -196,46 +170,20 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-3 rounded-xl font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2 ${
-              loading ? 'bg-slate-400 cursor-not-allowed' : 'bg-[var(--primary-color)] hover:bg-[var(--primary-dark)]'
-            }`}
+            className={`w-full py-3 rounded-xl font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2 ${loading ? 'bg-slate-400 cursor-not-allowed' : 'bg-[var(--primary-color)] hover:bg-[var(--primary-dark)]'
+              }`}
           >
             {loading ? 'Entrando...' : <>Entrar no Sistema <ArrowRight size={18} /></>}
           </button>
         </form>
 
-        <div className="my-6 h-px bg-slate-100" />
-
-        <div className="text-center">
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">
-            Versão 0.1.8 - UniversalSync ativada
-          </p>
-
-          <button
-            type="button"
-            onClick={clearAllAndRestart}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
-          >
-            Limpar tudo e reiniciar
-          </button>
-
-          <div className="mt-4">
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-[10px] text-slate-500">
-              <p className="font-bold mb-1">DIAGNÓSTICO DO BANCO:</p>
-              <p>
-                {supabaseReady
-                  ? (isOnline ? 'OK (Supabase configurado e online)' : 'Sem internet (offline)')
-                  : 'Supabase NÃO configurado (verifique URL e ANON KEY no .env)'}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <Link to="/" className="text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors">
-              Voltar para o Site
-            </Link>
-          </div>
+        {/* ✅ ÚNICA COISA ABAIXO DO BOTÃO */}
+        <div className="mt-6 text-center">
+          <Link to="/" className="text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors">
+            Voltar para o Site
+          </Link>
         </div>
+
       </div>
     </div>
   );

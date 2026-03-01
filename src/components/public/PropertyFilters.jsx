@@ -69,7 +69,13 @@ const PropertyFilters = ({ onFilterChange, neighborhoods = [] }) => {
                         <option value="">Qualquer</option>
                         <option value="Apartamento">Apartamento</option>
                         <option value="Casa">Casa</option>
+                        <option value="Studio">Studio</option>
                         <option value="Cobertura">Cobertura</option>
+                        <option value="Sala Comercial">Sala Comercial</option>
+                        <option value="Terreno">Terreno</option>
+                        <option value="Chácara">Chácara</option>
+                        <option value="Loja">Loja</option>
+                        <option value="Galpão">Galpão</option>
                         <option value="Flat">Flat</option>
                     </select>
                 </div>
@@ -112,7 +118,11 @@ const PropertyFilters = ({ onFilterChange, neighborhoods = [] }) => {
                 <div className="col-span-1">
                     <button
                         className="w-full h-[46px] bg-[var(--primary-color)] text-white font-bold rounded-xl shadow-lg hover:opacity-90 transition-all flex items-center justify-center gap-2"
-                        onClick={() => onFilterChange(filters)}
+                        onClick={() => {
+                            onFilterChange(filters);
+                            const section = document.getElementById('imoveis');
+                            if (section) section.scrollIntoView({ behavior: 'smooth' });
+                        }}
                     >
                         <Search size={18} /> Buscar
                     </button>

@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useProperties } from '../../contexts/PropertyContext';
-import { MapPin, ArrowUpRight, Phone, Instagram, Linkedin, MessageCircle, PlayCircle, Star, ShieldCheck, BedDouble, Bath, Car, Menu, X, Facebook, Youtube, User, LayoutDashboard, Settings as SettingsIcon, LogOut, ChevronDown } from 'lucide-react';
+import {
+    MapPin, ArrowUpRight, Phone, Instagram, Linkedin, MessageCircle,
+    PlayCircle, Star, ShieldCheck, BedDouble, Bath, Car, Menu, X,
+    Facebook, Youtube, User, LayoutDashboard, Settings as SettingsIcon,
+    LogOut, ChevronDown
+} from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import PropertyFilters from './PropertyFilters';
+import { getPublicWhatsapp, buildWaMeLink } from '../../lib/publicConfig';
 
 const PublicHome = () => {
     const { properties } = useProperties();
@@ -23,11 +29,13 @@ const PublicHome = () => {
             if (p.contract !== 'locacao' && p.contract !== 'ambos' && !hasRentalPrice) return false;
         }
 
-        if (filters.type && p.type !== filters.type) return false;
-        if (filters.bedrooms && p.rooms < parseInt(filters.bedrooms)) return false;
-        if (filters.neighborhood && !p.address.toLowerCase().includes(filters.neighborhood.toLowerCase())) return false;
+        if (filters.type && (p.type || '').toLowerCase() !== filters.type.toLowerCase()) return false;
+        if (filters.bedrooms && (p.rooms || 0) < parseInt(filters.bedrooms || 0)) return false;
+        if (filters.neighborhood && !(p.address || '').toLowerCase().includes(filters.neighborhood.toLowerCase())) return false;
         if (filters.maxPrice) {
-            const price = (filters.contract === 'locacao' || (p.contract === 'locacao' && !filters.contract)) ? (p.rentalPrice || 0) : (p.price || p.salePrice || 0);
+            const price = (filters.contract === 'locacao' || (p.contract === 'locacao' && !filters.contract))
+                ? (p.rentalPrice || 0)
+                : (p.price || p.salePrice || 0);
             if (price > parseFloat(filters.maxPrice)) return false;
         }
         return true;
@@ -54,20 +62,28 @@ const PublicHome = () => {
         setSettings({
             primaryColor: localStorage.getItem('ab-primary-color') || '#166b9c',
             logoUrl: localStorage.getItem('ab-logo-url') || '',
-            whatsapp: localStorage.getItem('ab-whatsapp') || '',
+            // ✅ aqui: pega do localStorage (se existir) OU do env VITE_PUBLIC_WHATSAPP
+            whatsapp: getPublicWhatsapp(),
             profilePhoto: localStorage.getItem('ab-profile-photo') || '',
             socials: JSON.parse(localStorage.getItem('ab-socials') || '{"instagram":"","linkedin":"","facebook":"","youtube":"","tiktok":""}')
         });
     }, []);
 
-    const whatsappLink = settings.whatsapp ? `https://wa.me/${settings.whatsapp}` : '#contato';
+    const whatsappNumber = settings.whatsapp; // já vem só com dígitos
+    const whatsappLink = whatsappNumber ? buildWaMeLink(whatsappNumber) : '#contato';
 
     const handleContactSubmit = (e) => {
         e.preventDefault();
         const phone = e.target.querySelector('input').value;
-        if (settings.whatsapp) {
-            window.open(`https://wa.me/${settings.whatsapp}?text=${encodeURIComponent(`Olá! Meu número é ${phone}. Gostaria de saber mais sobre seus imóveis.`)}`, '_blank');
+
+        if (whatsappNumber) {
+            const url = buildWaMeLink(
+                whatsappNumber,
+                `Olá! Meu número é ${phone}. Gostaria de saber mais sobre seus imóveis.`
+            );
+            if (url) window.open(url, '_blank', 'noopener,noreferrer');
         }
+
         e.target.querySelector('input').value = '';
     };
 
@@ -143,7 +159,13 @@ const PublicHome = () => {
                         </Link>
                     )}
 
-                    <a href={whatsappLink} target="_blank" rel="noreferrer" className="text-white px-5 py-2 rounded-full hover:opacity-90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-2" style={{ backgroundColor: settings.primaryColor }}>
+                    <a
+                        href={whatsappLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-white px-5 py-2 rounded-full hover:opacity-90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-2"
+                        style={{ backgroundColor: settings.primaryColor }}
+                    >
                         <MessageCircle size={18} /> Fale Comigo
                     </a>
                 </div>
@@ -152,50 +174,48 @@ const PublicHome = () => {
                 <button className="md:hidden text-slate-600" onClick={() => setMobileMenu(!mobileMenu)}>
                     {mobileMenu ? <X size={24} /> : <Menu size={24} />}
                 </button>
-            </nav >
+            </nav>
 
             {/* Mobile Menu */}
-            {
-                mobileMenu && (
-                    <div className="md:hidden fixed inset-0 top-[65px] bg-white z-40 p-6 flex flex-col gap-4">
-                        <a href="#imoveis" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">Imóveis</a>
-                        <a href="#sobre" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">Sobre</a>
-                        <a href="#contato" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">Contato</a>
-                        {localStorage.getItem('ab-auth-session') ? (
-                            <>
-                                <Link to="/admin" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100 flex items-center gap-2">
-                                    <LayoutDashboard size={20} /> Painel Admin
-                                </Link>
-                                <button
-                                    onClick={() => {
-                                        localStorage.removeItem('ab-auth-session');
-                                        localStorage.removeItem('authToken');
-                                        window.location.reload();
-                                    }}
-                                    className="text-lg font-bold text-red-500 py-2 border-b border-slate-100 flex items-center gap-2 text-left"
-                                >
-                                    <LogOut size={20} /> Sair
-                                </button>
-                            </>
-                        ) : (
-                            <Link to="/login" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">Login</Link>
-                        )}
-                        <a
-                            href={whatsappLink}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-white text-center px-6 py-3 rounded-full font-bold shadow-lg mt-4 flex items-center justify-center gap-2"
-                            style={{ backgroundColor: settings.primaryColor }}
-                        >
-                            <MessageCircle size={20} /> Fale Comigo
-                        </a>
-                        <div className="flex gap-4 justify-center mt-4">
-                            {settings.socials.instagram && <a href={`https://${settings.socials.instagram}`} target="_blank" rel="noreferrer"><Instagram size={24} className="text-slate-400" /></a>}
-                            {settings.socials.youtube && <a href={`https://${settings.socials.youtube}`} target="_blank" rel="noreferrer"><Youtube size={24} className="text-slate-400" /></a>}
-                        </div>
+            {mobileMenu && (
+                <div className="md:hidden fixed inset-0 top-[65px] bg-white z-40 p-6 flex flex-col gap-4">
+                    <a href="#imoveis" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">Imóveis</a>
+                    <a href="#sobre" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">Sobre</a>
+                    <a href="#contato" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">Contato</a>
+                    {localStorage.getItem('ab-auth-session') ? (
+                        <>
+                            <Link to="/admin" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100 flex items-center gap-2">
+                                <LayoutDashboard size={20} /> Painel Admin
+                            </Link>
+                            <button
+                                onClick={() => {
+                                    localStorage.removeItem('ab-auth-session');
+                                    localStorage.removeItem('authToken');
+                                    window.location.reload();
+                                }}
+                                className="text-lg font-bold text-red-500 py-2 border-b border-slate-100 flex items-center gap-2 text-left"
+                            >
+                                <LogOut size={20} /> Sair
+                            </button>
+                        </>
+                    ) : (
+                        <Link to="/login" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">Login</Link>
+                    )}
+                    <a
+                        href={whatsappLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-white text-center px-6 py-3 rounded-full font-bold shadow-lg mt-4 flex items-center justify-center gap-2"
+                        style={{ backgroundColor: settings.primaryColor }}
+                    >
+                        <MessageCircle size={20} /> Fale Comigo
+                    </a>
+                    <div className="flex gap-4 justify-center mt-4">
+                        {settings.socials.instagram && <a href={`https://${settings.socials.instagram}`} target="_blank" rel="noreferrer"><Instagram size={24} className="text-slate-400" /></a>}
+                        {settings.socials.youtube && <a href={`https://${settings.socials.youtube}`} target="_blank" rel="noreferrer"><Youtube size={24} className="text-slate-400" /></a>}
                     </div>
-                )
-            }
+                </div>
+            )}
 
             {/* Hero Section */}
             <header className="relative h-[600px] flex items-center justify-center text-center px-4 overflow-hidden group">
@@ -217,7 +237,12 @@ const PublicHome = () => {
                         <a href="#imoveis" className="text-white px-8 py-4 rounded-full font-bold text-lg hover:opacity-90 transition-all shadow-lg hover:shadow-cyan-500/50 hover:-translate-y-1" style={{ backgroundColor: settings.primaryColor }}>
                             Ver Oportunidades
                         </a>
-                        <a href={whatsappLink} target="_blank" rel="noreferrer" className="bg-white/10 backdrop-blur border border-white/30 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-slate-800 transition-all flex items-center gap-2 justify-center">
+                        <a
+                            href={whatsappLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="bg-white/10 backdrop-blur border border-white/30 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-slate-800 transition-all flex items-center gap-2 justify-center"
+                        >
                             <PlayCircle size={20} /> Agendar Visita
                         </a>
                     </div>
@@ -328,8 +353,15 @@ const PublicHome = () => {
                                             }
                                         }}
                                     />
-                                    <span className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-white shadow-sm ${property.contract === 'locacao' ? 'bg-purple-500' : property.contract === 'ambos' ? 'bg-gradient-to-r from-purple-500 to-blue-500' : ''}`}
-                                        style={{ backgroundColor: (property.contract === 'locacao' || property.contract === 'ambos') ? undefined : settings.primaryColor }}>
+                                    <span
+                                        className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-white shadow-sm ${property.contract === 'locacao'
+                                            ? 'bg-purple-500'
+                                            : property.contract === 'ambos'
+                                                ? 'bg-gradient-to-r from-purple-500 to-blue-500'
+                                                : ''
+                                            }`}
+                                        style={{ backgroundColor: (property.contract === 'locacao' || property.contract === 'ambos') ? undefined : settings.primaryColor }}
+                                    >
                                         {property.contract === 'locacao' ? 'Aluguel' : property.contract === 'ambos' ? 'Venda e Aluguel' : 'Venda'}
                                     </span>
                                     <div className="absolute bottom-0 left-0 w-full h-full bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
@@ -370,8 +402,12 @@ const PublicHome = () => {
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            if (settings.whatsapp) {
-                                                window.open(`https://wa.me/${settings.whatsapp}?text=${encodeURIComponent(`Olá! Tenho interesse no imóvel: ${property.title} - R$ ${(property.price || property.rentalPrice || 0).toLocaleString('pt-BR')}`)}`, '_blank');
+                                            if (whatsappNumber) {
+                                                const url = buildWaMeLink(
+                                                    whatsappNumber,
+                                                    `Olá! Tenho interesse no imóvel: ${property.title} - R$ ${(property.price || property.rentalPrice || 0).toLocaleString('pt-BR')}`
+                                                );
+                                                if (url) window.open(url, '_blank', 'noopener,noreferrer');
                                             } else {
                                                 window.location.href = '#contato';
                                             }
@@ -473,9 +509,9 @@ const PublicHome = () => {
                                     <Youtube size={18} />
                                 </a>
                             </div>
-                            {settings.whatsapp && (
+                            {whatsappNumber && (
                                 <a href={whatsappLink} target="_blank" rel="noreferrer" className="hidden mt-4 inline-flex items-center gap-2 text-sm text-emerald-400 hover:text-emerald-300 transition-colors font-medium">
-                                    <MessageCircle size={16} /> WhatsApp: +{settings.whatsapp}
+                                    <MessageCircle size={16} /> WhatsApp: +{whatsappNumber}
                                 </a>
                             )}
                         </div>
@@ -486,7 +522,7 @@ const PublicHome = () => {
                     </div>
                 </div>
             </footer>
-        </div >
+        </div>
     );
 };
 

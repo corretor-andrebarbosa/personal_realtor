@@ -22,3 +22,5 @@ Thumbs.db
 
 # Generated optimized images (não versionar)
 public/_optimized/
+.vercel
+.env*.local

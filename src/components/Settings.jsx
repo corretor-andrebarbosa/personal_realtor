@@ -36,9 +36,12 @@ const Settings = () => {
     };
 
     const handleSave = () => {
+        // ✅ mudança pontual: whatsapp sempre só dígitos
+        const whatsappDigits = String(whatsapp || '').replace(/\D/g, '');
+
         localStorage.setItem('ab-primary-color', primaryColor);
         localStorage.setItem('ab-logo-url', logoUrl);
-        localStorage.setItem('ab-whatsapp', whatsapp);
+        localStorage.setItem('ab-whatsapp', whatsappDigits);
         localStorage.setItem('ab-socials', JSON.stringify(socials));
         localStorage.setItem('ab-system-prompt', systemPrompt);
         localStorage.setItem('ab-gemini-key', geminiKey);
@@ -52,6 +55,9 @@ const Settings = () => {
         const hex = primaryColor;
         document.documentElement.style.setProperty('--primary-dark', hex);
         document.documentElement.style.setProperty('--primary-light', hex);
+
+        // mantém o input atualizado já sanitizado
+        setWhatsapp(whatsappDigits);
 
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);

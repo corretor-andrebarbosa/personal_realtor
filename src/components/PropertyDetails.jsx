@@ -19,6 +19,7 @@ import {
   X
 } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { getPublicWhatsapp, buildWaMeLink } from '../lib/publicConfig';
 
 const isValidSession = () => {
   try {
@@ -282,20 +283,25 @@ const PropertyDetails = () => {
     navigate('/properties');
   };
 
+  // ✅ ALTERAÇÃO PONTUAL: WhatsApp/Call agora funcionam para público
+  // prioridade: ab-whatsapp (admin) > VITE_PUBLIC_WHATSAPP (público)
   const handleWhatsApp = () => {
     if (!property) return;
-    const whatsapp = localStorage.getItem('ab-whatsapp') || '';
+
+    const whatsapp = getPublicWhatsapp(); // já retorna só dígitos
     const price = Number(property.price || property.rentalPrice || 0);
     const text = `Olá! Tenho interesse no imóvel: ${property.title} - R$ ${price.toLocaleString('pt-BR')}`;
+
     if (whatsapp) {
-      window.open(`https://wa.me/${whatsapp}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+      const url = buildWaMeLink(whatsapp, text);
+      if (url) window.open(url, '_blank', 'noopener,noreferrer');
     } else {
       alert('Número de WhatsApp não configurado. Vá em Configurações para definir.');
     }
   };
 
   const handleCall = () => {
-    const whatsapp = localStorage.getItem('ab-whatsapp') || '';
+    const whatsapp = getPublicWhatsapp();
     if (whatsapp) {
       window.open(`tel:+${whatsapp}`);
     } else {
