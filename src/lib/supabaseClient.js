@@ -2,46 +2,46 @@
 import { createClient } from '@supabase/supabase-js';
 
 /**
- * Fonte principal (produção): ENV do Vite (Cloudflare Pages)
- *   VITE_SUPABASE_URL
- *   VITE_SUPABASE_ANON_KEY
+ * Supabase Client — Cloudflare Pages Ready
  *
- * Fallback (admin avançado): localStorage
- *   ab-supabase-url
- *   ab-supabase-key   <-- (este é o que seu Settings.jsx salva)
- *
- * Observação: mantém compatibilidade com um legado opcional:
- *   ab-supabase-anon
+ * Ordem de prioridade:
+ *   1. Variáveis de ambiente Vite (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY)
+ *      → Injetadas no build pelo Cloudflare Pages ou .env local
+ *   2. localStorage (configuração manual via painel admin)
  */
 
-const clean = (v) => (typeof v === 'string' ? v.trim() : '');
+const clean = (v) =>
+  typeof v === 'string' ? v.trim().replace(/[\r\n]/g, '') : '';
 
-const looksLikeSupabaseUrl = (url) =>
-  /^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(url);
+const isValidUrl = (url) => {
+  const u = clean(url);
+  return u.startsWith('https://') && u.includes('.supabase.co');
+};
 
-const looksLikeAnonKey = (key) => {
+const isValidKey = (key) => {
   const k = clean(key);
-  // anon key costuma ser um JWT longo (eyJ...) ou algo bem grande
-  return k.length > 40 && !k.includes('COLE_AQUI') && !k.includes('RS256');
+  // Anon key é sempre um JWT começando com eyJ
+  return k.length > 40 && k.startsWith('eyJ') && !k.includes('COLE_AQUI');
 };
 
 export const getKeys = () => {
-  // 1) ENV (build time)
-  const envUrl = clean(import.meta?.env?.VITE_SUPABASE_URL);
-  const envAnon = clean(import.meta?.env?.VITE_SUPABASE_ANON_KEY);
+  // 1) Build-time ENV (Cloudflare Pages ou .env local)
+  const envUrl  = clean(import.meta?.env?.VITE_SUPABASE_URL  ?? '');
+  const envAnon = clean(import.meta?.env?.VITE_SUPABASE_ANON_KEY ?? '');
 
-  if (looksLikeSupabaseUrl(envUrl) && looksLikeAnonKey(envAnon)) {
+  if (isValidUrl(envUrl) && isValidKey(envAnon)) {
     return { supabaseUrl: envUrl, supabaseAnonKey: envAnon, source: 'env' };
   }
 
-  // 2) localStorage (runtime)
+  // 2) localStorage (painel admin)
   if (typeof window !== 'undefined') {
-    const lsUrl = clean(localStorage.getItem('ab-supabase-url'));
+    const lsUrl = clean(localStorage.getItem('ab-supabase-url') ?? '');
     const lsKey = clean(
-      localStorage.getItem('ab-supabase-key') || localStorage.getItem('ab-supabase-anon')
+      localStorage.getItem('ab-supabase-key') ??
+      localStorage.getItem('ab-supabase-anon') ?? ''
     );
 
-    if (looksLikeSupabaseUrl(lsUrl) && looksLikeAnonKey(lsKey)) {
+    if (isValidUrl(lsUrl) && isValidKey(lsKey)) {
       return { supabaseUrl: lsUrl, supabaseAnonKey: lsKey, source: 'localStorage' };
     }
   }
@@ -51,39 +51,49 @@ export const getKeys = () => {
 
 export const isSupabaseConfigured = () => {
   const { supabaseUrl, supabaseAnonKey } = getKeys();
-  return Boolean(looksLikeSupabaseUrl(supabaseUrl) && looksLikeAnonKey(supabaseAnonKey));
+  return isValidUrl(supabaseUrl) && isValidKey(supabaseAnonKey);
 };
 
-// Bucket padrão do Storage (se você usa no projeto)
 export const STORAGE_BUCKET = 'property-images';
 
-// Singleton
-let client = null;
+let _client = null;
 
-export const supabase = (() => {
+const buildClient = () => {
   const { supabaseUrl, supabaseAnonKey, source } = getKeys();
 
-  if (!looksLikeSupabaseUrl(supabaseUrl) || !looksLikeAnonKey(supabaseAnonKey)) {
-    // Mantém o app funcionando em modo offline, sem quebrar UI
+  if (!isValidUrl(supabaseUrl) || !isValidKey(supabaseAnonKey)) {
     if (typeof window !== 'undefined') {
-      console.warn('⚠️ Supabase não configurado (ENV/localStorage ausente ou inválido).');
+      console.warn('[Supabase] Não configurado.', {
+        urlOk: isValidUrl(supabaseUrl),
+        keyOk: isValidKey(supabaseAnonKey),
+        urlSnippet: supabaseUrl.slice(0, 40),
+        keySnippet: supabaseAnonKey.slice(0, 15),
+      });
     }
     return null;
   }
 
-  if (client) return client;
+  if (_client) return _client;
 
   if (typeof window !== 'undefined') {
-    console.info(`✅ Supabase configurado via: ${source}`);
+    console.info(`[Supabase] ✅ Conectado via: ${source} | ${supabaseUrl}`);
   }
 
-  client = createClient(supabaseUrl, supabaseAnonKey, {
+  _client = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
     },
+    global: {
+      headers: {
+        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${supabaseAnonKey}`,
+      },
+    },
   });
 
-  return client;
-})();
+  return _client;
+};
+
+export const supabase = buildClient();

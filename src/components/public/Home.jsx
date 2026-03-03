@@ -1,16 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useProperties } from '../../contexts/PropertyContext';
-<<<<<<< HEAD
-import {
-    MapPin, ArrowUpRight, Phone, Instagram, Linkedin, MessageCircle,
-    PlayCircle, Star, ShieldCheck, BedDouble, Bath, Car, Menu, X,
-    Facebook, Youtube, User, LayoutDashboard, Settings as SettingsIcon,
-    LogOut, ChevronDown
-} from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import PropertyFilters from './PropertyFilters';
-import { getPublicWhatsapp, buildWaMeLink } from '../../lib/publicConfig';
-=======
+
 import { MapPin, ArrowUpRight, Phone, Instagram, Linkedin, MessageCircle, PlayCircle, Star, ShieldCheck, BedDouble, Bath, Car, Menu, X, Facebook, Youtube, User, LayoutDashboard, Settings as SettingsIcon, LogOut, ChevronDown, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import PropertyFilters from './PropertyFilters';
@@ -19,6 +9,13 @@ import { translations } from '../../translations';
 import { systemConfig } from '../../system-config';
 import TranslatedText from '../common/TranslatedText';
 import PriceDisplay from '../common/PriceDisplay';
+
+// Gera link wa.me com número limpo (só dígitos)
+const buildWaMeLink = (number) => {
+    const digits = String(number || '').replace(/\D/g, '');
+    if (!digits) return '#contato';
+    return `https://wa.me/${digits}`;
+};
 
 // ✅ Função auxiliar para extrair ID do YouTube e gerar URL da miniatura
 const getYoutubeThumbnail = (url) => {
@@ -33,7 +30,6 @@ const getYoutubeThumbnail = (url) => {
     }
     return null;
 };
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
 
 const PublicHome = () => {
     const { properties, loading } = useProperties();
@@ -137,12 +133,8 @@ const PublicHome = () => {
         setSettings({
             primaryColor: localStorage.getItem('ab-primary-color') || '#166b9c',
             logoUrl: localStorage.getItem('ab-logo-url') || '',
-<<<<<<< HEAD
-            // ✅ aqui: pega do localStorage (se existir) OU do env VITE_PUBLIC_WHATSAPP
-            whatsapp: getPublicWhatsapp(),
-=======
+
             whatsapp: (storedWhatsapp && storedWhatsapp.trim()) ? storedWhatsapp : systemConfig.whatsappNumber,
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
             profilePhoto: localStorage.getItem('ab-profile-photo') || '',
             socials: JSON.parse(localStorage.getItem('ab-socials') || JSON.stringify(systemConfig.socialLinks || { instagram: '', linkedin: '', facebook: '', youtube: '', tiktok: '' }))
         });
@@ -154,19 +146,8 @@ const PublicHome = () => {
     const handleContactSubmit = (e) => {
         e.preventDefault();
         const phone = e.target.querySelector('input').value;
-<<<<<<< HEAD
 
-        if (whatsappNumber) {
-            const url = buildWaMeLink(
-                whatsappNumber,
-                `Olá! Meu número é ${phone}. Gostaria de saber mais sobre seus imóveis.`
-            );
-            if (url) window.open(url, '_blank', 'noopener,noreferrer');
-        }
-
-=======
         openWhatsApp(`Olá! Meu número é ${phone}. Gostaria de saber mais sobre seus imóveis.`, settings.whatsapp);
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
         e.target.querySelector('input').value = '';
     };
 
@@ -268,19 +249,9 @@ const PublicHome = () => {
                         </Link>
                     )}
 
-<<<<<<< HEAD
-                    <a
-                        href={whatsappLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-white px-5 py-2 rounded-full hover:opacity-90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-2"
-                        style={{ backgroundColor: settings.primaryColor }}
-                    >
-                        <MessageCircle size={18} /> Fale Comigo
-=======
+
                     <a href={whatsappLink} target="_blank" rel="noreferrer" className="text-white px-5 py-2 rounded-full hover:opacity-90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-2" style={{ backgroundColor: settings.primaryColor }}>
                         <MessageCircle size={18} /> {t('nav_fale_comigo')}
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
                     </a>
                 </div>
 
@@ -291,44 +262,7 @@ const PublicHome = () => {
             </nav>
 
             {/* Mobile Menu */}
-<<<<<<< HEAD
-            {mobileMenu && (
-                <div className="md:hidden fixed inset-0 top-[65px] bg-white z-40 p-6 flex flex-col gap-4">
-                    <a href="#imoveis" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">Imóveis</a>
-                    <a href="#sobre" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">Sobre</a>
-                    <a href="#contato" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">Contato</a>
-                    {localStorage.getItem('ab-auth-session') ? (
-                        <>
-                            <Link to="/admin" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100 flex items-center gap-2">
-                                <LayoutDashboard size={20} /> Painel Admin
-                            </Link>
-                            <button
-                                onClick={() => {
-                                    localStorage.removeItem('ab-auth-session');
-                                    localStorage.removeItem('authToken');
-                                    window.location.reload();
-                                }}
-                                className="text-lg font-bold text-red-500 py-2 border-b border-slate-100 flex items-center gap-2 text-left"
-                            >
-                                <LogOut size={20} /> Sair
-                            </button>
-                        </>
-                    ) : (
-                        <Link to="/login" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">Login</Link>
-                    )}
-                    <a
-                        href={whatsappLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-white text-center px-6 py-3 rounded-full font-bold shadow-lg mt-4 flex items-center justify-center gap-2"
-                        style={{ backgroundColor: settings.primaryColor }}
-                    >
-                        <MessageCircle size={20} /> Fale Comigo
-                    </a>
-                    <div className="flex gap-4 justify-center mt-4">
-                        {settings.socials.instagram && <a href={`https://${settings.socials.instagram}`} target="_blank" rel="noreferrer"><Instagram size={24} className="text-slate-400" /></a>}
-                        {settings.socials.youtube && <a href={`https://${settings.socials.youtube}`} target="_blank" rel="noreferrer"><Youtube size={24} className="text-slate-400" /></a>}
-=======
+
             {
                 mobileMenu && (
                     <div className="md:hidden fixed inset-0 top-[65px] bg-white z-40 p-6 flex flex-col gap-4">
@@ -382,10 +316,9 @@ const PublicHome = () => {
                             {settings.socials.instagram && <a href={`https://${settings.socials.instagram}`} target="_blank" rel="noreferrer"><Instagram size={24} className="text-slate-400" /></a>}
                             {settings.socials.youtube && <a href={`https://${settings.socials.youtube}`} target="_blank" rel="noreferrer"><Youtube size={24} className="text-slate-400" /></a>}
                         </div>
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Hero Section */}
             <header className="relative h-[600px] flex items-center justify-center text-center px-4 overflow-hidden group">
@@ -407,18 +340,9 @@ const PublicHome = () => {
                         <a href="#imoveis" className="text-white px-8 py-4 rounded-full font-bold text-lg hover:opacity-90 transition-all shadow-lg hover:shadow-cyan-500/50 hover:-translate-y-1" style={{ backgroundColor: settings.primaryColor }}>
                             {t('hero_cta_properties')}
                         </a>
-<<<<<<< HEAD
-                        <a
-                            href={whatsappLink}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="bg-white/10 backdrop-blur border border-white/30 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-slate-800 transition-all flex items-center gap-2 justify-center"
-                        >
-                            <PlayCircle size={20} /> Agendar Visita
-=======
+
                         <a href={whatsappLink} target="_blank" rel="noreferrer" className="bg-white/10 backdrop-blur border border-white/30 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-slate-800 transition-all flex items-center gap-2 justify-center">
                             <PlayCircle size={20} /> {t('hero_cta_visit')}
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
                         </a>
                     </div>
                 </div>
@@ -509,57 +433,7 @@ const PublicHome = () => {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-<<<<<<< HEAD
-                        {displayedProperties.map((property) => (
-                            <div
-                                key={property.id}
-                                onClick={() => {
-                                    const url = `/properties/${property.id}`;
-                                    window.open(url, '_blank', 'noopener,noreferrer');
-                                }}
-                                className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 group ring-1 ring-slate-100 hover:ring-2 cursor-pointer"
-                                style={{ '--tw-ring-color': `${settings.primaryColor}20` }}
-                            >
-                                <div className="relative h-64 overflow-hidden bg-slate-100">
-                                    <img
-                                        src={property.image || (property.images && property.images.length > 0 ? property.images[0] : 'https://via.placeholder.com/600x400?text=Imóvel+S/Foto')}
-                                        alt={property.title}
-                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                        onError={(e) => {
-                                            if (e.target.src !== "https://ui-avatars.com/api/?name=IMOVEL&size=600&background=cbd5e1&color=334155") {
-                                                e.target.src = "https://ui-avatars.com/api/?name=IMOVEL&size=600&background=cbd5e1&color=334155";
-                                            }
-                                        }}
-                                    />
-                                    <span
-                                        className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-white shadow-sm ${property.contract === 'locacao'
-                                            ? 'bg-purple-500'
-                                            : property.contract === 'ambos'
-                                                ? 'bg-gradient-to-r from-purple-500 to-blue-500'
-                                                : ''
-                                            }`}
-                                        style={{ backgroundColor: (property.contract === 'locacao' || property.contract === 'ambos') ? undefined : settings.primaryColor }}
-                                    >
-                                        {property.contract === 'locacao' ? 'Aluguel' : property.contract === 'ambos' ? 'Venda e Aluguel' : 'Venda'}
-                                    </span>
-                                    <div className="absolute bottom-0 left-0 w-full h-full bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
-                                    <div className="absolute bottom-4 left-4 text-white">
-                                        {property.contract === 'ambos' ? (
-                                            <>
-                                                <p className="text-lg font-bold">
-                                                    {(property.price || property.salePrice) ? `R$ ${(property.price || property.salePrice).toLocaleString('pt-BR')}` : 'Preço sob consulta'}
-                                                </p>
-                                                <p className="text-sm font-semibold text-white/80">
-                                                    {property.rentalPrice ? `R$ ${property.rentalPrice.toLocaleString('pt-BR')}/mês` : ''}
-                                                </p>
-                                            </>
-                                        ) : (
-                                            <p className="text-lg font-bold">
-                                                {(property.price || property.rentalPrice)
-                                                    ? `R$ ${(property.price || property.rentalPrice).toLocaleString('pt-BR')}${property.contract === 'locacao' ? '/mês' : ''}`
-                                                    : 'Sob consulta'}
-                                            </p>
-=======
+
                         {displayedProperties.map((property) => {
                             // ✅ Lógica de Imagem com Fallback de Vídeo
                             const primaryImage = property.image || (property.images && property.images.length > 0 ? property.images[0] : null);
@@ -593,7 +467,6 @@ const PublicHome = () => {
                                             <div className="absolute top-4 left-4 bg-red-600 text-white px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 shadow-lg">
                                                 <PlayCircle size={14} /> Vídeo
                                             </div>
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
                                         )}
 
                                         <span className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-white shadow-sm ${property.contract === 'locacao' ? 'bg-purple-500' : property.contract === 'ambos' ? 'bg-gradient-to-r from-purple-500 to-blue-500' : ''}`}
@@ -627,28 +500,7 @@ const PublicHome = () => {
                                         </div>
                                     </div>
 
-<<<<<<< HEAD
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (whatsappNumber) {
-                                                const url = buildWaMeLink(
-                                                    whatsappNumber,
-                                                    `Olá! Tenho interesse no imóvel: ${property.title} - R$ ${(property.price || property.rentalPrice || 0).toLocaleString('pt-BR')}`
-                                                );
-                                                if (url) window.open(url, '_blank', 'noopener,noreferrer');
-                                            } else {
-                                                window.location.href = '#contato';
-                                            }
-                                        }}
-                                        className="w-full mt-2 bg-slate-50 text-slate-600 font-bold py-3 rounded-xl border border-slate-200 hover:text-white hover:border-transparent transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-2"
-                                        style={{ '--tw-bg-opacity': 1 }}
-                                        onMouseEnter={e => { e.target.style.backgroundColor = settings.primaryColor; e.target.style.color = 'white'; }}
-                                        onMouseLeave={e => { e.target.style.backgroundColor = ''; e.target.style.color = ''; }}
-                                    >
-                                        Tenho Interesse <ArrowUpRight size={14} />
-                                    </button>
-=======
+
                                     <div className="p-6">
                                         <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:transition-colors" style={{ '--hover-color': settings.primaryColor }}>
                                             <TranslatedText lang={lang}>{property.title}</TranslatedText>
@@ -678,7 +530,6 @@ const PublicHome = () => {
                                             {t('property_interest')} <ArrowUpRight size={14} />
                                         </button>
                                     </div>
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
                                 </div>
                             );
                         })}
@@ -767,14 +618,7 @@ const PublicHome = () => {
                                     <Youtube size={18} />
                                 </a>
                             </div>
-<<<<<<< HEAD
-                            {whatsappNumber && (
-                                <a href={whatsappLink} target="_blank" rel="noreferrer" className="hidden mt-4 inline-flex items-center gap-2 text-sm text-emerald-400 hover:text-emerald-300 transition-colors font-medium">
-                                    <MessageCircle size={16} /> WhatsApp: +{whatsappNumber}
-                                </a>
-                            )}
-=======
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
+
                         </div>
                     </div>
 

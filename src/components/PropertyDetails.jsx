@@ -19,15 +19,12 @@ import {
   X
 } from 'lucide-react';
 import jsPDF from 'jspdf';
-<<<<<<< HEAD
-import { getPublicWhatsapp, buildWaMeLink } from '../lib/publicConfig';
-=======
+
 import { systemConfig } from '../system-config';
 import { openWhatsApp } from '../whatsapp';
 import { translations } from '../translations';
 import TranslatedText from './common/TranslatedText';
 import PriceDisplay from './common/PriceDisplay';
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
 
 const isValidSession = () => {
   try {
@@ -150,12 +147,10 @@ const PropertyDetails = () => {
   const { properties, deleteProperty } = useProperties();
   const navigate = useNavigate();
 
-<<<<<<< HEAD
-=======
+
   const [lang, setLang] = useState(localStorage.getItem('ab-user-lang') || 'pt');
   const t = (key) => translations[lang][key] || translations['pt'][key] || key;
 
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
   const [property, setProperty] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -226,19 +221,7 @@ const PropertyDetails = () => {
     doc.setFontSize(12);
     doc.setTextColor(0);
     doc.setFont("helvetica", "normal");
-<<<<<<< HEAD
-    doc.text(`Endereço: ${property.address || 'N/D'}`, 20, 35);
-    doc.text(`Tipo: ${property.type || 'N/D'}`, 20, 45);
 
-    const contract =
-      property.contract === 'locacao'
-        ? 'Locação'
-        : property.contract === 'ambos'
-          ? 'Venda e Locação'
-          : 'Venda';
-
-    doc.text(`Contrato: ${contract}`, 20, 55);
-=======
     doc.text(`${t('pdf_address')}: ${property.address || 'N/D'}`, 20, 35);
     doc.text(`${t('pdf_type')}: ${property.type || 'N/D'}`, 20, 45);
 
@@ -250,29 +233,12 @@ const PropertyDetails = () => {
           : t('filter_sale');
 
     doc.text(`${t('pdf_contract')}: ${contract}`, 20, 55);
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
 
     const sale = Number(property.price || property.salePrice || 0);
     const rent = Number(property.rentalPrice || 0);
 
     if (property.contract === 'ambos') {
-<<<<<<< HEAD
-      doc.text(`Preço de Venda: R$ ${sale.toLocaleString('pt-BR')}`, 20, 65);
-      doc.text(`Aluguel: R$ ${rent.toLocaleString('pt-BR')}/mês`, 20, 75);
-      doc.text(`Área: ${Number(property.area || 0)}m²`, 20, 85);
-    } else {
-      const val = Number(property.price || property.rentalPrice || 0);
-      doc.text(
-        `Preço: R$ ${val.toLocaleString('pt-BR')}${property.contract === 'locacao' ? '/mês' : ''}`,
-        20,
-        65
-      );
-      doc.text(`Área: ${Number(property.area || 0)}m²`, 20, 75);
-    }
 
-    doc.text(
-      `Quartos: ${Number(property.rooms || 0)} | Banheiros: ${Number(property.bathrooms || 0)} | Vagas: ${Number(property.garage || 0)}`,
-=======
       doc.text(`${t('pdf_sale_price')}: R$ ${sale.toLocaleString('pt-BR')}`, 20, 65);
       doc.text(`${t('pdf_rent_price')}: R$ ${rent.toLocaleString('pt-BR')}${t('prop_month')}`, 20, 75);
       doc.text(`${t('pdf_area')}: ${Number(property.area || 0)}m²`, 20, 85);
@@ -288,17 +254,13 @@ const PropertyDetails = () => {
 
     doc.text(
       `${t('prop_rooms')}: ${Number(property.rooms || 0)} | ${t('prop_baths')}: ${Number(property.bathrooms || 0)} | ${t('prop_garage')}: ${Number(property.garage || 0)}`,
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
       20,
       95
     );
 
     if (property.description) {
-<<<<<<< HEAD
-      doc.text('Descrição:', 20, 110);
-=======
+
       doc.text(`${t('details_description')}:`, 20, 110);
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
       const lines = doc.splitTextToSize(String(property.description), 170);
       doc.text(lines, 20, 120);
     }
@@ -321,11 +283,8 @@ const PropertyDetails = () => {
         await navigator.share(shareData);
       } else {
         await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
-<<<<<<< HEAD
-        alert('Link copiado para a área de transferência!');
-=======
+
         // alert(t('link_copied')); // I can skip alert if it creates noise, but let's just keep it simple
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
       }
     } catch {
       // usuário cancelou share, ok
@@ -337,27 +296,7 @@ const PropertyDetails = () => {
     navigate('/properties');
   };
 
-<<<<<<< HEAD
-  // ✅ ALTERAÇÃO PONTUAL: WhatsApp/Call agora funcionam para público
-  // prioridade: ab-whatsapp (admin) > VITE_PUBLIC_WHATSAPP (público)
-  const handleWhatsApp = () => {
-    if (!property) return;
 
-    const whatsapp = getPublicWhatsapp(); // já retorna só dígitos
-    const price = Number(property.price || property.rentalPrice || 0);
-    const text = `Olá! Tenho interesse no imóvel: ${property.title} - R$ ${price.toLocaleString('pt-BR')}`;
-
-    if (whatsapp) {
-      const url = buildWaMeLink(whatsapp, text);
-      if (url) window.open(url, '_blank', 'noopener,noreferrer');
-    } else {
-      alert('Número de WhatsApp não configurado. Vá em Configurações para definir.');
-    }
-  };
-
-  const handleCall = () => {
-    const whatsapp = getPublicWhatsapp();
-=======
   const handleWhatsApp = () => {
     if (!property) return;
     const price = Number(property.price || property.rentalPrice || 0);
@@ -368,7 +307,6 @@ const PropertyDetails = () => {
 
   const handleCall = () => {
     const whatsapp = localStorage.getItem('ab-whatsapp') || systemConfig.whatsappNumber;
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
     if (whatsapp) {
       window.open(`tel:+${whatsapp}`);
     } else {
@@ -376,11 +314,8 @@ const PropertyDetails = () => {
     }
   };
 
-<<<<<<< HEAD
-  if (!property) return <div className="p-10 text-center text-slate-400">Carregando...</div>;
-=======
+
   if (!property) return <div className="p-10 text-center text-slate-400">{t('loading')}</div>;
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
 
   const coverSrc = allImages[currentImageIndex];
 
@@ -392,11 +327,8 @@ const PropertyDetails = () => {
         <Link
           to={backHref}
           className="absolute top-4 left-4 z-10 bg-white/80 p-2 rounded-full shadow-sm backdrop-blur"
-<<<<<<< HEAD
-          title="Voltar"
-=======
+
           title={t('details_back')}
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
         >
           <ArrowLeft size={20} className="text-slate-800" />
         </Link>
@@ -450,30 +382,20 @@ const PropertyDetails = () => {
             </span>
           </>
         ) : (
-<<<<<<< HEAD
-          <div className="w-full h-full flex items-center justify-center text-slate-400">Sem imagem</div>
-=======
+
           <div className="w-full h-full flex items-center justify-center text-slate-400">{t('no_images') || 'Sem imagem'}</div>
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
         )}
       </div>
 
       {/* Action buttons on image */}
       <div className="absolute top-[240px] right-4 flex gap-2 z-10">
         <button onClick={handleShare} className="bg-white/90 backdrop-blur px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm">
-<<<<<<< HEAD
-          <Share2 size={14} /> Compartilhar
-        </button>
-        {youtubeId && (
-          <button onClick={() => setShowVideoModal(true)} className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm">
-            <Video size={14} /> Vídeo
-=======
+
           <Share2 size={14} /> {t('details_share')}
         </button>
         {youtubeId && (
           <button onClick={() => setShowVideoModal(true)} className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm">
             <Video size={14} /> {t('details_video')}
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
           </button>
         )}
       </div>
@@ -483,13 +405,10 @@ const PropertyDetails = () => {
         <div className="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-6"></div>
 
         <div className="flex justify-between items-start mb-2">
-<<<<<<< HEAD
-          <h1 className="text-2xl font-bold text-slate-800 w-3/4 leading-tight">{property.title}</h1>
-=======
+
           <h1 className="text-2xl font-bold text-slate-800 w-3/4 leading-tight">
             <TranslatedText lang={lang}>{property.title}</TranslatedText>
           </h1>
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
 
           {/* Só mostra ações de editar/excluir no admin */}
           {authed && (
@@ -520,12 +439,9 @@ const PropertyDetails = () => {
         </div>
 
         <p className="text-slate-500 text-sm mb-6 flex items-center gap-1">
-<<<<<<< HEAD
-          <MapPin size={16} className="text-[var(--primary-color)]" /> {property.address}
-=======
+
           <MapPin size={16} className="text-[var(--primary-color)]" />
           <TranslatedText lang={lang}>{property.address}</TranslatedText>
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
         </p>
 
         {/* Badges */}
@@ -538,17 +454,11 @@ const PropertyDetails = () => {
                 : 'bg-red-100 text-red-700'
               }`}
           >
-<<<<<<< HEAD
-            {property.status}
-          </span>
-          <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 uppercase">
-            {property.contract === 'locacao' ? 'Locação' : property.contract === 'ambos' ? 'Venda e Locação' : 'Venda'}
-=======
+
             <TranslatedText lang={lang}>{property.status}</TranslatedText>
           </span>
           <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 uppercase">
             {property.contract === 'locacao' ? t('filter_rent') : property.contract === 'ambos' ? t('filter_both') : t('filter_sale')}
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
           </span>
           {property.type && (
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 uppercase">
@@ -561,21 +471,7 @@ const PropertyDetails = () => {
         <div className="flex gap-4 mb-6 overflow-x-auto pb-2 no-scrollbar">
           <div className="min-w-[80px] p-3 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center gap-1">
             <span className="text-slate-400"><BedDouble size={20} /></span>
-<<<<<<< HEAD
-            <span className="font-bold text-slate-800 text-sm">{Number(property.rooms || 0)} <span className="text-[10px] font-normal text-slate-400">Quartos</span></span>
-          </div>
-          <div className="min-w-[80px] p-3 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center gap-1">
-            <span className="text-slate-400"><Bath size={20} /></span>
-            <span className="font-bold text-slate-800 text-sm">{Number(property.bathrooms || 0)} <span className="text-[10px] font-normal text-slate-400">Banheiros</span></span>
-          </div>
-          <div className="min-w-[80px] p-3 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center gap-1">
-            <span className="text-slate-400"><Car size={20} /></span>
-            <span className="font-bold text-slate-800 text-sm">{Number(property.garage || 0)} <span className="text-[10px] font-normal text-slate-400">Vagas</span></span>
-          </div>
-          <div className="min-w-[80px] p-3 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center gap-1">
-            <span className="text-slate-400 font-serif font-bold text-lg">M²</span>
-            <span className="font-bold text-slate-800 text-sm">{Number(property.area || 0)} <span className="text-[10px] font-normal text-slate-400">Área</span></span>
-=======
+
             <span className="font-bold text-slate-800 text-sm">{Number(property.rooms || 0)} <span className="text-[10px] font-normal text-slate-400">{t('prop_rooms')}</span></span>
           </div>
           <div className="min-w-[80px] p-3 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center gap-1">
@@ -589,25 +485,18 @@ const PropertyDetails = () => {
           <div className="min-w-[80px] p-3 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center gap-1">
             <span className="text-slate-400 font-serif font-bold text-lg">M²</span>
             <span className="font-bold text-slate-800 text-sm">{Number(property.area || 0)} <span className="text-[10px] font-normal text-slate-400">{t('prop_area')}</span></span>
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
           </div>
         </div>
 
         {/* Description */}
         <div className="mb-8">
-<<<<<<< HEAD
-          <h3 className="font-bold text-slate-800 mb-2">Descrição</h3>
-          <p className="text-slate-500 text-sm leading-relaxed whitespace-pre-wrap">
-            {property.description ||
-              `Este imóvel incrível localizado em ${String(property.address || '').split('-')[1] || 'João Pessoa - PB'} oferece todo o conforto e exclusividade. Com acabamento de alto padrão e localização privilegiada.`}
-=======
+
           <h3 className="font-bold text-slate-800 mb-2">{t('details_description')}</h3>
           <p className="text-slate-500 text-sm leading-relaxed whitespace-pre-wrap">
             <TranslatedText lang={lang}>
               {property.description ||
                 `Este imóvel incrível localizado em ${String(property.address || '').split('-')[1] || 'João Pessoa - PB'} oferece todo o conforto e exclusividade. Com acabamento de alto padrão e localização privilegiada.`}
             </TranslatedText>
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
           </p>
         </div>
 
@@ -615,11 +504,8 @@ const PropertyDetails = () => {
         {youtubeId && (
           <div className="mb-8">
             <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2">
-<<<<<<< HEAD
-              <Video size={18} className="text-red-500" /> Vídeo do Imóvel
-=======
+
               <Video size={18} className="text-red-500" /> {t('details_video_title')}
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
             </h3>
             <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-md">
               <iframe
@@ -634,11 +520,8 @@ const PropertyDetails = () => {
         )}
 
         <div className="mb-24">
-<<<<<<< HEAD
-          <h3 className="font-bold text-slate-800 mb-2">Localização</h3>
-=======
+
           <h3 className="font-bold text-slate-800 mb-2">{t('details_location')}</h3>
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
           <div className="h-40 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 font-bold border-2 border-dashed border-slate-200">
             📍 {property.address}
           </div>
@@ -649,26 +532,7 @@ const PropertyDetails = () => {
       <div className="fixed bottom-0 left-0 w-full bg-white p-4 border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex items-center justify-between gap-4 z-20">
         <div>
           {property.contract === 'ambos' ? (
-<<<<<<< HEAD
-            <>
-              <p className="text-xs font-bold text-slate-400 uppercase">Venda / Locação</p>
-              <p className="text-lg font-bold text-[var(--primary-color)]">
-                {(property.price || property.salePrice) ? `R$ ${Number(property.price || property.salePrice || 0).toLocaleString('pt-BR')}` : 'Sob consulta'}
-              </p>
-              <p className="text-sm font-bold text-emerald-600">
-                {property.rentalPrice ? `R$ ${Number(property.rentalPrice || 0).toLocaleString('pt-BR')}/mês` : ''}
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="text-xs font-bold text-slate-400 uppercase">Valor Total</p>
-              <p className="text-xl font-bold text-[var(--primary-color)]">
-                {(property.price || property.rentalPrice)
-                  ? `R$ ${Number(property.price || property.rentalPrice || 0).toLocaleString('pt-BR')}${property.contract === 'locacao' ? '/mês' : ''}`
-                  : 'Sob consulta'}
-              </p>
-            </>
-=======
+
             <div className="flex flex-col">
               <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">{t('filter_both')}</p>
               <PriceDisplay
@@ -693,7 +557,6 @@ const PropertyDetails = () => {
                 isRent={property.contract === 'locacao'}
               />
             </div>
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
           )}
         </div>
 
@@ -703,21 +566,15 @@ const PropertyDetails = () => {
             className="bg-[#25D366] text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-emerald-500/30 hover:bg-[#128C7E] transition-all flex items-center gap-2 group"
           >
             <MessageCircle size={20} className="group-hover:scale-110 transition-transform" />
-<<<<<<< HEAD
-            WhatsApp
-=======
+
             {t('details_whatsapp')}
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
           </button>
           <button
             onClick={handleCall}
             className="bg-[var(--primary-color)] text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-500/30 hover:bg-[var(--primary-dark)] transition-colors flex items-center gap-2"
           >
-<<<<<<< HEAD
-            <Phone size={18} /> Ligar
-=======
+
             <Phone size={18} /> {t('details_call')}
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
           </button>
         </div>
       </div>
@@ -726,16 +583,7 @@ const PropertyDetails = () => {
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowDeleteModal(false)}>
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
-<<<<<<< HEAD
-            <h3 className="text-lg font-bold text-slate-800 mb-2">Excluir Imóvel?</h3>
-            <p className="text-sm text-slate-500 mb-6">Esta ação é irreversível. O imóvel "{property.title}" será removido permanentemente.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setShowDeleteModal(false)} className="flex-1 py-2 rounded-xl font-bold text-slate-500 border border-slate-200 hover:bg-slate-50">
-                Cancelar
-              </button>
-              <button onClick={handleDelete} className="flex-1 py-2 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600 transition-colors">
-                Excluir
-=======
+
             <h3 className="text-lg font-bold text-slate-800 mb-2">{t('details_delete_title')}</h3>
             <p className="text-sm text-slate-500 mb-6">{t('details_delete_confirm')}</p>
             <div className="flex gap-3">
@@ -744,7 +592,6 @@ const PropertyDetails = () => {
               </button>
               <button onClick={handleDelete} className="flex-1 py-2 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600 transition-colors">
                 {t('details_delete_button')}
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
               </button>
             </div>
           </div>

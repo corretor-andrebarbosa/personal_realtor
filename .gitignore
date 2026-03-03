@@ -7,6 +7,7 @@ dist/
 # local env files
 .env
 .env.local
+.env*.local
 
 # logs
 *.log
@@ -17,10 +18,15 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Vercel
+# Vercel (manter durante transição)
 .vercel/
+
+# Cloudflare
+.wrangler/
+.dev.vars
 
 # Generated optimized images (não versionar)
 public/_optimized/
-.vercel
-.env*.local
+
+# Arquivos temporários
+rep.zip

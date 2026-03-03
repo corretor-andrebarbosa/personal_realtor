@@ -66,25 +66,12 @@ const PropertyFilters = ({ onFilterChange, neighborhoods = [], t = (k) => k }) =
                         onChange={handleChange}
                         className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[var(--primary-color)] outline-none"
                     >
-<<<<<<< HEAD
-                        <option value="">Qualquer</option>
-                        <option value="Apartamento">Apartamento</option>
-                        <option value="Casa">Casa</option>
-                        <option value="Studio">Studio</option>
-                        <option value="Cobertura">Cobertura</option>
-                        <option value="Sala Comercial">Sala Comercial</option>
-                        <option value="Terreno">Terreno</option>
-                        <option value="Chácara">Chácara</option>
-                        <option value="Loja">Loja</option>
-                        <option value="Galpão">Galpão</option>
-                        <option value="Flat">Flat</option>
-=======
+
                         <option value="">{t('filter_any') || 'Qualquer'}</option>
                         <option value="Apartamento">{t('type_apartment') || 'Apartamento'}</option>
                         <option value="Casa">{t('type_house') || 'Casa'}</option>
                         <option value="Cobertura">{t('type_penthouse') || 'Cobertura'}</option>
                         <option value="Flat">{t('type_flat') || 'Flat'}</option>
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
                     </select>
                 </div>
 

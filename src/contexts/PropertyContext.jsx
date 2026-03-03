@@ -121,29 +121,7 @@ export const PropertyProvider = ({ children }) => {
                         image: p.image ?? p.image_url ?? p.main_image ?? p.capa ?? ''
                     }));
 
-<<<<<<< HEAD
-                    const optimizeImageUrl = (url) => {
-    if (!url) return '';
 
-    // Se for imagem do Supabase Storage
-    if (url.includes('/storage/v1/object/public/')) {
-        // Adiciona transformação automática de tamanho
-        return `${url}?width=1200&quality=70`;
-    }
-
-    return url;
-};
-
-const fullyNormalized = normalized.map(p => {
-    const mainImage = p.image || (p.images.length > 0 ? p.images[0] : '');
-
-    return {
-        ...p,
-        image: optimizeImageUrl(mainImage),
-        images: p.images.map(optimizeImageUrl)
-    };
-});
-=======
                     // Otimização de URLs (não quebra base64, mas otimiza storage)
                     const optimizeImageUrl = (url) => {
                         if (!url) return '';
@@ -152,7 +130,6 @@ const fullyNormalized = normalized.map(p => {
                         }
                         return url;
                     };
->>>>>>> da43ae91d6726ce15ea8e715ca4648eb30dfa935
 
                     const fullyNormalized = normalized.map(p => {
                         const mainImage = p.image || (p.images.length > 0 ? p.images[0] : '');
