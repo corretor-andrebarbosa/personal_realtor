@@ -26,64 +26,45 @@ const App = () => {
     // ✅ Se tiver ?preview=true na URL, ignoramos a manutenção
     const isPreviewMode = searchParams.get('preview') === 'true';
 
-    const [isAuthenticated, setIsAuthenticated] = React.useState(() => {
-        const sessionStr = localStorage.getItem('ab-auth-session');
-        if (!sessionStr) return false;
-        try {
-            const session = JSON.parse(sessionStr);
-            return (Date.now() - session.timestamp < 30 * 60 * 1000);
-        } catch (e) { return false; }
-    });
+    // isLoading=true impede redirect prematuro enquanto o Supabase verifica a sessão
+    const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+    const [isLoading, setIsLoading] = React.useState(true);
+
+    const _syncLocalSession = (session) => {
+        if (session) {
+            localStorage.setItem('ab-auth-session', JSON.stringify({ timestamp: Date.now() }));
+            localStorage.setItem('authToken', session.access_token);
+        } else {
+            localStorage.removeItem('ab-auth-session');
+            localStorage.removeItem('authToken');
+        }
+    };
 
     React.useEffect(() => {
-        const checkLocalSession = () => {
-            const sessionStr = localStorage.getItem('ab-auth-session');
-            if (!sessionStr) {
+        // 1) Verifica sessão atual no Supabase (resolvida antes de qualquer redirect)
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setIsAuthenticated(!!session);
+            _syncLocalSession(session || null);
+            setIsLoading(false);
+        });
+
+        // 2) Subscription criada UMA VEZ (não a cada mudança de pathname)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+                setIsAuthenticated(true);
+                _syncLocalSession(session);
+            } else if (event === 'SIGNED_OUT') {
                 setIsAuthenticated(false);
-                return;
+                _syncLocalSession(null);
+            } else if (event === 'INITIAL_SESSION') {
+                setIsAuthenticated(!!session);
+                _syncLocalSession(session || null);
             }
+            setIsLoading(false);
+        });
 
-            try {
-                const session = JSON.parse(sessionStr);
-                const now = Date.now();
-                const thirtyMinutes = 30 * 60 * 1000;
-
-                if (now - session.timestamp > thirtyMinutes) {
-                    localStorage.removeItem('ab-auth-session');
-                    localStorage.removeItem('authToken');
-                    setIsAuthenticated(false);
-                } else {
-                    const updatedSession = { ...session, timestamp: now };
-                    localStorage.setItem('ab-auth-session', JSON.stringify(updatedSession));
-                    setIsAuthenticated(true);
-                }
-            } catch (e) {
-                setIsAuthenticated(false);
-            }
-        };
-
-        checkLocalSession();
-
-        // ✅ CORREÇÃO: Só tenta usar o Supabase se ele existir
-        if (supabase) {
-            const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-                if (event === 'SIGNED_IN' && session) {
-                    localStorage.setItem('ab-auth-session', JSON.stringify({ timestamp: Date.now() }));
-                    localStorage.setItem('authToken', session.access_token);
-                    setIsAuthenticated(true);
-                }
-                if (event === 'SIGNED_OUT') {
-                    localStorage.removeItem('ab-auth-session');
-                    localStorage.removeItem('authToken');
-                    setIsAuthenticated(false);
-                }
-            });
-
-            return () => {
-                subscription.unsubscribe();
-            };
-        }
-    }, [location.pathname]);
+        return () => subscription.unsubscribe();
+    }, []); // ← sem dependência de pathname: subscription vive durante toda a sessão
 
 
     const adminPrefixes = ['/admin', '/kaleb', '/leads', '/people', '/settings'];
@@ -96,6 +77,15 @@ const App = () => {
     const isAdminPath =
         adminPrefixes.some((p) => location.pathname.startsWith(p)) ||
         isAdminPropertyRoute;
+
+    // Enquanto aguarda verificação de sessão, não redireciona (evita race condition)
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     if (isAdminPath && !isAuthenticated) {
         return <Navigate to="/login" replace />;

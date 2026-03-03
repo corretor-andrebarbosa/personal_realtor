@@ -10,7 +10,7 @@
     "optimize:images": "node tools/optimize-images.mjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4",
+    "@supabase/supabase-js": "^2.98.0",
     "clsx": "^2.1.1",
     "jspdf": "^4.2.0",
     "lucide-react": "^0.395.0",

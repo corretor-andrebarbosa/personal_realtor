@@ -26,12 +26,6 @@ export default function Login() {
   const onSubmit = async (e) => {
     e.preventDefault();
     setErr("");
-
-    if (!supabase) {
-      setErr(t('login_err_connection'));
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -41,8 +35,14 @@ export default function Login() {
       });
 
       if (error) {
-        if (error.message.includes("Failed to fetch") || error.message.includes("network")) {
+        if (
+          error.message.includes("Failed to fetch") ||
+          error.message.includes("network") ||
+          error.message.includes("ERR_NAME_NOT_RESOLVED")
+        ) {
           setErr(t('login_err_network'));
+        } else if (error.message.includes("Invalid login credentials")) {
+          setErr("E-mail ou senha incorretos.");
         } else {
           setErr(error.message);
         }
@@ -55,7 +55,13 @@ export default function Login() {
         navigate("/admin");
       }
     } catch (e2) {
-      setErr(t('login_err_unexpected'));
+      console.error('[Login] Erro inesperado:', e2);
+      // Erro de rede — Brave Shield ou sem internet
+      if (e2?.message?.includes('fetch') || e2?.name === 'TypeError') {
+        setErr('Bloqueio de rede detectado. Se estiver usando Brave, desative o Brave Shield para este site (ícone 🦁 na barra de endereço).');
+      } else {
+        setErr(t('login_err_unexpected'));
+      }
     } finally {
       setLoading(false);
     }
