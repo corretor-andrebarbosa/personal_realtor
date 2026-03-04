@@ -106,7 +106,13 @@ export const translations = {
         type_penthouse: "Cobertura",
         type_flat: "Flat",
         no_images: "Sem imagem",
-        prop_approx: "aprox."
+        prop_approx: "aprox.",
+
+        sell_badge: "Quer vender seu imóvel?",
+        sell_title: "Tem um imóvel para vender ou alugar?",
+        sell_subtitle: "Entre em contato agora e descubra o verdadeiro potencial do seu imóvel.",
+        sell_cta: "Falar com André no WhatsApp",
+        sell_coming_soon: "Em breve: cadastre seu imóvel gratuitamente com fotos e vídeos diretamente pela plataforma — sem intermediários, sem burocracia."
     },
     en: {
         nav_properties: "Properties",
@@ -215,7 +221,13 @@ export const translations = {
         type_penthouse: "Penthouse",
         type_flat: "Flat",
         no_images: "No image",
-        prop_approx: "approx."
+        prop_approx: "approx.",
+
+        sell_badge: "Want to sell your property?",
+        sell_title: "Have a property to sell or rent?",
+        sell_subtitle: "Contact us now and discover the true potential of your property.",
+        sell_cta: "Talk to André on WhatsApp",
+        sell_coming_soon: "Coming soon: list your property for free with photos and videos directly on the platform — no middlemen, no hassle."
     },
     de: {
         nav_properties: "Immobilien",
@@ -324,7 +336,13 @@ export const translations = {
         type_penthouse: "Dachgeschoss",
         type_flat: "Flat",
         no_images: "Kein Bild",
-        prop_approx: "ca."
+        prop_approx: "ca.",
+
+        sell_badge: "Immobilie verkaufen?",
+        sell_title: "Haben Sie eine Immobilie zu verkaufen oder vermieten?",
+        sell_subtitle: "Kontaktieren Sie uns jetzt und entdecken Sie das wahre Potenzial Ihrer Immobilie.",
+        sell_cta: "Mit André auf WhatsApp sprechen",
+        sell_coming_soon: "Bald verfügbar: listen Sie Ihre Immobilie kostenlos mit Fotos und Videos direkt auf der Plattform — ohne Zwischenhändler, ohne Bürokratie."
     },
     es: {
         nav_properties: "Inmuebles",
@@ -433,6 +451,12 @@ export const translations = {
         type_penthouse: "Ático",
         type_flat: "Flat",
         no_images: "Sin imagen",
-        prop_approx: "aprox."
+        prop_approx: "aprox.",
+
+        sell_badge: "¿Quiere vender su inmueble?",
+        sell_title: "¿Tiene un inmueble para vender o alquilar?",
+        sell_subtitle: "Contáctenos ahora y descubra el verdadero potencial de su inmueble.",
+        sell_cta: "Hablar con André en WhatsApp",
+        sell_coming_soon: "Próximamente: registre su inmueble gratuitamente con fotos y vídeos directamente en la plataforma — sin intermediarios, sin burocracia."
     }
 };
