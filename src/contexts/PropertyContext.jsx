@@ -118,7 +118,8 @@ export const PropertyProvider = ({ children }) => {
                             }
                             return [];
                         })(),
-                        image: p.image ?? p.image_url ?? p.main_image ?? p.capa ?? ''
+                        image: p.image ?? p.image_url ?? p.main_image ?? p.capa ?? '',
+                        price_type: p.price_type ?? 'fixo'
                     }));
 
 
@@ -185,7 +186,8 @@ export const PropertyProvider = ({ children }) => {
             videoLink: data.videoLink || '',
             video_link: data.videoLink || '',
             video_url: data.videoLink || '',
-            video: data.videoLink || ''
+            video: data.videoLink || '',
+            price_type: data.priceType ?? data.price_type ?? 'fixo'
         };
 
         if (cols && cols.length > 0) {

@@ -481,6 +481,7 @@ const PublicHome = () => {
                                                         brlValue={property.price || property.salePrice}
                                                         lang={lang}
                                                         propertyConsultText={t('property_consult')}
+                                                        priceType={property.price_type || 'fixo'}
                                                     />
                                                     <PriceDisplay
                                                         brlValue={property.rentalPrice}
@@ -495,6 +496,7 @@ const PublicHome = () => {
                                                     lang={lang}
                                                     propertyConsultText={t('property_consult')}
                                                     isRent={property.contract === 'locacao'}
+                                                    priceType={property.price_type || 'fixo'}
                                                 />
                                             )}
                                         </div>

@@ -60,6 +60,7 @@ const normalizeExistingPropertyToForm = (existing) => {
     address: existing?.address || '',
     description: existing?.description || '',
     videoLink: existing?.videoLink || existing?.video || existing?.video_url || existing?.video_link || '',
+    priceType: existing?.price_type || existing?.priceType || 'fixo',
     images: images || [],
     image: cover
   };
@@ -83,6 +84,7 @@ const PropertyForm = () => {
     salePrice: '',
     rentalPrice: '',
     contract: 'venda',
+    priceType: 'fixo',
     area: '',
     rooms: 0,
     bathrooms: 0,
@@ -268,6 +270,9 @@ const PropertyForm = () => {
 
       images: (formData.images || []).filter(Boolean),
       image: formData.image || (formData.images?.[0] || ''),
+
+      price_type: formData.priceType || 'fixo',
+      priceType: formData.priceType || 'fixo',
 
       status: 'Disponível'
     };
@@ -460,6 +465,31 @@ const PropertyForm = () => {
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[var(--primary-color)] outline-none transition-colors font-mono"
                   placeholder="0"
                 />
+              </div>
+            )}
+
+            {(formData.contract === 'venda' || formData.contract === 'ambos') && (
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">Tipo do Preço de Venda</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { value: 'fixo', label: 'Fixo' },
+                    { value: 'negociavel', label: 'Negociável' },
+                    { value: 'a_partir_de', label: 'A partir de' }
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, priceType: opt.value }))}
+                      className={`py-2 rounded-xl font-bold border transition-all text-sm ${formData.priceType === opt.value
+                        ? 'bg-[var(--primary-color)] text-white border-[var(--primary-color)] shadow-md'
+                        : 'bg-white text-slate-400 border-slate-200'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
