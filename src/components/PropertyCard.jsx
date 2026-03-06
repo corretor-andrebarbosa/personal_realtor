@@ -108,10 +108,17 @@ const PropertyCard = ({ property }) => {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-1 text-slate-500 text-xs mb-4">
+                    <div className="flex items-center gap-1 text-slate-500 text-xs mb-2">
                         <MapPin size={14} />
                         <span className="truncate">{property.address || 'Endereço não informado'}</span>
                     </div>
+
+                    {(property.caucao || property.fiador) && (
+                        <div className="flex gap-1 mb-3">
+                            {property.caucao && <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-[10px] font-bold">Caução</span>}
+                            {property.fiador && <span className="px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-md text-[10px] font-bold">Fiador</span>}
+                        </div>
+                    )}
 
                     <div className="flex items-center justify-between pt-4 border-t border-slate-100 text-slate-600 text-sm">
                         <div className="flex gap-4">

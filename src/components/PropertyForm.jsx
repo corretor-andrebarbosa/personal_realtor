@@ -61,6 +61,8 @@ const normalizeExistingPropertyToForm = (existing) => {
     description: existing?.description || '',
     videoLink: existing?.videoLink || existing?.video || existing?.video_url || existing?.video_link || '',
     priceType: existing?.price_type || existing?.priceType || 'fixo',
+    caucao: existing?.caucao ?? false,
+    fiador: existing?.fiador ?? false,
     images: images || [],
     image: cover
   };
@@ -85,6 +87,8 @@ const PropertyForm = () => {
     rentalPrice: '',
     contract: 'venda',
     priceType: 'fixo',
+    caucao: false,
+    fiador: false,
     area: '',
     rooms: 0,
     bathrooms: 0,
@@ -273,6 +277,9 @@ const PropertyForm = () => {
 
       price_type: formData.priceType || 'fixo',
       priceType: formData.priceType || 'fixo',
+
+      caucao: formData.caucao || false,
+      fiador: formData.fiador || false,
 
       status: 'Disponível'
     };
@@ -504,6 +511,32 @@ const PropertyForm = () => {
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[var(--primary-color)] outline-none transition-colors font-mono"
                   placeholder="0"
                 />
+              </div>
+            )}
+
+            {(formData.contract === 'locacao' || formData.contract === 'ambos') && (
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-2">Requisitos de Locação</label>
+                <div className="flex gap-3">
+                  <label className="flex items-center gap-2 cursor-pointer select-none bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 flex-1 hover:bg-slate-100 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={formData.caucao}
+                      onChange={e => setFormData(p => ({ ...p, caucao: e.target.checked }))}
+                      className="w-4 h-4 accent-[var(--primary-color)]"
+                    />
+                    <span className="text-sm font-bold text-slate-700">Caução</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer select-none bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 flex-1 hover:bg-slate-100 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={formData.fiador}
+                      onChange={e => setFormData(p => ({ ...p, fiador: e.target.checked }))}
+                      className="w-4 h-4 accent-[var(--primary-color)]"
+                    />
+                    <span className="text-sm font-bold text-slate-700">Fiador</span>
+                  </label>
+                </div>
               </div>
             )}
           </div>
