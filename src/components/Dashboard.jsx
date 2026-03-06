@@ -1,12 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     DollarSign,
     Users,
     Building2,
     TrendingUp,
-    ArrowUpRight,
-    ArrowDownRight,
     Target,
     Globe,
     PlusCircle
@@ -14,6 +12,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Link } from 'react-router-dom';
 import { useProperties } from '../contexts/PropertyContext';
+import { useDashboardConfig } from '../hooks/useDashboardConfig';
 
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Settings as SettingsIcon, User } from 'lucide-react';
@@ -34,10 +33,10 @@ const Dashboard = () => {
         } catch (error) {
             console.error("Logout error:", error);
         }
-
         localStorage.removeItem('authToken');
         localStorage.removeItem('ab-auth-session');
-        navigate('/login');
+        // window.location.replace garante reload completo — evita estado residual do React
+        window.location.replace('/login');
     };
 
     // Load primary color from settings
@@ -51,37 +50,38 @@ const Dashboard = () => {
     const vendaProperties = properties.filter(p => p.contract === 'venda');
     const locacaoProperties = properties.filter(p => p.contract === 'locacao');
 
-    const stats = {
-        venda: {
-            sales: 'R$ 650.000',
-            salesGoal: 1000000,
-            leads: 24,
-            properties: vendaProperties.length,
-            commissions: 'R$ 27k',
-            funnel: [
-                { name: 'Prospecção', value: 145, color: '#93c5fd' },
-                { name: 'Visita', value: 42, color: '#60a5fa' },
-                { name: 'Proposta', value: 12, color: '#3b82f6' },
-                { name: 'Fechado', value: 4, color: '#166b9c' },
-            ]
-        },
-        locacao: {
-            sales: 'R$ 15.000',
-            salesGoal: 25000,
-            leads: 18,
-            properties: locacaoProperties.length,
-            commissions: 'R$ 4.2k',
-            funnel: [
-                { name: 'Prospecção', value: 80, color: '#93c5fd' },
-                { name: 'Visita', value: 25, color: '#60a5fa' },
-                { name: 'Proposta', value: 8, color: '#3b82f6' },
-                { name: 'Fechado', value: 6, color: '#166b9c' },
-            ]
-        }
+    const { config } = useDashboardConfig();
+
+    const FUNNEL_COLORS = ['#93c5fd', '#60a5fa', '#3b82f6', '#166b9c'];
+    const FUNNEL_LABELS = ['Prospecção', 'Visita', 'Proposta', 'Fechado'];
+
+    const fmt = (n) => {
+        const v = Number(n) || 0;
+        if (v >= 1000000) return `R$ ${(v / 1000000).toFixed(1).replace('.0', '').replace('.', ',')}M`;
+        if (v >= 1000) return `R$ ${(v / 1000).toFixed(1).replace('.0', '').replace('.', ',')}k`;
+        return `R$ ${v.toLocaleString('pt-BR')}`;
     };
 
-    const currentStats = stats[context];
-    const progressPercentage = (parseInt(currentStats.sales.replace(/\D/g, '')) / currentStats.salesGoal) * 100;
+    const currentStats = useMemo(() => {
+        const isVenda = context === 'venda';
+        const vendas = Number(isVenda ? config.vendas_venda : config.vendas_locacao) || 0;
+        const meta = Number(isVenda ? config.meta_venda : config.meta_locacao) || 1;
+        const funil = (isVenda ? config.funil_venda : config.funil_locacao) || [0, 0, 0, 0];
+        return {
+            sales: vendas,
+            salesGoal: meta,
+            leads: Number(isVenda ? config.leads_venda : config.leads_locacao) || 0,
+            properties: isVenda ? vendaProperties.length : locacaoProperties.length,
+            commissions: fmt(isVenda ? config.comissoes_venda : config.comissoes_locacao),
+            funnel: FUNNEL_LABELS.map((name, i) => ({
+                name,
+                value: Number(Array.isArray(funil) ? funil[i] : 0) || 0,
+                color: FUNNEL_COLORS[i],
+            })),
+        };
+    }, [context, config, vendaProperties.length, locacaoProperties.length]);
+
+    const progressPercentage = Math.min((currentStats.sales / currentStats.salesGoal) * 100, 100);
 
     return (
         <div className="pb-20 bg-slate-50 min-h-screen">
@@ -178,7 +178,7 @@ const Dashboard = () => {
                     <div className="flex justify-between items-end mb-2">
                         <div>
                             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Vendas Mensais</p>
-                            <h2 className="text-3xl font-bold text-slate-800 tracking-tight">{currentStats.sales} <span className="text-sm font-normal text-slate-400">/ {(currentStats.salesGoal / 1000).toFixed(0)}k</span></h2>
+                            <h2 className="text-3xl font-bold text-slate-800 tracking-tight">{fmt(currentStats.sales)} <span className="text-sm font-normal text-slate-400">/ {fmt(currentStats.salesGoal)}</span></h2>
                         </div>
                         <div className="text-[var(--primary-color)] font-bold bg-blue-50 px-2 py-1 rounded text-sm">
                             {progressPercentage.toFixed(0)}%
@@ -194,7 +194,10 @@ const Dashboard = () => {
 
                     <div className="flex items-center gap-2 text-xs font-medium text-emerald-600 bg-emerald-50 w-fit px-2 py-1 rounded">
                         <TrendingUp size={14} />
-                        Faltam R$ {(currentStats.salesGoal - parseInt(currentStats.sales.replace(/\D/g, ''))).toLocaleString('pt-BR')} para bater sua meta
+                        {currentStats.sales >= currentStats.salesGoal
+                            ? 'Meta atingida!'
+                            : `Faltam ${fmt(currentStats.salesGoal - currentStats.sales)} para bater sua meta`
+                        }
                     </div>
                 </div>
 
@@ -203,7 +206,7 @@ const Dashboard = () => {
                     <Link to="/leads" className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-2">
                             <div className="text-slate-400 bg-slate-50 p-2 rounded-lg"><Users size={20} /></div>
-                            <span className="text-xs font-bold text-red-500 flex items-center bg-red-50 px-1 rounded">-5% <ArrowDownRight size={12} /></span>
+                            <span className="text-xs text-slate-400 font-medium">do mês</span>
                         </div>
                         <div>
                             <p className="text-2xl font-bold text-slate-800">{currentStats.leads}</p>
@@ -214,7 +217,7 @@ const Dashboard = () => {
                     <Link to="/properties" className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-2">
                             <div className="text-slate-400 bg-slate-50 p-2 rounded-lg"><Building2 size={20} /></div>
-                            <span className="text-xs font-bold text-emerald-500 flex items-center bg-emerald-50 px-1 rounded">+12% <ArrowUpRight size={12} /></span>
+                            <span className="text-xs text-slate-400 font-medium">cadastrados</span>
                         </div>
                         <div>
                             <p className="text-2xl font-bold text-slate-800">{currentStats.properties}</p>
@@ -225,7 +228,7 @@ const Dashboard = () => {
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between col-span-2">
                         <div className="flex justify-between items-start mb-2">
                             <div className="text-slate-400 bg-slate-50 p-2 rounded-lg"><DollarSign size={20} /></div>
-                            <span className="text-xs font-bold text-emerald-500 flex items-center bg-emerald-50 px-1 rounded">+8% <ArrowUpRight size={12} /></span>
+                            <span className="text-xs text-slate-400 font-medium">previstas</span>
                         </div>
                         <div>
                             <p className="text-2xl font-bold text-slate-800">{currentStats.commissions}</p>

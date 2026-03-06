@@ -182,6 +182,16 @@ const PropertyDetails = () => {
     });
   }, [allImages]);
 
+  // Bloqueia scroll do body quando galeria está aberta
+  useEffect(() => {
+    if (showGallery) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [showGallery]);
+
   // Keyboard Navigation (setas + ESC)
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -600,34 +610,44 @@ const PropertyDetails = () => {
 
       {/* Fullscreen Gallery Modal */}
       {showGallery && (
-        <div className="fixed inset-0 bg-black z-50 flex flex-col">
-          <div className="flex justify-between items-center p-4">
+        <div className="fixed inset-0 bg-black z-50 overflow-hidden" style={{ height: '100dvh' }}>
+          {/* Header */}
+          <div className="absolute top-0 left-0 right-0 flex justify-between items-center p-4 z-10">
             <span className="text-white font-bold">{currentImageIndex + 1} / {allImages.length}</span>
             <button onClick={() => setShowGallery(false)} className="text-white p-2" title="Fechar (ESC)">
               <X size={24} />
             </button>
           </div>
-          <div className="flex-1 flex items-center justify-center relative">
-            <img src={allImages[currentImageIndex]} alt="" className="max-w-full max-h-full object-contain" />
-            {allImages.length > 1 && (
-              <>
-                <button
-                  onClick={() => setCurrentImageIndex(i => (i - 1 + allImages.length) % allImages.length)}
-                  className="absolute left-4 bg-white/20 backdrop-blur p-3 rounded-full text-white"
-                  title="Anterior (←)"
-                >
-                  <ChevronLeft size={24} />
-                </button>
-                <button
-                  onClick={() => setCurrentImageIndex(i => (i + 1) % allImages.length)}
-                  className="absolute right-4 bg-white/20 backdrop-blur p-3 rounded-full text-white"
-                  title="Próxima (→)"
-                >
-                  <ChevronRight size={24} />
-                </button>
-              </>
-            )}
+          {/* Image area */}
+          <div
+            className="absolute left-0 right-0 bottom-0 overflow-hidden"
+            style={{ top: '56px' }}
+          >
+            <img
+              src={allImages[currentImageIndex]}
+              alt=""
+              className="block w-full h-full object-contain"
+            />
           </div>
+          {/* Navigation arrows */}
+          {allImages.length > 1 && (
+            <>
+              <button
+                onClick={() => setCurrentImageIndex(i => (i - 1 + allImages.length) % allImages.length)}
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 backdrop-blur p-3 rounded-full text-white z-10"
+                title="Anterior (←)"
+              >
+                <ChevronLeft size={24} />
+              </button>
+              <button
+                onClick={() => setCurrentImageIndex(i => (i + 1) % allImages.length)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 backdrop-blur p-3 rounded-full text-white z-10"
+                title="Próxima (→)"
+              >
+                <ChevronRight size={24} />
+              </button>
+            </>
+          )}
         </div>
       )}
 

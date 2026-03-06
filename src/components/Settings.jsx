@@ -1,8 +1,11 @@
-import React, { useState, useRef } from 'react';
-import { Settings as SettingsIcon, Upload, Database, PaintBucket, Brain, Globe, Save, Image, CheckCircle, Share2 } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Settings as SettingsIcon, Upload, Database, PaintBucket, Brain, Globe, Save, Image, CheckCircle, Share2, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { systemConfig } from '../system-config';
 import { useProperties } from '../contexts/PropertyContext';
+import { useDashboardConfig, DEFAULT_DASHBOARD } from '../hooks/useDashboardConfig';
+
+const FUNNEL_LABELS = ['Prospecção', 'Visita', 'Proposta', 'Fechado'];
 
 const Settings = () => {
     const [primaryColor, setPrimaryColor] = useState(localStorage.getItem('ab-primary-color') || '#166b9c');
@@ -16,6 +19,35 @@ const Settings = () => {
     const [supabaseKey, setSupabaseKey] = useState(localStorage.getItem('ab-supabase-key') || '');
     const [saved, setSaved] = useState(false);
     const { properties, syncAllLocal, isSyncing } = useProperties();
+
+    // Dashboard config (Supabase)
+    const { config: dashConfig, loading: dashLoading, saveConfig: saveDashConfig } = useDashboardConfig();
+    const [metaVenda, setMetaVenda] = useState(String(DEFAULT_DASHBOARD.meta_venda));
+    const [metaLocacao, setMetaLocacao] = useState(String(DEFAULT_DASHBOARD.meta_locacao));
+    const [vendasVenda, setVendasVenda] = useState('0');
+    const [vendasLocacao, setVendasLocacao] = useState('0');
+    const [leadsVenda, setLeadsVenda] = useState('0');
+    const [leadsLocacao, setLeadsLocacao] = useState('0');
+    const [comissoesVenda, setComissoesVenda] = useState('0');
+    const [comissoesLocacao, setComissoesLocacao] = useState('0');
+    const [funilVenda, setFunilVenda] = useState(['0', '0', '0', '0']);
+    const [funilLocacao, setFunilLocacao] = useState(['0', '0', '0', '0']);
+
+    useEffect(() => {
+        if (dashLoading) return;
+        setMetaVenda(String(dashConfig.meta_venda ?? DEFAULT_DASHBOARD.meta_venda));
+        setMetaLocacao(String(dashConfig.meta_locacao ?? DEFAULT_DASHBOARD.meta_locacao));
+        setVendasVenda(String(dashConfig.vendas_venda ?? 0));
+        setVendasLocacao(String(dashConfig.vendas_locacao ?? 0));
+        setLeadsVenda(String(dashConfig.leads_venda ?? 0));
+        setLeadsLocacao(String(dashConfig.leads_locacao ?? 0));
+        setComissoesVenda(String(dashConfig.comissoes_venda ?? 0));
+        setComissoesLocacao(String(dashConfig.comissoes_locacao ?? 0));
+        const fv = Array.isArray(dashConfig.funil_venda) ? dashConfig.funil_venda : [0, 0, 0, 0];
+        const fl = Array.isArray(dashConfig.funil_locacao) ? dashConfig.funil_locacao : [0, 0, 0, 0];
+        setFunilVenda(fv.map(String));
+        setFunilLocacao(fl.map(String));
+    }, [dashLoading]);
     const [syncStatus, setSyncStatus] = useState(null);
     const pendingCount = properties.filter(p => String(p.id).startsWith('local-') || p._isLocal).length;
     const logoInputRef = useRef(null);
@@ -40,7 +72,7 @@ const Settings = () => {
         reader.readAsDataURL(file);
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         // ✅ mudança pontual: whatsapp sempre só dígitos
         const whatsappDigits = String(whatsapp || '').replace(/\D/g, '');
 
@@ -63,6 +95,20 @@ const Settings = () => {
 
         // mantém o input atualizado já sanitizado
         setWhatsapp(whatsappDigits);
+
+        // Salva metas do dashboard no Supabase
+        await saveDashConfig({
+            meta_venda: Number(metaVenda) || 0,
+            meta_locacao: Number(metaLocacao) || 0,
+            vendas_venda: Number(vendasVenda) || 0,
+            vendas_locacao: Number(vendasLocacao) || 0,
+            leads_venda: Number(leadsVenda) || 0,
+            leads_locacao: Number(leadsLocacao) || 0,
+            comissoes_venda: Number(comissoesVenda) || 0,
+            comissoes_locacao: Number(comissoesLocacao) || 0,
+            funil_venda: funilVenda.map(v => Number(v) || 0),
+            funil_locacao: funilLocacao.map(v => Number(v) || 0),
+        });
 
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
@@ -354,6 +400,102 @@ const Settings = () => {
                         </div>
                         <p className="text-[10px] text-slate-400">O sistema alternará entre Gemini e Groq automaticamente para economizar limites gratuitos.</p>
                     </div>
+                </section>
+
+                {/* Metas & Dashboard */}
+                <section className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                    <h2 className="font-bold text-slate-800 mb-1 flex items-center gap-2 text-sm uppercase tracking-wider text-[var(--primary-color)]">
+                        <Target size={16} /> Metas & Dashboard
+                    </h2>
+                    <p className="text-xs text-slate-400 mb-4">Esses dados ficam salvos na nuvem e aparecem no seu painel mesmo após sair e entrar novamente.</p>
+
+                    {dashLoading ? (
+                        <p className="text-xs text-slate-400 text-center py-4">Carregando dados salvos...</p>
+                    ) : (
+                        <div className="space-y-5">
+                            {/* Vendas */}
+                            <div>
+                                <p className="text-xs font-bold text-slate-500 uppercase mb-2">Venda</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Meta Mensal (R$)</label>
+                                        <input type="number" value={metaVenda} onChange={e => setMetaVenda(e.target.value)}
+                                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="1000000" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Vendas do Mês (R$)</label>
+                                        <input type="number" value={vendasVenda} onChange={e => setVendasVenda(e.target.value)}
+                                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="0" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Leads Ativos</label>
+                                        <input type="number" value={leadsVenda} onChange={e => setLeadsVenda(e.target.value)}
+                                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="0" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Comissões Previstas (R$)</label>
+                                        <input type="number" value={comissoesVenda} onChange={e => setComissoesVenda(e.target.value)}
+                                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="0" />
+                                    </div>
+                                </div>
+                                <div className="mt-3">
+                                    <label className="block text-[10px] font-bold text-slate-400 mb-2">Funil de Vendas</label>
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {FUNNEL_LABELS.map((label, i) => (
+                                            <div key={label}>
+                                                <label className="block text-[9px] text-slate-400 mb-1 text-center">{label}</label>
+                                                <input type="number" value={funilVenda[i] ?? '0'}
+                                                    onChange={e => setFunilVenda(prev => { const n = [...prev]; n[i] = e.target.value; return n; })}
+                                                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-center" placeholder="0" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="border-t border-slate-100" />
+
+                            {/* Locação */}
+                            <div>
+                                <p className="text-xs font-bold text-slate-500 uppercase mb-2">Locação</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Meta Mensal (R$)</label>
+                                        <input type="number" value={metaLocacao} onChange={e => setMetaLocacao(e.target.value)}
+                                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="25000" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Vendas do Mês (R$)</label>
+                                        <input type="number" value={vendasLocacao} onChange={e => setVendasLocacao(e.target.value)}
+                                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="0" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Leads Ativos</label>
+                                        <input type="number" value={leadsLocacao} onChange={e => setLeadsLocacao(e.target.value)}
+                                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="0" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Comissões Previstas (R$)</label>
+                                        <input type="number" value={comissoesLocacao} onChange={e => setComissoesLocacao(e.target.value)}
+                                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="0" />
+                                    </div>
+                                </div>
+                                <div className="mt-3">
+                                    <label className="block text-[10px] font-bold text-slate-400 mb-2">Funil de Locação</label>
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {FUNNEL_LABELS.map((label, i) => (
+                                            <div key={label}>
+                                                <label className="block text-[9px] text-slate-400 mb-1 text-center">{label}</label>
+                                                <input type="number" value={funilLocacao[i] ?? '0'}
+                                                    onChange={e => setFunilLocacao(prev => { const n = [...prev]; n[i] = e.target.value; return n; })}
+                                                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-center" placeholder="0" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </section>
 
                 <button

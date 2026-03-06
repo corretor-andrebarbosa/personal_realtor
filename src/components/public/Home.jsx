@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useProperties } from '../../contexts/PropertyContext';
+import { useLeads } from '../../contexts/LeadContext';
 
 import { MapPin, ArrowUpRight, Phone, Instagram, Linkedin, MessageCircle, PlayCircle, Star, ShieldCheck, BedDouble, Bath, Car, Menu, X, Facebook, Youtube, User, LayoutDashboard, Settings as SettingsIcon, LogOut, ChevronDown, Loader2, Building2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -33,8 +34,11 @@ const getYoutubeThumbnail = (url) => {
 
 const PublicHome = () => {
     const { properties, loading } = useProperties();
+    const { addLead } = useLeads();
     const navigate = useNavigate();
     const [mobileMenu, setMobileMenu] = useState(false);
+    const [contactForm, setContactForm] = useState({ name: '', phone: '', interest: '' });
+    const [contactStatus, setContactStatus] = useState(null); // null | 'sending' | 'sent' | 'error'
     const [filters, setFilters] = useState({});
     const [lang, setLang] = useState('pt');
     const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
@@ -147,12 +151,32 @@ const PublicHome = () => {
         ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent('Olá! Tenho um imóvel que gostaria de avaliar para venda ou locação. Pode me ajudar?')}`
         : '#vender';
 
-    const handleContactSubmit = (e) => {
+    const handleContactSubmit = async (e) => {
         e.preventDefault();
-        const phone = e.target.querySelector('input').value;
-
-        openWhatsApp(`Olá! Meu número é ${phone}. Gostaria de saber mais sobre seus imóveis.`, settings.whatsapp);
-        e.target.querySelector('input').value = '';
+        if (!contactForm.name.trim() || !contactForm.phone.trim()) return;
+        setContactStatus('sending');
+        try {
+            await addLead({
+                name: contactForm.name.trim(),
+                phone: contactForm.phone.trim().replace(/\D/g, ''),
+                interest: contactForm.interest.trim() || 'Site público',
+                status: 'Quente',
+                budget: '',
+                lastContact: 'Agora',
+                archived: false,
+                avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(contactForm.name.trim())}&background=cbd5e1&color=334155`,
+                source: 'site',
+            });
+            setContactStatus('sent');
+            setContactForm({ name: '', phone: '', interest: '' });
+            // Também abre WhatsApp para atendimento imediato
+            openWhatsApp(
+                `Olá! Me chamo ${contactForm.name.trim()} e gostaria de saber mais sobre: ${contactForm.interest.trim() || 'seus imóveis'}.`,
+                settings.whatsapp
+            );
+        } catch {
+            setContactStatus('error');
+        }
     };
 
     return (
@@ -619,20 +643,63 @@ const PublicHome = () => {
                         {t('contact_subtitle')}
                     </p>
 
-                    <form onSubmit={handleContactSubmit} className="max-w-md mx-auto bg-white/10 backdrop-blur-md p-2 rounded-2xl md:rounded-full flex flex-col md:flex-row border border-white/20 shadow-2xl hover:bg-white/20 transition-all focus-within:ring-4 focus-within:ring-white/30 gap-2">
-                        <div className="flex-1 flex items-center px-4 py-2">
-                            <MessageCircle className="text-blue-400 mr-2 shrink-0" size={20} />
-                            <input
-                                type="text"
-                                placeholder={t('contact_placeholder')}
-                                className="bg-transparent border-none text-white placeholder-white/50 focus:ring-0 w-full text-sm md:text-base outline-none"
-                                required
-                            />
+                    {contactStatus === 'sent' ? (
+                        <div className="max-w-md mx-auto bg-white/20 backdrop-blur-md rounded-2xl p-8 border border-white/30 text-center">
+                            <div className="text-4xl mb-3">✅</div>
+                            <p className="text-white font-bold text-lg">Mensagem recebida!</p>
+                            <p className="text-white/80 text-sm mt-1">André vai entrar em contato em breve. O WhatsApp já foi aberto para você continuar a conversa.</p>
+                            <button onClick={() => setContactStatus(null)} className="mt-4 text-white/70 text-xs underline">Enviar outra mensagem</button>
                         </div>
-                        <button className="bg-white text-slate-900 px-8 py-3 rounded-xl md:rounded-full font-bold hover:bg-blue-50 transition-colors shadow-lg">
-                            {t('contact_button')}
-                        </button>
-                    </form>
+                    ) : (
+                        <form onSubmit={handleContactSubmit} className="max-w-md mx-auto bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl p-6 space-y-3">
+                            <div className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-3 border border-white/20 focus-within:border-white/50 transition-colors">
+                                <User size={16} className="text-white/60 shrink-0" />
+                                <input
+                                    type="text"
+                                    value={contactForm.name}
+                                    onChange={e => setContactForm(p => ({ ...p, name: e.target.value }))}
+                                    placeholder="Seu nome *"
+                                    required
+                                    className="bg-transparent outline-none text-white placeholder-white/50 w-full text-sm"
+                                />
+                            </div>
+                            <div className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-3 border border-white/20 focus-within:border-white/50 transition-colors">
+                                <Phone size={16} className="text-white/60 shrink-0" />
+                                <input
+                                    type="tel"
+                                    value={contactForm.phone}
+                                    onChange={e => setContactForm(p => ({ ...p, phone: e.target.value }))}
+                                    placeholder="WhatsApp com DDD *"
+                                    required
+                                    className="bg-transparent outline-none text-white placeholder-white/50 w-full text-sm"
+                                />
+                            </div>
+                            <div className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-3 border border-white/20 focus-within:border-white/50 transition-colors">
+                                <MessageCircle size={16} className="text-white/60 shrink-0" />
+                                <input
+                                    type="text"
+                                    value={contactForm.interest}
+                                    onChange={e => setContactForm(p => ({ ...p, interest: e.target.value }))}
+                                    placeholder="O que você procura? (opcional)"
+                                    className="bg-transparent outline-none text-white placeholder-white/50 w-full text-sm"
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={contactStatus === 'sending'}
+                                className="w-full bg-white text-slate-900 py-3 rounded-xl font-bold hover:bg-blue-50 transition-colors shadow-lg disabled:opacity-60 flex items-center justify-center gap-2"
+                            >
+                                {contactStatus === 'sending' ? (
+                                    <><Loader2 size={16} className="animate-spin" /> Enviando...</>
+                                ) : (
+                                    <><MessageCircle size={16} /> {t('contact_button')}</>
+                                )}
+                            </button>
+                            {contactStatus === 'error' && (
+                                <p className="text-red-200 text-xs text-center">Erro ao enviar. Tente pelo WhatsApp diretamente.</p>
+                            )}
+                        </form>
+                    )}
                 </div>
             </section>
 
