@@ -22,16 +22,9 @@ const People = () => {
     const [people, setPeople] = useState(() => {
         const saved = localStorage.getItem('ab-people');
         return saved ? JSON.parse(saved) : {
-            clientes: [
-                { id: 1, name: 'Roberto Silva', phone: '5583999990000', email: 'roberto@email.com', address: 'Bessa, João Pessoa', cpf: '123.456.789-00', notes: 'Busca apartamento 3 quartos', role: '', creci: '', company: '' },
-                { id: 2, name: 'Mariana Costa', phone: '5583988881111', email: 'mariana@email.com', address: 'Manaíra, João Pessoa', cpf: '987.654.321-00', notes: 'Interesse em casas de alto padrão', role: '', creci: '', company: '' },
-            ],
-            corretores: [
-                { id: 3, name: 'André Barbosa', phone: '5583977770000', email: 'andre@barbosa.com', address: 'João Pessoa, PB', cpf: '', notes: 'Corretor principal', role: 'Corretor Chefe', creci: 'CRECI 16321-F', company: 'AB Imóveis' },
-            ],
-            colaboradores: [
-                { id: 4, name: 'Juliana Santos', phone: '5583966660000', email: 'juliana@email.com', address: 'João Pessoa, PB', cpf: '', notes: 'Responsável pelo marketing', role: 'Marketing', creci: '', company: '' },
-            ]
+            clientes: [],
+            corretores: [],
+            colaboradores: [],
         };
     });
 

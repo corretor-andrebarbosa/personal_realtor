@@ -10,31 +10,6 @@ export const LeadProvider = ({ children }) => {
     const [leads, setLeads] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const defaultLeads = [
-        {
-            id: 1,
-            name: 'Roberto Silva',
-            phone: '5581999990000',
-            interest: 'Edifício Horizon',
-            status: 'Quente',
-            lastContact: 'Hoje, 09:30',
-            budget: 'R$ 1.2M',
-            archived: false,
-            avatar: 'https://ui-avatars.com/api/?name=Roberto+Silva&background=cbd5e1&color=334155'
-        },
-        {
-            id: 2,
-            name: 'Mariana Costa',
-            phone: '5581988881111',
-            interest: 'Casa Jardim do Sol',
-            status: 'Agendado',
-            lastContact: 'Ontem',
-            budget: 'R$ 900k',
-            archived: false,
-            avatar: 'https://ui-avatars.com/api/?name=Mariana+Costa&background=fce7f3&color=db2777'
-        }
-    ];
-
     // Initial Load
     useEffect(() => {
         const loadLeads = async () => {
@@ -46,7 +21,7 @@ export const LeadProvider = ({ children }) => {
                         .select('*')
                         .order('created_at', { ascending: false });
 
-                    if (!error && data && data.length > 0) {
+                    if (!error && data) {
                         setLeads(data);
                         setLoading(false);
                         return;
@@ -54,14 +29,10 @@ export const LeadProvider = ({ children }) => {
                 }
 
                 const saved = localStorage.getItem('ab-leads');
-                if (saved) {
-                    setLeads(JSON.parse(saved));
-                } else {
-                    setLeads(defaultLeads);
-                }
+                setLeads(saved ? JSON.parse(saved) : []);
             } catch (error) {
                 console.error('Erro ao carregar leads:', error);
-                setLeads(defaultLeads);
+                setLeads([]);
             } finally {
                 setLoading(false);
             }

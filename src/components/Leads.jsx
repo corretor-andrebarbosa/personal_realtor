@@ -8,6 +8,7 @@ const Leads = () => {
     const [activeTab, setActiveTab] = useState('active');
     const [showAddModal, setShowAddModal] = useState(false);
     const [newLead, setNewLead] = useState({ name: '', phone: '', interest: '', budget: '', status: 'Quente' });
+    const [deleteConfirm, setDeleteConfirm] = useState(null);
 
     const handleAddLead = async () => {
         if (!newLead.name || !newLead.phone) return;
@@ -146,10 +147,31 @@ const Leads = () => {
                             >
                                 {lead.archived ? '↩' : '📦'}
                             </button>
+                            <button
+                                onClick={() => setDeleteConfirm(lead.id)}
+                                className="w-10 bg-red-50 text-red-500 rounded-lg flex items-center justify-center hover:bg-red-100"
+                                title="Excluir lead"
+                            >
+                                <Trash2 size={15} />
+                            </button>
                         </div>
                     </div>
                 ))}
             </div>
+
+            {/* Delete Confirmation */}
+            {deleteConfirm && (
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setDeleteConfirm(null)}>
+                    <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-lg font-bold text-slate-800 mb-2">Excluir lead?</h3>
+                        <p className="text-sm text-slate-500 mb-6">Esta ação é irreversível e remove o lead do Supabase.</p>
+                        <div className="flex gap-3">
+                            <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-2.5 rounded-xl font-bold text-slate-500 border border-slate-200 hover:bg-slate-50">Cancelar</button>
+                            <button onClick={() => { deleteLead(deleteConfirm); setDeleteConfirm(null); }} className="flex-1 py-2.5 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/20">Excluir</button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Add Lead Modal */}
             {showAddModal && (
