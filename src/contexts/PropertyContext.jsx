@@ -187,7 +187,9 @@ export const PropertyProvider = ({ children }) => {
             video_link: data.videoLink || '',
             video_url: data.videoLink || '',
             video: data.videoLink || '',
-            price_type: data.priceType ?? data.price_type ?? 'fixo'
+            price_type: data.priceType ?? data.price_type ?? 'fixo',
+            caucao: data.caucao ?? false,
+            fiador: data.fiador ?? false,
         };
 
         if (cols && cols.length > 0) {
@@ -206,7 +208,7 @@ export const PropertyProvider = ({ children }) => {
         let payload = { ...basePayload };
         Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
 
-        for (let attempt = 0; attempt < 5; attempt++) {
+        for (let attempt = 0; attempt < 20; attempt++) {
             const { data, error } = await supabase.from('properties').insert([payload]).select();
             if (!error) return { data, error: null };
 
@@ -229,7 +231,7 @@ export const PropertyProvider = ({ children }) => {
         let payload = { ...basePayload };
         Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
 
-        for (let attempt = 0; attempt < 5; attempt++) {
+        for (let attempt = 0; attempt < 20; attempt++) {
             const { error } = await supabase.from('properties').update(payload).eq('id', id);
             if (!error) return { error: null };
 
@@ -353,19 +355,18 @@ export const PropertyProvider = ({ children }) => {
 
         if (supabase && !String(id).startsWith('local-')) {
             try {
-                let cols = dbSchema || await discoverSchema();
-                const payload = buildUniversalPayload(updated, cols);
+                const payload = { ...updated };
                 const { error } = await updateAdaptive(id, payload);
                 if (error) {
-                    console.error("Update error:", error);
-                    // Reverte em caso de erro
+                    const msg = error.message || JSON.stringify(error);
+                    console.error("Update error:", msg);
                     setProperties(prev => prev.map(p => p.id === id ? { ...p, ...prevItem } : p));
-                    return false;
+                    return msg; // retorna a mensagem de erro para exibir na UI
                 }
                 return true;
             } catch (e) {
                 console.error("Update exception:", e);
-                return false;
+                return e?.message || 'Erro inesperado';
             }
         }
         return false;

@@ -47,8 +47,8 @@ const Dashboard = () => {
         }
     }, []);
 
-    const vendaProperties = properties.filter(p => p.contract === 'venda');
-    const locacaoProperties = properties.filter(p => p.contract === 'locacao');
+    const vendaProperties = properties.filter(p => p.contract === 'venda' || p.contract === 'ambos');
+    const locacaoProperties = properties.filter(p => p.contract === 'locacao' || p.contract === 'ambos');
 
     const { config } = useDashboardConfig();
 

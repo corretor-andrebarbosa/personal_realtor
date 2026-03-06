@@ -549,6 +549,21 @@ const PublicHome = () => {
                                             {property.area > 0 && <span>{property.area}m²</span>}
                                         </div>
 
+                                        {(property.caucao || property.fiador) && (
+                                            <div className="flex gap-2 mb-3">
+                                                {property.caucao && (
+                                                    <span className="px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-[10px] font-bold uppercase tracking-wide">
+                                                        🔒 Caução (1 aluguel)
+                                                    </span>
+                                                )}
+                                                {property.fiador && (
+                                                    <span className="px-2 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-lg text-[10px] font-bold uppercase tracking-wide">
+                                                        👤 Fiador
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();

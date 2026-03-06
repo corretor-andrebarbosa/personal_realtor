@@ -306,7 +306,8 @@ const PropertyForm = () => {
       const propertyData = buildPropertyData();
       const imagesChanged = didImagesChange();
 
-      if (isEditing && hasBase64 && !imagesChanged) {
+      if (isEditing && !imagesChanged) {
+        // Não envia imagens se não mudaram — evita erros de tipo e reduz payload
         delete propertyData.images;
         delete propertyData.image;
       }
@@ -319,14 +320,12 @@ const PropertyForm = () => {
         success = await addProperty(propertyData);
       }
 
-      if (success) {
+      if (success === true) {
         setSaved(true);
         setTimeout(() => navigate('/properties'), 1200);
       } else {
-        setSaveError(
-          'Erro ao salvar. Se você ainda tem fotos em base64 (data:image...), o ideal é migrar para o Storage. ' +
-          'Por enquanto, tente salvar sem mexer nas fotos (apenas vídeo/texto), ou remova fotos base64 e use URLs/Storage.'
-        );
+        const errMsg = typeof success === 'string' ? success : 'Erro desconhecido ao salvar.';
+        setSaveError(`Erro ao salvar: ${errMsg}`);
       }
     } catch (error) {
       console.error('Erro ao salvar imóvel:', error);
