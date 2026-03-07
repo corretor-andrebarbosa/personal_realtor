@@ -87,7 +87,7 @@ const BlogList = () => {
                                 <Eye size={14} /> Ver
                             </a>
                             <Link
-                                to={`/blog/edit/${post.id}`}
+                                to={`/admin/blog/edit/${post.id}`}
                                 className="flex-1 py-2.5 text-xs font-bold text-slate-500 hover:text-[var(--primary-color)] flex items-center justify-center gap-1.5 transition-colors border-l border-slate-50"
                             >
                                 <Pencil size={14} /> Editar
