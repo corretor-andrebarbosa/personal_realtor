@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calendar, User, Tag, ChevronDown } from 'lucide-react';
+import { ArrowLeft, User, Tag, ChevronDown } from 'lucide-react';
 import { useBlog } from '../../contexts/BlogContext';
 import TranslatedText from '../common/TranslatedText';
 import { translations } from '../../translations';
@@ -41,11 +41,8 @@ const BlogPostPage = () => {
         if (!loading && !post) navigate('/blog', { replace: true });
     }, [loading, post, navigate]);
 
-    const formatDate = (d) => new Date(d).toLocaleDateString(lang === 'pt' ? 'pt-BR' : lang === 'de' ? 'de-DE' : lang === 'es' ? 'es-ES' : 'en-US', {
-        day: '2-digit', month: 'long', year: 'numeric'
-    });
-
-    // Parse content: split line by line, [img:URL] lines → image blocks, rest → text paragraphs
+    // Parse content: normalize [img:URL] tags (wherever they appear) then split
+    const IMG_MARKER = '__IMGBLOCK__';
     const IMG_RE = /^\[img:(https?:\/\/[^\]]+)\]$/i;
     const contentBlocks = [];
     let currentPara = [];
@@ -55,12 +52,14 @@ const BlogPostPage = () => {
             currentPara = [];
         }
     };
-    (post?.content || '').split('\n').forEach(line => {
+    // Replace [img:URL] anywhere in text with isolated marker lines
+    const normalized = (post?.content || '')
+        .replace(/\[img:(https?:\/\/[^\]]+)\]/gi, `\n${IMG_MARKER}$1\n`);
+    normalized.split('\n').forEach(line => {
         const trimmed = line.trim();
-        const imgMatch = trimmed.match(IMG_RE);
-        if (imgMatch) {
+        if (trimmed.startsWith(IMG_MARKER)) {
             flushPara();
-            contentBlocks.push({ type: 'img', url: imgMatch[1] });
+            contentBlocks.push({ type: 'img', url: trimmed.slice(IMG_MARKER.length) });
         } else if (!trimmed) {
             flushPara();
         } else {
@@ -149,15 +148,11 @@ const BlogPostPage = () => {
                     <TranslatedText lang={lang}>{post.title}</TranslatedText>
                 </h1>
 
-                {/* Meta */}
+                {/* Meta — apenas autor, sem data */}
                 <div className="flex flex-wrap gap-4 text-sm text-slate-400 mb-8 pb-8 border-b border-slate-100">
                     <span className="flex items-center gap-1.5">
                         <User size={14} />
                         {post.author || systemConfig.brokerName}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                        <Calendar size={14} />
-                        {formatDate(post.created_at)}
                     </span>
                 </div>
 
