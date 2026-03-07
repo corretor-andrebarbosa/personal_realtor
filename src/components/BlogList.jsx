@@ -79,7 +79,7 @@ const BlogList = () => {
 
                         <div className="flex border-t border-slate-50">
                             <a
-                                href={`/blog/${post.id}`}
+                                href={`/blog/${post.slug || post.id}`}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="flex-1 py-2.5 text-xs font-bold text-slate-500 hover:text-[var(--primary-color)] flex items-center justify-center gap-1.5 transition-colors"
