@@ -96,7 +96,7 @@ const App = () => {
         return <Navigate to="/login" replace />;
     }
 
-    const hideNavPaths = ['/properties/new', '/website', '/login'];
+    const hideNavPaths = ['/properties/new', '/website', '/login', '/admin/blog/new', '/admin/blog/edit'];
     const showNav = isAuthenticated
         && location.pathname !== '/'
         && !hideNavPaths.some(p => location.pathname.includes(p))
