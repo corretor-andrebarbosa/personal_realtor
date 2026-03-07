@@ -37,7 +37,7 @@ const PriceDisplay = ({ brlValue, lang, propertyConsultText, isRent = false, pri
 
     const formattedBRL = `R$ ${brlValue.toLocaleString('pt-BR')}${isRent ? t('prop_month') : ''}`;
     const prefix = priceType === 'a_partir_de'
-        ? <span className="text-xs font-medium opacity-90 block leading-tight">A partir de</span>
+        ? <span className="text-xs font-medium opacity-90 block leading-tight">{t('price_from')}</span>
         : null;
 
     if (!localPrice || currencyInfo.code === 'BRL') {
