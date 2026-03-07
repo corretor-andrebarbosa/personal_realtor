@@ -13,6 +13,11 @@ import PublicHome from './components/public/Home';
 import Login from './components/Login';
 import { PropertyProvider } from './contexts/PropertyContext';
 import { LeadProvider } from './contexts/LeadContext';
+import { BlogProvider } from './contexts/BlogContext';
+import BlogList from './components/BlogList';
+import BlogForm from './components/BlogForm';
+import BlogPage from './components/public/BlogPage';
+import BlogPostPage from './components/public/BlogPostPage';
 import ErrorBoundary from './components/ErrorBoundary';
 
 import { config } from './config';
@@ -102,9 +107,12 @@ const App = () => {
         <ErrorBoundary>
             <PropertyProvider>
                 <LeadProvider>
+                <BlogProvider>
                     <div className="font-['Manrope'] antialiased text-slate-900 bg-slate-50 min-h-screen">
                         <Routes>
                             {/* Public routes */}
+                            <Route path="/blog" element={<BlogPage />} />
+                            <Route path="/blog/:id" element={<BlogPostPage />} />
                             <Route
                                 path="/"
                                 element={
@@ -127,10 +135,15 @@ const App = () => {
                             <Route path="/leads" element={<Leads />} />
                             <Route path="/people" element={<People />} />
                             <Route path="/settings" element={<Settings />} />
+                            {/* Admin blog routes */}
+                            <Route path="/admin/blog" element={isAuthenticated ? <BlogList /> : <Navigate to="/login" replace />} />
+                            <Route path="/admin/blog/new" element={isAuthenticated ? <BlogForm /> : <Navigate to="/login" replace />} />
+                            <Route path="/admin/blog/edit/:id" element={isAuthenticated ? <BlogForm /> : <Navigate to="/login" replace />} />
                         </Routes>
 
                         {showNav && <Navigation />}
                     </div>
+                </BlogProvider>
                 </LeadProvider>
             </PropertyProvider>
         </ErrorBoundary>
