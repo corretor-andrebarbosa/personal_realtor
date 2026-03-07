@@ -56,6 +56,7 @@ export const translations = {
         prop_garage: "Vagas",
         prop_area: "Área",
         prop_month: "/mês",
+        price_from: "A partir de",
 
         loading: "Carregando imóveis...",
         no_properties: "Nenhum imóvel disponível no momento.",
@@ -171,6 +172,7 @@ export const translations = {
         prop_garage: "Parking",
         prop_area: "Area",
         prop_month: "/month",
+        price_from: "Starting at",
 
         loading: "Loading properties...",
         no_properties: "No properties available at the moment.",
@@ -286,6 +288,7 @@ export const translations = {
         prop_garage: "Parkplätze",
         prop_area: "Fläche",
         prop_month: "/Monat",
+        price_from: "Ab",
 
         loading: "Immobilien werden geladen...",
         no_properties: "Zurzeit sind keine Immobilien verfügbar.",
@@ -401,6 +404,7 @@ export const translations = {
         prop_garage: "Plazas",
         prop_area: "Área",
         prop_month: "/mes",
+        price_from: "Desde",
 
         loading: "Cargando inmuebles...",
         no_properties: "No hay inmuebles disponibles en este momento.",
