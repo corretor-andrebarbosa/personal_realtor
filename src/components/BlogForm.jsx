@@ -197,14 +197,17 @@ const BlogForm = () => {
                 {/* Conteúdo */}
                 <section className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                     <h2 className="font-bold text-slate-800 mb-2 text-sm uppercase tracking-wider text-[var(--primary-color)]">Conteúdo *</h2>
-                    <p className="text-xs text-slate-400 mb-3">Separe os parágrafos com uma linha em branco. O texto será traduzido automaticamente para o idioma do visitante.</p>
+                    <p className="text-xs text-slate-400 mb-1">Separe os parágrafos com uma linha em branco. O texto será traduzido automaticamente para o idioma do visitante.</p>
+                    <p className="text-xs text-slate-400 mb-3 bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">
+                        📷 <strong>Imagem no meio do texto:</strong> em uma linha separada, escreva <code className="bg-slate-200 px-1 rounded">[img:https://url-da-imagem.jpg]</code>
+                    </p>
                     <textarea
                         name="content"
                         value={formData.content}
                         onChange={handleChange}
-                        rows={16}
+                        rows={18}
                         className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[var(--primary-color)] outline-none resize-none leading-relaxed text-sm"
-                        placeholder={`Escreva o artigo aqui...\n\nSepare os parágrafos com uma linha em branco.\n\nCada parágrafo será traduzido automaticamente.`}
+                        placeholder={`Escreva o artigo aqui...\n\nSepare os parágrafos com uma linha em branco.\n\nPara inserir uma imagem no meio do texto:\n\n[img:https://url-da-imagem.jpg]\n\nCada parágrafo será traduzido automaticamente.`}
                         required
                     />
                 </section>

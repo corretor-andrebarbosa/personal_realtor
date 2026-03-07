@@ -45,8 +45,9 @@ const BlogPostPage = () => {
         day: '2-digit', month: 'long', year: 'numeric'
     });
 
-    // Split content by double newline to translate paragraph by paragraph
+    // Split content by double newline; detect [img:URL] blocks for inline images
     const paragraphs = (post?.content || '').split(/\n\n+/).map(p => p.trim()).filter(Boolean);
+    const IMG_RE = /^\[img:(https?:\/\/[^\]]+)\]$/i;
 
     if (loading) {
         return (
@@ -147,13 +148,27 @@ const BlogPostPage = () => {
                     </p>
                 )}
 
-                {/* Content — translated paragraph by paragraph */}
+                {/* Content — translated paragraph by paragraph; [img:URL] renders as image */}
                 <div className="prose prose-slate max-w-none space-y-5">
-                    {paragraphs.map((para, i) => (
-                        <p key={i} className="text-slate-700 leading-relaxed text-base">
-                            <TranslatedText lang={lang}>{para}</TranslatedText>
-                        </p>
-                    ))}
+                    {paragraphs.map((para, i) => {
+                        const imgMatch = para.match(IMG_RE);
+                        if (imgMatch) {
+                            return (
+                                <img
+                                    key={i}
+                                    src={imgMatch[1]}
+                                    alt=""
+                                    className="w-full rounded-xl object-cover my-2"
+                                    onError={e => e.target.style.display = 'none'}
+                                />
+                            );
+                        }
+                        return (
+                            <p key={i} className="text-slate-700 leading-relaxed text-base">
+                                <TranslatedText lang={lang}>{para}</TranslatedText>
+                            </p>
+                        );
+                    })}
                 </div>
 
                 {/* Back link */}
