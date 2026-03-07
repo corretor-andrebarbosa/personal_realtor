@@ -838,6 +838,11 @@
         }
 
         @media (max-width: 1024px) {
+            .hero {
+                overflow: visible;
+                padding-bottom: 80px;
+            }
+
             .hero-content {
                 grid-template-columns: 1fr;
                 gap: 60px;
@@ -893,8 +898,7 @@
 
         @media (max-width: 768px) {
             .hero {
-                overflow-x: hidden;
-                overflow-y: visible;
+                overflow: visible;
                 min-height: unset;
                 padding-bottom: 60px;
             }
