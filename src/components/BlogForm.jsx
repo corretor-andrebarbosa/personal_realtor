@@ -15,6 +15,12 @@ const CATEGORIES = [
     'Notícias',
 ];
 
+const toSlug = (str) =>
+    str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase().trim()
+        .replace(/[^a-z0-9\s]/g, ' ').trim()
+        .replace(/\s+/g, '-').replace(/-+/g, '-');
+
 const BlogForm = () => {
     const { addPost, updatePost, posts } = useBlog();
     const navigate = useNavigate();
@@ -23,6 +29,7 @@ const BlogForm = () => {
 
     const [formData, setFormData] = useState({
         title: '',
+        slug: '',
         excerpt: '',
         content: '',
         cover_image: '',
@@ -30,6 +37,7 @@ const BlogForm = () => {
         author: 'André Barbosa',
         status: 'published',
     });
+    const [slugManual, setSlugManual] = useState(false);
 
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
@@ -39,8 +47,10 @@ const BlogForm = () => {
         if (!isEditing) return;
         const existing = posts.find(p => String(p.id) === String(id));
         if (existing) {
+            setSlugManual(true);
             setFormData({
                 title: existing.title || '',
+                slug: existing.slug || toSlug(existing.title || ''),
                 excerpt: existing.excerpt || '',
                 content: existing.content || '',
                 cover_image: existing.cover_image || '',
@@ -53,7 +63,11 @@ const BlogForm = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => {
+            const updated = { ...prev, [name]: value };
+            if (name === 'title' && !slugManual) updated.slug = toSlug(value);
+            return updated;
+        });
     };
 
     const handleSubmit = async (e) => {
@@ -126,6 +140,20 @@ const BlogForm = () => {
                                 placeholder="Ex: 5 dicas para comprar seu primeiro apartamento"
                                 required
                             />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 mb-1">URL do artigo (slug)</label>
+                            <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl overflow-hidden focus-within:border-[var(--primary-color)]">
+                                <span className="text-xs text-slate-400 pl-3 pr-1 whitespace-nowrap">/blog/</span>
+                                <input
+                                    type="text"
+                                    value={formData.slug}
+                                    onChange={e => { setSlugManual(true); setFormData(prev => ({ ...prev, slug: e.target.value })); }}
+                                    className="flex-1 p-3 pl-0 bg-transparent outline-none text-xs font-mono text-slate-700"
+                                    placeholder="gerado-automaticamente-do-titulo"
+                                />
+                            </div>
                         </div>
 
                         <div>

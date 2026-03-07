@@ -35,7 +35,7 @@ const BlogPostPage = () => {
         setIsLangMenuOpen(false);
     };
 
-    const post = posts.find(p => String(p.id) === String(id));
+    const post = posts.find(p => p.slug === id || String(p.id) === String(id));
 
     useEffect(() => {
         if (!loading && !post) navigate('/blog', { replace: true });
@@ -45,9 +45,29 @@ const BlogPostPage = () => {
         day: '2-digit', month: 'long', year: 'numeric'
     });
 
-    // Split content by double newline; detect [img:URL] blocks for inline images
-    const paragraphs = (post?.content || '').split(/\n\n+/).map(p => p.trim()).filter(Boolean);
+    // Parse content: split line by line, [img:URL] lines → image blocks, rest → text paragraphs
     const IMG_RE = /^\[img:(https?:\/\/[^\]]+)\]$/i;
+    const contentBlocks = [];
+    let currentPara = [];
+    const flushPara = () => {
+        if (currentPara.length > 0) {
+            contentBlocks.push({ type: 'text', content: currentPara.join(' ') });
+            currentPara = [];
+        }
+    };
+    (post?.content || '').split('\n').forEach(line => {
+        const trimmed = line.trim();
+        const imgMatch = trimmed.match(IMG_RE);
+        if (imgMatch) {
+            flushPara();
+            contentBlocks.push({ type: 'img', url: imgMatch[1] });
+        } else if (!trimmed) {
+            flushPara();
+        } else {
+            currentPara.push(trimmed);
+        }
+    });
+    flushPara();
 
     if (loading) {
         return (
@@ -148,27 +168,23 @@ const BlogPostPage = () => {
                     </p>
                 )}
 
-                {/* Content — translated paragraph by paragraph; [img:URL] renders as image */}
+                {/* Content — [img:URL] lines render as images, rest as translated paragraphs */}
                 <div className="prose prose-slate max-w-none space-y-5">
-                    {paragraphs.map((para, i) => {
-                        const imgMatch = para.match(IMG_RE);
-                        if (imgMatch) {
-                            return (
-                                <img
-                                    key={i}
-                                    src={imgMatch[1]}
-                                    alt=""
-                                    className="w-full rounded-xl object-cover my-2"
-                                    onError={e => e.target.style.display = 'none'}
-                                />
-                            );
-                        }
-                        return (
+                    {contentBlocks.map((block, i) =>
+                        block.type === 'img' ? (
+                            <img
+                                key={i}
+                                src={block.url}
+                                alt=""
+                                className="w-full rounded-xl object-cover my-2"
+                                onError={e => e.target.style.display = 'none'}
+                            />
+                        ) : (
                             <p key={i} className="text-slate-700 leading-relaxed text-base">
-                                <TranslatedText lang={lang}>{para}</TranslatedText>
+                                <TranslatedText lang={lang}>{block.content}</TranslatedText>
                             </p>
-                        );
-                    })}
+                        )
+                    )}
                 </div>
 
                 {/* Back link */}
