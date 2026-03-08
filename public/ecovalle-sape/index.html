@@ -322,6 +322,38 @@
             display: block;
         }
 
+        .mobile-videos {
+            display: none;
+            background: linear-gradient(135deg, #1a2e35 0%, #2d4a5a 50%, #3a5a77 100%);
+            padding: 0 20px 50px;
+        }
+
+        .mobile-videos .video-preview-container {
+            display: block;
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+            text-decoration: none;
+            margin-bottom: 20px;
+        }
+
+        .mobile-videos .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+        }
+
+        .mobile-videos .video-container img {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
         .video-container {
             position: relative;
             width: 100%;
@@ -838,6 +870,11 @@
         }
 
         @media (max-width: 1024px) {
+            .hero {
+                overflow: visible;
+                padding-bottom: 80px;
+            }
+
             .hero-content {
                 grid-template-columns: 1fr;
                 gap: 60px;
@@ -892,6 +929,12 @@
         }
 
         @media (max-width: 768px) {
+            .hero {
+                overflow: visible;
+                min-height: unset;
+                padding-bottom: 60px;
+            }
+
             .hero-content {
                 padding: 40px 20px;
             }
@@ -934,6 +977,14 @@
             .urgency {
                 padding: 60px 20px;
             }
+
+            .hero-image-container {
+                display: none;
+            }
+
+            .mobile-videos {
+                display: block;
+            }
         }
     </style>
 </head>
@@ -952,11 +1003,6 @@
     />
   </a>
 
-  <!-- CONTEÚDO NORMAL DO HERO -->
-  <div class="hero-content">
-    ...
-  </div>
-        
         <div class="hero-content">
             <div class="hero-text">
                 <div class="eyebrow">CONDOMÍNIO FECHADO • SAPÉ • PARAÍBA</div>
@@ -1044,6 +1090,36 @@
             </div>
         </div>
     </section>
+
+    <!-- VÍDEOS MOBILE — visível apenas em telas <= 768px -->
+    <div class="mobile-videos">
+        <a href="https://www.youtube.com/watch?v=v05kyu-pfcE" target="_blank" class="video-preview-container">
+            <div class="video-container">
+                <img src="https://img.youtube.com/vi/v05kyu-pfcE/maxresdefault.jpg"
+                     alt="Conheça o Jardim Ecovalle – Condomínio Fechado em Sapé-PB"
+                     onerror="this.src='https://img.youtube.com/vi/v05kyu-pfcE/hqdefault.jpg'">
+                <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;width:70px;height:70px;background:rgba(255,0,0,0.9);border-radius:18px;display:flex;align-items:center;justify-content:center;">
+                    <svg viewBox="0 0 24 24" style="width:35px;height:35px;fill:white;margin-left:5px;"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+                <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.7),transparent);padding:15px 12px 10px;color:white;font-size:0.8rem;font-weight:700;">
+                    🎬 ASSISTA: Conheça o Jardim Ecovalle
+                </div>
+            </div>
+        </a>
+        <a href="https://www.youtube.com/watch?v=vFJV2o69fwc" target="_blank" class="video-preview-container">
+            <div class="video-container">
+                <img src="https://img.youtube.com/vi/vFJV2o69fwc/maxresdefault.jpg"
+                     alt="Infraestrutura e Área Verde – Jardim Ecovalle Sapé-PB"
+                     onerror="this.src='https://img.youtube.com/vi/vFJV2o69fwc/hqdefault.jpg'">
+                <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;width:70px;height:70px;background:rgba(255,0,0,0.9);border-radius:18px;display:flex;align-items:center;justify-content:center;">
+                    <svg viewBox="0 0 24 24" style="width:35px;height:35px;fill:white;margin-left:5px;"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+                <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.7),transparent);padding:15px 12px 10px;color:white;font-size:0.8rem;font-weight:700;">
+                    🎬 ASSISTA: Infraestrutura e Área Verde
+                </div>
+            </div>
+        </a>
+    </div>
 
     <section class="benefits">
         <div class="section-header">
