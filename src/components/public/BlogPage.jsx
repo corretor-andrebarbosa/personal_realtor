@@ -36,10 +36,6 @@ const BlogPage = () => {
 
     const publishedPosts = posts.filter(p => p.status === 'published');
 
-    const formatDate = (d) => new Date(d).toLocaleDateString(lang === 'pt' ? 'pt-BR' : lang === 'de' ? 'de-DE' : lang === 'es' ? 'es-ES' : 'en-US', {
-        day: '2-digit', month: 'long', year: 'numeric'
-    });
-
     return (
         <div className="font-['Manrope'] antialiased bg-slate-50 min-h-screen">
 
@@ -154,8 +150,7 @@ const BlogPage = () => {
                                         <TranslatedText lang={lang}>{post.excerpt}</TranslatedText>
                                     </p>
                                 )}
-                                <div className="flex items-center justify-between text-xs text-slate-400 pt-3 border-t border-slate-50">
-                                    <span>{formatDate(post.created_at)}</span>
+                                <div className="flex items-center justify-end text-xs pt-3 border-t border-slate-50">
                                     <span className="flex items-center gap-1 text-[#166b9c] font-bold">
                                         <TranslatedText lang={lang}>Ler artigo</TranslatedText>
                                         <ArrowRight size={12} />

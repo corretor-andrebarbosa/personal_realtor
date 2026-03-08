@@ -28,13 +28,20 @@ const Dashboard = () => {
     const handleLogout = async () => {
         try {
             if (supabase) {
-                await supabase.auth.signOut();
+                // scope: 'local' faz logout apenas local, sem depender de rede
+                await supabase.auth.signOut({ scope: 'local' });
             }
         } catch (error) {
             console.error("Logout error:", error);
         }
         localStorage.removeItem('authToken');
         localStorage.removeItem('ab-auth-session');
+        // Remove o token interno do Supabase (garante logout mesmo se signOut falhou)
+        for (const key of Object.keys(localStorage)) {
+            if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+                localStorage.removeItem(key);
+            }
+        }
         // window.location.replace garante reload completo — evita estado residual do React
         window.location.replace('/login');
     };
