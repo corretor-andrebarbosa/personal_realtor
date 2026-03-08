@@ -25,24 +25,16 @@ const Dashboard = () => {
     const { properties } = useProperties();
     const [showProfileMenu, setShowProfileMenu] = useState(false);
 
-    const handleLogout = async () => {
-        try {
-            if (supabase) {
-                // scope: 'local' faz logout apenas local, sem depender de rede
-                await supabase.auth.signOut({ scope: 'local' });
-            }
-        } catch (error) {
-            console.error("Logout error:", error);
-        }
+    const handleLogout = () => {
+        // Remove todos os tokens Supabase e sessão imediatamente (síncrono)
+        Object.keys(localStorage)
+            .filter(k => k.startsWith('sb-'))
+            .forEach(k => localStorage.removeItem(k));
         localStorage.removeItem('authToken');
         localStorage.removeItem('ab-auth-session');
-        // Remove o token interno do Supabase (garante logout mesmo se signOut falhou)
-        for (const key of Object.keys(localStorage)) {
-            if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
-                localStorage.removeItem(key);
-            }
-        }
-        // window.location.replace garante reload completo — evita estado residual do React
+        // Dispara signOut em background sem bloquear o redirect
+        supabase?.auth.signOut({ scope: 'local' }).catch(() => {});
+        // Reload forçado — evita estado residual do React
         window.location.replace('/login');
     };
 
