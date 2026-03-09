@@ -23,13 +23,24 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { config } from './config';
 import Maintenance from './components/public/Maintenance';
 import { supabase } from './lib/supabaseClient';
+import { useSetApartDayStatus } from './hooks/useSetApartDayStatus';
 
 const App = () => {
     const location = useLocation();
     const [searchParams] = useSearchParams();
 
-    // ✅ Se tiver ?preview=true na URL, ignoramos a manutenção
+    // ✅ Se tiver ?preview=true na URL, ignoramos a manutenção e dias apartados
     const isPreviewMode = searchParams.get('preview') === 'true';
+
+    // 🔍 ?setapart=Shabbat (ou qualquer nome) força a tela de dia apartado para testes locais
+    const setApartPreview = searchParams.get('setapart');
+
+    const setApartDayStatus = useSetApartDayStatus();
+
+    // Override de teste: se ?setapart=X, simula dia apartado com esse nome
+    const effectiveSetApartStatus = setApartPreview
+        ? { isSetApartDay: true, name: setApartPreview, endTimeMs: Date.now() + 3 * 60 * 60 * 1000 }
+        : setApartDayStatus;
 
     // isLoading=true impede redirect prematuro enquanto o Supabase verifica a sessão
     const [isAuthenticated, setIsAuthenticated] = React.useState(false);
@@ -111,15 +122,24 @@ const App = () => {
                     <div className="font-['Manrope'] antialiased text-slate-900 bg-slate-50 min-h-screen">
                         <Routes>
                             {/* Public routes */}
-                            <Route path="/blog" element={<BlogPage />} />
-                            <Route path="/blog/:id" element={<BlogPostPage />} />
+                            <Route path="/blog" element={
+                                (!isPreviewMode && effectiveSetApartStatus.isSetApartDay)
+                                    ? <Maintenance setApartDay={effectiveSetApartStatus} />
+                                    : <BlogPage />
+                            } />
+                            <Route path="/blog/:id" element={
+                                (!isPreviewMode && effectiveSetApartStatus.isSetApartDay)
+                                    ? <Maintenance setApartDay={effectiveSetApartStatus} />
+                                    : <BlogPostPage />
+                            } />
                             <Route
                                 path="/"
                                 element={
-                                    // ✅ LÓGICA DO PREVIEW
-                                    (config.maintenance.enabled && !isPreviewMode) 
-                                        ? <Maintenance expectedReturnDate={config.maintenance.returnDate} /> 
-                                        : <PublicHome />
+                                    (!isPreviewMode && effectiveSetApartStatus.isSetApartDay)
+                                        ? <Maintenance setApartDay={effectiveSetApartStatus} />
+                                        : (config.maintenance.enabled && !isPreviewMode)
+                                            ? <Maintenance expectedReturnDate={config.maintenance.returnDate} />
+                                            : <PublicHome />
                                 }
                             />
                             <Route path="/website" element={<Navigate to="/" replace />} />
