@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { systemConfig } from '../system-config';
 import { useProperties } from '../contexts/PropertyContext';
 import { useDashboardConfig, DEFAULT_DASHBOARD } from '../hooks/useDashboardConfig';
+import { useSiteSettings } from '../hooks/useSiteSettings';
 
 const FUNNEL_LABELS = ['Prospecção', 'Visita', 'Proposta', 'Fechado'];
 
@@ -18,6 +19,9 @@ const Settings = () => {
     const [supabaseUrl, setSupabaseUrl] = useState(localStorage.getItem('ab-supabase-url') || '');
     const [supabaseKey, setSupabaseKey] = useState(localStorage.getItem('ab-supabase-key') || '');
     const [saved, setSaved] = useState(false);
+
+    // Configurações persistidas no Supabase (nunca somem com limpeza de cache)
+    const { settings: cloudSettings, loading: cloudLoading, saveSettings: saveCloudSettings } = useSiteSettings();
     const { properties, syncAllLocal, isSyncing } = useProperties();
 
     // Dashboard config (Supabase)
@@ -32,6 +36,18 @@ const Settings = () => {
     const [comissoesLocacao, setComissoesLocacao] = useState('0');
     const [funilVenda, setFunilVenda] = useState(['0', '0', '0', '0']);
     const [funilLocacao, setFunilLocacao] = useState(['0', '0', '0', '0']);
+
+    // Quando dados do Supabase chegam, atualiza o formulário (sobrepõe cache local)
+    useEffect(() => {
+        if (cloudLoading || !cloudSettings) return;
+        if (cloudSettings.whatsapp) setWhatsapp(cloudSettings.whatsapp);
+        if (cloudSettings.socials && Object.keys(cloudSettings.socials).length)
+            setSocials(prev => ({ ...prev, ...cloudSettings.socials }));
+        if (cloudSettings.primary_color) setPrimaryColor(cloudSettings.primary_color);
+        if (cloudSettings.system_prompt) setSystemPrompt(cloudSettings.system_prompt);
+        if (cloudSettings.gemini_key) setGeminiKey(cloudSettings.gemini_key);
+        if (cloudSettings.groq_key) setGroqKey(cloudSettings.groq_key);
+    }, [cloudLoading]);
 
     useEffect(() => {
         if (dashLoading) return;
@@ -76,6 +92,7 @@ const Settings = () => {
         // ✅ mudança pontual: whatsapp sempre só dígitos
         const whatsappDigits = String(whatsapp || '').replace(/\D/g, '');
 
+        // Salva no localStorage (cache local para leitura rápida)
         localStorage.setItem('ab-primary-color', primaryColor);
         localStorage.setItem('ab-logo-url', logoUrl);
         localStorage.setItem('ab-whatsapp', whatsappDigits);
@@ -85,6 +102,16 @@ const Settings = () => {
         localStorage.setItem('ab-groq-key', groqKey);
         localStorage.setItem('ab-supabase-url', supabaseUrl);
         localStorage.setItem('ab-supabase-key', supabaseKey);
+
+        // Salva no Supabase (persistência permanente, sobrevive a limpeza de cache)
+        await saveCloudSettings({
+            whatsapp: whatsappDigits,
+            socials,
+            primary_color: primaryColor,
+            system_prompt: systemPrompt,
+            gemini_key: geminiKey,
+            groq_key: groqKey,
+        });
 
         document.documentElement.style.setProperty('--primary-color', primaryColor);
 

@@ -27,7 +27,7 @@ const LLMAssistant = () => {
     }, [messages, isTyping]);
 
     const callGemini = async (prompt, apiKey) => {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -35,6 +35,7 @@ const LLMAssistant = () => {
             })
         });
         const data = await response.json();
+        if (data.error) throw new Error(data.error.message);
         return data.candidates[0].content.parts[0].text;
     };
 

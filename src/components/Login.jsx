@@ -18,7 +18,21 @@ export default function Login() {
 
   const handleClearCache = () => {
     if (confirm(t('login_confirm_reset'))) {
+      // Preserva todas as configurações do site antes de limpar
+      const keysToPreserve = [
+        'ab-whatsapp', 'ab-socials', 'ab-primary-color',
+        'ab-system-prompt', 'ab-gemini-key', 'ab-groq-key',
+        'ab-logo-url', 'ab-profile-photo',
+        'ab-supabase-url', 'ab-supabase-key',
+        'ab-user-lang',
+      ];
+      const saved = {};
+      keysToPreserve.forEach(k => {
+        const v = localStorage.getItem(k);
+        if (v !== null) saved[k] = v;
+      });
       localStorage.clear();
+      Object.entries(saved).forEach(([k, v]) => localStorage.setItem(k, v));
       window.location.reload();
     }
   };

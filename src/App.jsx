@@ -23,6 +23,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { config } from './config';
 import Maintenance from './components/public/Maintenance';
 import { supabase } from './lib/supabaseClient';
+import { applySettingsToLocal } from './hooks/useSiteSettings';
 
 const App = () => {
     const location = useLocation();
@@ -46,6 +47,16 @@ const App = () => {
     };
 
     React.useEffect(() => {
+        // Sincroniza configurações do site do Supabase → localStorage em background
+        // Garante que WhatsApp, redes sociais e APIs nunca somem mesmo após limpeza de cache
+        supabase
+            .from('site_settings')
+            .select('*')
+            .eq('id', 'default')
+            .maybeSingle()
+            .then(({ data }) => { if (data) applySettingsToLocal(data); })
+            .catch(() => {}); // silencioso se tabela ainda não existe
+
         // 1) Verifica sessão atual no Supabase (resolvida antes de qualquer redirect)
         supabase.auth.getSession().then(({ data: { session } }) => {
             setIsAuthenticated(!!session);
