@@ -1,11 +1,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Upload, Sparkles, Loader2 } from 'lucide-react';
+import { Send, Upload, Sparkles, Loader2, AlertCircle } from 'lucide-react';
 import { useProperties } from '../contexts/PropertyContext';
 import { systemConfig } from '../system-config';
+import { useSiteSettings } from '../hooks/useSiteSettings';
 
 const LLMAssistant = () => {
     const { properties } = useProperties();
+    const { settings: siteSettings, loading: settingsLoading } = useSiteSettings();
     const [messages, setMessages] = useState([
         {
             id: 1,
@@ -35,7 +37,7 @@ const LLMAssistant = () => {
             })
         });
         const data = await response.json();
-        if (data.error) throw new Error(data.error.message);
+        if (data.error) throw new Error(`Gemini: ${data.error.message}`);
         return data.candidates[0].content.parts[0].text;
     };
 
@@ -52,6 +54,7 @@ const LLMAssistant = () => {
             })
         });
         const data = await response.json();
+        if (data.error) throw new Error(`Groq: ${data.error.message}`);
         return data.choices[0].message.content;
     };
 
@@ -70,10 +73,12 @@ const LLMAssistant = () => {
         setInput('');
         setIsTyping(true);
 
-        // Prepare Context
-        const systemPrompt = localStorage.getItem('ab-system-prompt') || `Você é Kaleb, assistente do corretor ${systemConfig.brokerName}.`;
-        const geminiKey = localStorage.getItem('ab-gemini-key');
-        const groqKey = localStorage.getItem('ab-groq-key');
+        // Lê as chaves do hook (Supabase) com fallback para localStorage
+        const systemPrompt = siteSettings?.system_prompt
+            || localStorage.getItem('ab-system-prompt')
+            || `Você é Kaleb, assistente do corretor ${systemConfig.brokerName}.`;
+        const geminiKey = siteSettings?.gemini_key || localStorage.getItem('ab-gemini-key') || '';
+        const groqKey = siteSettings?.groq_key || localStorage.getItem('ab-groq-key') || '';
         const lastProvider = localStorage.getItem('ab-last-llm-provider') || 'gemini';
 
         // Summary of properties for context
@@ -85,6 +90,7 @@ const LLMAssistant = () => {
 
         let responseText = '';
         let success = false;
+        const errors = [];
 
         // Round-robin & Fallback Logic
         const providers = lastProvider === 'gemini' ? ['groq', 'gemini'] : ['gemini', 'groq'];
@@ -103,17 +109,17 @@ const LLMAssistant = () => {
                     break;
                 }
             } catch (error) {
-                console.error(`Erro com ${provider}:`, error);
-                continue; // Tenta o próximo
+                errors.push(`${provider}: ${error.message}`);
+                continue;
             }
         }
 
         if (!success) {
-            // Fallback for no API keys or all failed
-            if (userInput.toLowerCase().includes('quantos') || userInput.toLowerCase().includes('total')) {
-                responseText = `Você tem atualmente ${properties.length} imóveis cadastrados. (Nota: APIs de LLM não configuradas)`;
+            const noKeys = !geminiKey && !groqKey;
+            if (noKeys) {
+                responseText = "Chaves de API não encontradas. Vá em Configurações → Treinar Kaleb e salve suas chaves do Gemini e/ou Groq.";
             } else {
-                responseText = "Estou funcionando em modo limitado pois as chaves de API (Gemini/Groq) não foram configuradas ou falharam. Vá em Configurações para conectar o cérebro do Kaleb!";
+                responseText = `Não consegui responder agora. Erros:\n${errors.join('\n')}\n\nVerifique se o Brave Shield está bloqueando (ícone 🦁 na barra de endereço) ou tente novamente.`;
             }
         }
 
@@ -126,6 +132,11 @@ const LLMAssistant = () => {
         setIsTyping(false);
     };
 
+    const hasKeys = !settingsLoading && (
+        (siteSettings?.gemini_key || localStorage.getItem('ab-gemini-key')) ||
+        (siteSettings?.groq_key || localStorage.getItem('ab-groq-key'))
+    );
+
     return (
         <div className="flex flex-col h-[calc(100vh-64px)] bg-[#f8fafc]">
             <div className="bg-white p-4 shadow-sm flex items-center justify-between border-b">
@@ -135,8 +146,13 @@ const LLMAssistant = () => {
                     </div>
                     <div>
                         <h1 className="font-bold text-lg text-slate-800">Kaleb</h1>
-                        <p className="text-xs text-slate-500 flex items-center gap-1">
-                            <Sparkles size={12} className="text-blue-500" /> Tecnologia LLM Conectada
+                        <p className="text-xs flex items-center gap-1">
+                            {settingsLoading
+                                ? <><Loader2 size={12} className="animate-spin text-slate-400" /><span className="text-slate-400">Carregando configurações...</span></>
+                                : hasKeys
+                                    ? <><Sparkles size={12} className="text-blue-500" /><span className="text-slate-500">LLM Conectado</span></>
+                                    : <><AlertCircle size={12} className="text-amber-500" /><span className="text-amber-500">Chaves de API não configuradas</span></>
+                            }
                         </p>
                     </div>
                 </div>
@@ -194,7 +210,7 @@ const LLMAssistant = () => {
                     </button>
                 </div>
                 <p className="text-[10px] text-center text-slate-400 mt-2">
-                    Kaleb alterna entre Gemini e Groq para maior eficiência.
+                    {settingsLoading ? 'Carregando chaves...' : hasKeys ? 'Kaleb alterna entre Gemini e Groq para maior eficiência.' : 'Configure as chaves em Configurações → Treinar Kaleb'}
                 </p>
             </div>
         </div>
