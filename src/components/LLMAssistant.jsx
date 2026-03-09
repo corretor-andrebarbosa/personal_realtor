@@ -29,7 +29,7 @@ const LLMAssistant = () => {
     }, [messages, isTyping]);
 
     const callGemini = async (prompt, apiKey) => {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -49,7 +49,7 @@ const LLMAssistant = () => {
                 'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: 'llama3-8b-8192',
+                model: 'llama-3.1-8b-instant',
                 messages: [{ role: 'user', content: prompt }]
             })
         });
