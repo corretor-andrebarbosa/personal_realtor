@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Save, RefreshCcw } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ArrowLeft, Save, RefreshCcw, Bold, Italic, Heading2, Heading3 } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useBlog } from '../contexts/BlogContext';
 
@@ -42,6 +42,44 @@ const BlogForm = () => {
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
     const [saveError, setSaveError] = useState('');
+    const contentRef = useRef(null);
+
+    // Envolve o texto selecionado com os marcadores (negrito/itálico)
+    const wrapSelection = (marker) => {
+        const el = contentRef.current;
+        if (!el) return;
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+        const selected = formData.content.slice(start, end) || 'texto';
+        const newContent =
+            formData.content.slice(0, start) +
+            marker + selected + marker +
+            formData.content.slice(end);
+        setFormData(prev => ({ ...prev, content: newContent }));
+        setTimeout(() => {
+            el.focus();
+            el.setSelectionRange(start + marker.length, end + marker.length);
+        }, 0);
+    };
+
+    // Adiciona prefixo de título na linha atual
+    const insertHeading = (prefix) => {
+        const el = contentRef.current;
+        if (!el) return;
+        const pos = el.selectionStart;
+        const text = formData.content;
+        let lineStart = pos;
+        while (lineStart > 0 && text[lineStart - 1] !== '\n') lineStart--;
+        const lineEnd = text.indexOf('\n', pos);
+        const currentLine = text.slice(lineStart, lineEnd === -1 ? text.length : lineEnd);
+        const cleanLine = currentLine.replace(/^#{1,3}\s/, '');
+        const newContent =
+            text.slice(0, lineStart) +
+            prefix + cleanLine +
+            (lineEnd === -1 ? '' : text.slice(lineEnd));
+        setFormData(prev => ({ ...prev, content: newContent }));
+        setTimeout(() => el.focus(), 0);
+    };
 
     useEffect(() => {
         if (!isEditing) return;
@@ -229,13 +267,39 @@ const BlogForm = () => {
                     <p className="text-xs text-slate-400 mb-3 bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">
                         📷 <strong>Imagem no meio do texto:</strong> em uma linha separada, escreva <code className="bg-slate-200 px-1 rounded">[img:https://url-da-imagem.jpg]</code>
                     </p>
+                    {/* Barra de formatação */}
+                    <div className="flex gap-1 mb-2 flex-wrap">
+                        <button type="button" onClick={() => wrapSelection('**')}
+                            title="Negrito (selecione o texto primeiro)"
+                            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-lg border border-slate-200 text-slate-700 transition-colors">
+                            <Bold size={13} />
+                        </button>
+                        <button type="button" onClick={() => wrapSelection('*')}
+                            title="Itálico (selecione o texto primeiro)"
+                            className="flex items-center gap-1 px-2.5 py-1.5 text-xs italic bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-lg border border-slate-200 text-slate-700 transition-colors">
+                            <Italic size={13} />
+                        </button>
+                        <div className="w-px bg-slate-200 mx-0.5" />
+                        <button type="button" onClick={() => insertHeading('## ')}
+                            title="Título (subtítulo grande)"
+                            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-lg border border-slate-200 text-slate-700 transition-colors">
+                            <Heading2 size={13} />
+                        </button>
+                        <button type="button" onClick={() => insertHeading('### ')}
+                            title="Subtítulo menor"
+                            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-lg border border-slate-200 text-slate-700 transition-colors">
+                            <Heading3 size={13} />
+                        </button>
+                        <span className="text-[10px] text-slate-400 self-center ml-1">Selecione o texto e clique para formatar</span>
+                    </div>
                     <textarea
+                        ref={contentRef}
                         name="content"
                         value={formData.content}
                         onChange={handleChange}
                         rows={18}
-                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[var(--primary-color)] outline-none resize-none leading-relaxed text-sm"
-                        placeholder={`Escreva o artigo aqui...\n\nSepare os parágrafos com uma linha em branco.\n\nPara inserir uma imagem no meio do texto:\n\n[img:https://url-da-imagem.jpg]\n\nCada parágrafo será traduzido automaticamente.`}
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[var(--primary-color)] outline-none resize-none leading-relaxed text-sm font-mono"
+                        placeholder={`Escreva o artigo aqui...\n\nSepare os parágrafos com uma linha em branco.\n\n**negrito**  *itálico*  ## Título  ### Subtítulo\n\nPara inserir uma imagem no meio do texto:\n[img:https://url-da-imagem.jpg]`}
                         required
                     />
                 </section>

@@ -4,6 +4,38 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Tag, ChevronDown } from 'lucide-react';
 import { useBlog } from '../../contexts/BlogContext';
 import TranslatedText from '../common/TranslatedText';
+import { translateText } from '../../lib/translator';
+
+// Converte **negrito** e *itálico* em elementos React
+const parseInlineMarkdown = (text) => {
+    if (!text || typeof text !== 'string') return text;
+    const parts = [];
+    const regex = /(\*\*[^*\n]+\*\*|\*[^*\n]+\*)/g;
+    let last = 0, match, key = 0;
+    while ((match = regex.exec(text)) !== null) {
+        if (match.index > last) parts.push(text.slice(last, match.index));
+        const m = match[0];
+        if (m.startsWith('**'))
+            parts.push(<strong key={key++} className="font-bold">{m.slice(2, -2)}</strong>);
+        else
+            parts.push(<em key={key++} className="italic">{m.slice(1, -1)}</em>);
+        last = match.index + m.length;
+    }
+    if (last < text.length) parts.push(text.slice(last));
+    return parts.length > 1 ? parts : text;
+};
+
+// Traduz e depois aplica markdown inline
+const MarkdownBlock = ({ children, lang }) => {
+    const [text, setText] = useState(children);
+    useEffect(() => {
+        if (!children || lang === 'pt') { setText(children); return; }
+        let active = true;
+        translateText(children, lang).then(r => { if (active) setText(r); });
+        return () => { active = false; };
+    }, [children, lang]);
+    return <>{parseInlineMarkdown(text)}</>;
+};
 import { translations } from '../../translations';
 import { systemConfig } from '../../system-config';
 
@@ -41,9 +73,8 @@ const BlogPostPage = () => {
         if (!loading && !post) navigate('/blog', { replace: true });
     }, [loading, post, navigate]);
 
-    // Parse content: normalize [img:URL] tags (wherever they appear) then split
+    // Parse content: normalize [img:URL] tags then split into blocks
     const IMG_MARKER = '__IMGBLOCK__';
-    const IMG_RE = /^\[img:(https?:\/\/[^\]]+)\]$/i;
     const contentBlocks = [];
     let currentPara = [];
     const flushPara = () => {
@@ -52,7 +83,6 @@ const BlogPostPage = () => {
             currentPara = [];
         }
     };
-    // Replace [img:URL] anywhere in text with isolated marker lines
     const normalized = (post?.content || '')
         .replace(/\[img:(https?:\/\/[^\]]+)\]/gi, `\n${IMG_MARKER}$1\n`);
     normalized.split('\n').forEach(line => {
@@ -60,6 +90,12 @@ const BlogPostPage = () => {
         if (trimmed.startsWith(IMG_MARKER)) {
             flushPara();
             contentBlocks.push({ type: 'img', url: trimmed.slice(IMG_MARKER.length) });
+        } else if (/^###\s/.test(trimmed)) {
+            flushPara();
+            contentBlocks.push({ type: 'h3', content: trimmed.slice(4) });
+        } else if (/^##\s/.test(trimmed)) {
+            flushPara();
+            contentBlocks.push({ type: 'h2', content: trimmed.slice(3) });
         } else if (!trimmed) {
             flushPara();
         } else {
@@ -163,7 +199,7 @@ const BlogPostPage = () => {
                     </p>
                 )}
 
-                {/* Content — [img:URL] lines render as images, rest as translated paragraphs */}
+                {/* Content — suporta [img:URL], ## H2, ### H3, **negrito**, *itálico* */}
                 <div className="prose prose-slate max-w-none space-y-5">
                     {contentBlocks.map((block, i) =>
                         block.type === 'img' ? (
@@ -174,9 +210,17 @@ const BlogPostPage = () => {
                                 className="w-full rounded-xl object-cover my-2"
                                 onError={e => e.target.style.display = 'none'}
                             />
+                        ) : block.type === 'h2' ? (
+                            <h2 key={i} className="text-2xl font-extrabold text-slate-900 mt-8 mb-2">
+                                <MarkdownBlock lang={lang}>{block.content}</MarkdownBlock>
+                            </h2>
+                        ) : block.type === 'h3' ? (
+                            <h3 key={i} className="text-lg font-bold text-slate-800 mt-6 mb-1">
+                                <MarkdownBlock lang={lang}>{block.content}</MarkdownBlock>
+                            </h3>
                         ) : (
                             <p key={i} className="text-slate-700 leading-relaxed text-base">
-                                <TranslatedText lang={lang}>{block.content}</TranslatedText>
+                                <MarkdownBlock lang={lang}>{block.content}</MarkdownBlock>
                             </p>
                         )
                     )}
