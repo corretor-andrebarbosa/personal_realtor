@@ -31,10 +31,10 @@ export async function onRequest(context) {
     const SUPABASE_KEY = env.VITE_SUPABASE_ANON_KEY;
 
     try {
-        if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error(`Missing env vars: URL=${SUPABASE_URL ? 'ok' : 'MISSING'}, KEY=${SUPABASE_KEY ? 'ok' : 'MISSING'}`);
+        if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('Missing env vars');
 
         const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/blog_posts?or=(slug.eq.${encodeURIComponent(slug)},id.eq.${encodeURIComponent(slug)})&select=title,excerpt,cover_image,slug&limit=1`,
+            `${SUPABASE_URL}/rest/v1/blog_posts?slug=eq.${encodeURIComponent(slug)}&select=title,excerpt,cover_image,slug&limit=1`,
             {
                 headers: {
                     apikey: SUPABASE_KEY,
@@ -43,13 +43,10 @@ export async function onRequest(context) {
             }
         );
 
-        const rawText = await res.text();
-        let posts;
-        try { posts = JSON.parse(rawText); } catch { throw new Error(`Parse error (status ${res.status}): ${rawText.substring(0, 300)}`); }
-
+        const posts = await res.json();
         const post = Array.isArray(posts) && posts[0];
 
-        if (!post) throw new Error(`Post not found. Status: ${res.status}. Body: ${rawText.substring(0, 300)}`);
+        if (!post) throw new Error('Post not found');
 
         const title = esc(post.title || 'André Barbosa Imóveis');
         const desc = esc(post.excerpt || 'Artigo sobre mercado imobiliário em João Pessoa');
@@ -94,16 +91,7 @@ export async function onRequest(context) {
                 'cache-control': 'no-store',
             },
         });
-    } catch (err) {
-        // DEBUG TEMPORÁRIO — expõe o erro no og:title para diagnóstico
-        const errMsg = esc(String(err).substring(0, 300));
-        return new Response(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/>
-<title>Debug</title>
-<meta property="og:title" content="DEBUG: ${errMsg}" />
-<meta property="og:description" content="${errMsg}" />
-<meta property="og:image" content="${SITE_URL}/newlogo.png" />
-</head><body><pre>${errMsg}</pre></body></html>`, {
-            headers: { 'content-type': 'text/html; charset=UTF-8', 'cache-control': 'no-store' },
-        });
+    } catch (_) {
+        return env.ASSETS.fetch(new Request(new URL('/', request.url)));
     }
 }
