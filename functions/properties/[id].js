@@ -7,10 +7,6 @@
  * Equivalente ao middleware.js do Vercel, mas para Cloudflare Pages.
  */
 
-const SUPABASE_URL = 'https://kavjusgxohdpvkeknyjz.supabase.co';
-const SUPABASE_ANON_KEY =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imthdmp1c2d4b2hkcHZrZWtueWp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzODIxMzIsImV4cCI6MjA4Njk1ODEzMn0.9hCRW3v1FXOaIGGTZy5ECLsemUmUls_9w-p3PzuNMRo';
-
 const BOT_REGEX =
     /WhatsApp|facebookexternalhit|Twitterbot|LinkedInBot|TelegramBot|Slackbot|googlebot|bingbot|Discordbot/i;
 
@@ -28,8 +24,12 @@ export async function onRequest(context) {
 
     // Bot detectado — busca dados do imóvel no Supabase
     try {
-        const supabaseUrl = env.VITE_SUPABASE_URL || SUPABASE_URL;
-        const supabaseKey = env.VITE_SUPABASE_ANON_KEY || SUPABASE_ANON_KEY;
+        const supabaseUrl = env.SUPABASE_URL;
+        const supabaseKey = env.SUPABASE_KEY;
+
+        if (!supabaseUrl || !supabaseKey) {
+            return env.ASSETS.fetch(new Request(new URL('/', request.url)));
+        }
 
         const res = await fetch(
             `${supabaseUrl}/rest/v1/properties?id=eq.${encodeURIComponent(id)}&select=title,description,image,images`,
