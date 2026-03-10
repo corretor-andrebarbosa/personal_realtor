@@ -5,6 +5,7 @@ import { ArrowLeft, User, Tag, ChevronDown } from 'lucide-react';
 import { useBlog } from '../../contexts/BlogContext';
 import TranslatedText from '../common/TranslatedText';
 import { translateText } from '../../lib/translator';
+import { useCurrencyConverter } from '../../hooks/useCurrencyConverter';
 
 // Converte **negrito** e *itálico* em elementos React
 const parseInlineMarkdown = (text) => {
@@ -25,8 +26,8 @@ const parseInlineMarkdown = (text) => {
     return parts.length > 1 ? parts : text;
 };
 
-// Traduz e depois aplica markdown inline
-const MarkdownBlock = ({ children, lang }) => {
+// Traduz, converte moeda e aplica markdown inline
+const MarkdownBlock = ({ children, lang, convertBRL }) => {
     const [text, setText] = useState(children);
     useEffect(() => {
         if (!children || lang === 'pt') { setText(children); return; }
@@ -34,7 +35,8 @@ const MarkdownBlock = ({ children, lang }) => {
         translateText(children, lang).then(r => { if (active) setText(r); });
         return () => { active = false; };
     }, [children, lang]);
-    return <>{parseInlineMarkdown(text)}</>;
+    const displayed = convertBRL ? convertBRL(text) : text;
+    return <>{parseInlineMarkdown(displayed)}</>;
 };
 import { translations } from '../../translations';
 import { systemConfig } from '../../system-config';
@@ -50,6 +52,8 @@ const BlogPostPage = () => {
     const { id } = useParams();
     const { posts, loading } = useBlog();
     const navigate = useNavigate();
+
+    const { convertBRLInText } = useCurrencyConverter();
 
     const [lang, setLang] = useState(() => {
         const saved = localStorage.getItem('ab-lang');
@@ -212,15 +216,15 @@ const BlogPostPage = () => {
                             />
                         ) : block.type === 'h2' ? (
                             <h2 key={i} className="text-2xl font-extrabold text-slate-900 mt-8 mb-2">
-                                <MarkdownBlock lang={lang}>{block.content}</MarkdownBlock>
+                                <MarkdownBlock lang={lang} convertBRL={convertBRLInText}>{block.content}</MarkdownBlock>
                             </h2>
                         ) : block.type === 'h3' ? (
                             <h3 key={i} className="text-lg font-bold text-slate-800 mt-6 mb-1">
-                                <MarkdownBlock lang={lang}>{block.content}</MarkdownBlock>
+                                <MarkdownBlock lang={lang} convertBRL={convertBRLInText}>{block.content}</MarkdownBlock>
                             </h3>
                         ) : (
                             <p key={i} className="text-slate-700 leading-relaxed text-base">
-                                <MarkdownBlock lang={lang}>{block.content}</MarkdownBlock>
+                                <MarkdownBlock lang={lang} convertBRL={convertBRLInText}>{block.content}</MarkdownBlock>
                             </p>
                         )
                     )}
