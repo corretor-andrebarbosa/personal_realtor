@@ -24,8 +24,8 @@ export async function onRequest(context) {
 
     // Bot detectado — busca dados do imóvel no Supabase
     try {
-        const supabaseUrl = env.SUPABASE_URL;
-        const supabaseKey = env.SUPABASE_KEY;
+        const supabaseUrl = env.VITE_SUPABASE_URL;
+        const supabaseKey = env.VITE_SUPABASE_ANON_KEY;
 
         if (!supabaseUrl || !supabaseKey) {
             return env.ASSETS.fetch(new Request(new URL('/', request.url)));

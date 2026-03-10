@@ -18,8 +18,8 @@ export async function onRequest(context) {
   const { params, request, env } = context;
   const slug = params.slug;
 
-  const SUPABASE_URL = env.SUPABASE_URL;
-  const SUPABASE_KEY = env.SUPABASE_KEY;
+  const SUPABASE_URL = env.VITE_SUPABASE_URL;
+  const SUPABASE_KEY = env.VITE_SUPABASE_ANON_KEY;
 
   // Serve o index.html base
   const indexRes = await env.ASSETS.fetch(new Request(new URL('/index.html', request.url)));
