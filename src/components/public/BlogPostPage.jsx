@@ -7,19 +7,32 @@ import TranslatedText from '../common/TranslatedText';
 import { translateText } from '../../lib/translator';
 import { useCurrencyConverter } from '../../hooks/useCurrencyConverter';
 
-// Converte **negrito** e *itálico* em elementos React
+// Converte **negrito**, *itálico* e [texto](url) em elementos React
 const parseInlineMarkdown = (text) => {
     if (!text || typeof text !== 'string') return text;
     const parts = [];
-    const regex = /(\*\*[^*\n]+\*\*|\*[^*\n]+\*)/g;
+    const regex = /(\*\*[^*\n]+\*\*|\*[^*\n]+\*|\[[^\]\n]+\]\(https?:\/\/[^)\n]+\))/g;
     let last = 0, match, key = 0;
     while ((match = regex.exec(text)) !== null) {
         if (match.index > last) parts.push(text.slice(last, match.index));
         const m = match[0];
-        if (m.startsWith('**'))
+        if (m.startsWith('**')) {
             parts.push(<strong key={key++} className="font-bold">{m.slice(2, -2)}</strong>);
-        else
+        } else if (m.startsWith('*')) {
             parts.push(<em key={key++} className="italic">{m.slice(1, -1)}</em>);
+        } else {
+            const linkMatch = m.match(/^\[([^\]]+)\]\((https?:\/\/[^)]+)\)$/);
+            if (linkMatch) {
+                parts.push(
+                    <a key={key++} href={linkMatch[2]} target="_blank" rel="noopener noreferrer"
+                       className="text-[#166b9c] underline hover:opacity-75 transition-opacity">
+                        {linkMatch[1]}
+                    </a>
+                );
+            } else {
+                parts.push(m);
+            }
+        }
         last = match.index + m.length;
     }
     if (last < text.length) parts.push(text.slice(last));

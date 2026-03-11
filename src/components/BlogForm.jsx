@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Save, RefreshCcw, Bold, Italic, Heading2, Heading3 } from 'lucide-react';
+import { ArrowLeft, Save, RefreshCcw, Bold, Italic, Heading2, Heading3, Link2 } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useBlog } from '../contexts/BlogContext';
 
@@ -59,6 +59,25 @@ const BlogForm = () => {
         setTimeout(() => {
             el.focus();
             el.setSelectionRange(start + marker.length, end + marker.length);
+        }, 0);
+    };
+
+    // Insere link no formato [texto](url)
+    const insertLink = () => {
+        const el = contentRef.current;
+        if (!el) return;
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+        const selected = formData.content.slice(start, end);
+        const url = prompt('URL do link (ex: https://site.com.br):');
+        if (!url) return;
+        const label = selected || prompt('Texto do link:') || url;
+        const snippet = `[${label}](${url})`;
+        const newContent = formData.content.slice(0, start) + snippet + formData.content.slice(end);
+        setFormData(prev => ({ ...prev, content: newContent }));
+        setTimeout(() => {
+            el.focus();
+            el.setSelectionRange(start + snippet.length, start + snippet.length);
         }, 0);
     };
 
@@ -289,6 +308,12 @@ const BlogForm = () => {
                             title="Subtítulo menor"
                             className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-lg border border-slate-200 text-slate-700 transition-colors">
                             <Heading3 size={13} />
+                        </button>
+                        <div className="w-px bg-slate-200 mx-0.5" />
+                        <button type="button" onClick={insertLink}
+                            title="Inserir link externo"
+                            className="flex items-center gap-1 px-2.5 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-lg border border-slate-200 text-slate-700 transition-colors">
+                            <Link2 size={13} />
                         </button>
                         <span className="text-[10px] text-slate-400 self-center ml-1">Selecione o texto e clique para formatar</span>
                     </div>
