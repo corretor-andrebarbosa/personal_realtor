@@ -72,6 +72,10 @@ const PropertyFilters = ({ onFilterChange, neighborhoods = [], t = (k) => k }) =
                         <option value="Casa">{t('type_house') || 'Casa'}</option>
                         <option value="Cobertura">{t('type_penthouse') || 'Cobertura'}</option>
                         <option value="Flat">{t('type_flat') || 'Flat'}</option>
+                        <option value="Terreno">{t('type_terrain') || 'Terreno'}</option>
+                        <option value="Sítio">{t('type_sitio') || 'Sítio'}</option>
+                        <option value="Chácara">{t('type_chacara') || 'Chácara'}</option>
+                        <option value="Fazenda">{t('type_fazenda') || 'Fazenda'}</option>
                     </select>
                 </div>
 

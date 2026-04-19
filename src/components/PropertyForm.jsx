@@ -420,10 +420,14 @@ const PropertyForm = () => {
                 <option value="Casa">Casa</option>
                 <option value="Studio">Studio</option>
                 <option value="Cobertura">Cobertura</option>
+                <option value="Flat">Flat</option>
                 <option value="Sala Comercial">Sala Comercial</option>
                 <option value="Terreno">Terreno</option>
                 <option value="Loja">Loja</option>
                 <option value="Galpão">Galpão</option>
+                <option value="Sítio">Sítio</option>
+                <option value="Chácara">Chácara</option>
+                <option value="Fazenda">Fazenda</option>
               </select>
             </div>
 

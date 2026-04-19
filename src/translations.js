@@ -106,6 +106,10 @@ export const translations = {
         type_house: "Casa",
         type_penthouse: "Cobertura",
         type_flat: "Flat",
+        type_terrain: "Terreno",
+        type_sitio: "Sítio",
+        type_chacara: "Chácara",
+        type_fazenda: "Fazenda",
         no_images: "Sem imagem",
         prop_approx: "aprox.",
 
@@ -222,6 +226,10 @@ export const translations = {
         type_house: "House",
         type_penthouse: "Penthouse",
         type_flat: "Flat",
+        type_terrain: "Land",
+        type_sitio: "Country house",
+        type_chacara: "Ranch",
+        type_fazenda: "Farm",
         no_images: "No image",
         prop_approx: "approx.",
 
@@ -338,6 +346,10 @@ export const translations = {
         type_house: "Haus",
         type_penthouse: "Dachgeschoss",
         type_flat: "Flat",
+        type_terrain: "Grundstück",
+        type_sitio: "Landsitz",
+        type_chacara: "Ranch",
+        type_fazenda: "Bauernhof",
         no_images: "Kein Bild",
         prop_approx: "ca.",
 
@@ -454,6 +466,10 @@ export const translations = {
         type_house: "Casa",
         type_penthouse: "Ático",
         type_flat: "Flat",
+        type_terrain: "Terreno",
+        type_sitio: "Sítio",
+        type_chacara: "Chácara",
+        type_fazenda: "Fazenda",
         no_images: "Sin imagen",
         prop_approx: "aprox.",
 
