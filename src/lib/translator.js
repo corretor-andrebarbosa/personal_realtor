@@ -24,15 +24,28 @@ export const translateText = async (text, targetLang) => {
 
         if (data.responseData && data.responseData.translatedText) {
             const translated = data.responseData.translatedText;
-            cache[cacheKey] = translated;
+            
+            // Don't cache if it looks like an error/warning message from MyMemory
+            if (!translated.toUpperCase().includes('MYMEMORY WARNING') && 
+                !translated.toUpperCase().includes('ERROR') &&
+                !translated.includes('https://')) {
+                
+                cache[cacheKey] = translated;
 
-            // Limit cache size to avoid localStorage bloat (keep last 500 translations)
-            const keys = Object.keys(cache);
-            if (keys.length > 500) {
-                delete cache[keys[0]];
+                // Limit cache size to avoid localStorage bloat (keep last 500 translations)
+                const keys = Object.keys(cache);
+                if (keys.length > 500) {
+                    delete cache[keys[0]];
+                }
+
+                localStorage.setItem('ab-translations-cache', JSON.stringify(cache));
             }
-
-            localStorage.setItem('ab-translations-cache', JSON.stringify(cache));
+            
+            // Return original text if it's an error message, otherwise return translation
+            if (translated.toUpperCase().includes('MYMEMORY WARNING') || translated.includes('https://')) {
+                return text;
+            }
+            
             return translated;
         }
     } catch (error) {
