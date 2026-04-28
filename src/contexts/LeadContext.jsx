@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 const LeadContext = createContext();
@@ -10,36 +10,68 @@ export const LeadProvider = ({ children }) => {
     const [leads, setLeads] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Initial Load
-    useEffect(() => {
-        const loadLeads = async () => {
-            setLoading(true);
-            try {
-                if (supabase) {
-                    const { data, error } = await supabase
-                        .from('leads')
-                        .select('*')
-                        .order('created_at', { ascending: false });
+    // Refresh manual - função para atualizar leads
+    const refreshLeads = useCallback(async () => {
+        try {
+            if (supabase) {
+                const { data, error } = await supabase
+                    .from('leads')
+                    .select('*')
+                    .order('created_at', { ascending: false });
 
-                    if (!error && data) {
-                        setLeads(data);
-                        setLoading(false);
-                        return;
-                    }
+                if (!error && data) {
+                    setLeads(data);
+                    return;
                 }
+            }
 
-                const saved = localStorage.getItem('ab-leads');
-                setLeads(saved ? JSON.parse(saved) : []);
-            } catch (error) {
-                console.error('Erro ao carregar leads:', error);
-                setLeads([]);
-            } finally {
-                setLoading(false);
+            const saved = localStorage.getItem('ab-leads');
+            setLeads(saved ? JSON.parse(saved) : []);
+        } catch (error) {
+            console.error('Erro ao carregar leads:', error);
+            setLeads([]);
+        }
+    }, []);
+
+    // Initial Load + Real-time Subscription
+    useEffect(() => {
+        const loadLeadsWithSubscription = async () => {
+            setLoading(true);
+            await refreshLeads();
+            setLoading(false);
+
+            // Subscribe to real-time changes
+            if (supabase) {
+                const channel = supabase
+                    .channel('leads-changes')
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: '*',
+                            schema: 'public',
+                            table: 'leads',
+                        },
+                        (payload) => {
+                            console.log('Lead atualizado em tempo real:', payload);
+                            if (payload.eventType === 'INSERT') {
+                                setLeads(prev => [payload.new, ...prev]);
+                            } else if (payload.eventType === 'UPDATE') {
+                                setLeads(prev => prev.map(l => l.id === payload.new.id ? payload.new : l));
+                            } else if (payload.eventType === 'DELETE') {
+                                setLeads(prev => prev.filter(l => l.id !== payload.old.id));
+                            }
+                        }
+                    )
+                    .subscribe();
+
+                return () => {
+                    supabase.removeChannel(channel);
+                };
             }
         };
 
-        loadLeads();
-    }, []);
+        loadLeadsWithSubscription();
+    }, [refreshLeads]);
 
     // Sync to LocalStorage as backup
     useEffect(() => {
@@ -101,7 +133,7 @@ export const LeadProvider = ({ children }) => {
     };
 
     return (
-        <LeadContext.Provider value={{ leads, loading, addLead, updateLead, deleteLead }}>
+        <LeadContext.Provider value={{ leads, loading, addLead, updateLead, deleteLead, refreshLeads }}>
             {children}
         </LeadContext.Provider>
     );

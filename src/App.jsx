@@ -13,6 +13,7 @@ import PublicHome from './components/public/Home';
 import Login from './components/Login';
 import { PropertyProvider } from './contexts/PropertyContext';
 import { LeadProvider } from './contexts/LeadContext';
+import { PeopleProvider } from './contexts/PeopleContext';
 import { BlogProvider } from './contexts/BlogContext';
 import BlogList from './components/BlogList';
 import BlogForm from './components/BlogForm';
@@ -118,6 +119,7 @@ const App = () => {
         <ErrorBoundary>
             <PropertyProvider>
                 <LeadProvider>
+                <PeopleProvider>
                 <BlogProvider>
                     <div className="font-['Manrope'] antialiased text-slate-900 bg-slate-50 min-h-screen">
                         <Routes>
@@ -154,6 +156,7 @@ const App = () => {
                         {showNav && <Navigation />}
                     </div>
                 </BlogProvider>
+                </PeopleProvider>
                 </LeadProvider>
             </PropertyProvider>
         </ErrorBoundary>

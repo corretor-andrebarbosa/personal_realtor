@@ -3,8 +3,9 @@ import React, { useState, useEffect } from 'react';
 import {
     Users, UserPlus, Phone, Mail, MapPin, Tag,
     Edit, Trash2, X, Save, Search, Building2,
-    Briefcase, UserCheck, ChevronDown, MessageCircle
+    Briefcase, UserCheck, ChevronDown, MessageCircle, RotateCcw, Loader2
 } from 'lucide-react';
+import { usePeople } from '../contexts/PeopleContext';
 
 const TABS = [
     { key: 'clientes', label: 'Clientes', icon: Users, color: 'blue' },
@@ -18,25 +19,19 @@ const emptyPerson = {
 };
 
 const People = () => {
+    const { people, loading, addPerson, updatePerson, deletePerson, refreshPeople } = usePeople();
     const [activeTab, setActiveTab] = useState('clientes');
-    const [people, setPeople] = useState(() => {
-        const saved = localStorage.getItem('ab-people');
-        return saved ? JSON.parse(saved) : {
-            clientes: [],
-            corretores: [],
-            colaboradores: [],
-        };
-    });
-
     const [showModal, setShowModal] = useState(false);
     const [editingPerson, setEditingPerson] = useState(null);
     const [form, setForm] = useState({ ...emptyPerson });
     const [searchTerm, setSearchTerm] = useState('');
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
-    const save = (updatedPeople) => {
-        setPeople(updatedPeople);
-        localStorage.setItem('ab-people', JSON.stringify(updatedPeople));
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        await refreshPeople();
+        setIsRefreshing(false);
     };
 
     const openAdd = () => {
@@ -51,24 +46,20 @@ const People = () => {
         setShowModal(true);
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!form.name || !form.phone) return;
 
-        const updated = { ...people };
         if (editingPerson) {
-            updated[activeTab] = updated[activeTab].map(p => p.id === editingPerson.id ? { ...form, id: editingPerson.id } : p);
+            await updatePerson(activeTab, editingPerson.id, form);
         } else {
-            updated[activeTab] = [{ ...form, id: Date.now() }, ...updated[activeTab]];
+            await addPerson(activeTab, form);
         }
-        save(updated);
         setShowModal(false);
         setForm({ ...emptyPerson });
     };
 
-    const handleDelete = (id) => {
-        const updated = { ...people };
-        updated[activeTab] = updated[activeTab].filter(p => p.id !== id);
-        save(updated);
+    const handleDelete = async (id) => {
+        await deletePerson(activeTab, id);
         setShowDeleteConfirm(null);
     };
 
@@ -87,6 +78,14 @@ const People = () => {
         p.phone.includes(searchTerm)
     );
 
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-screen bg-slate-50">
+                <Loader2 className="animate-spin text-[var(--primary-color)]" size={40} />
+            </div>
+        );
+    }
+
     return (
         <div className="pb-24 min-h-screen bg-slate-50">
             <header className="bg-white p-4 shadow-sm sticky top-0 z-10">
@@ -94,12 +93,22 @@ const People = () => {
                     <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                         <Users size={20} className="text-[var(--primary-color)]" /> Cadastro de Pessoas
                     </h1>
-                    <button
-                        onClick={openAdd}
-                        className="text-[var(--primary-color)] flex items-center gap-1 font-bold text-sm bg-blue-50 px-3 py-1.5 rounded-full hover:bg-blue-100 transition-colors"
-                    >
-                        <UserPlus size={16} /> Adicionar
-                    </button>
+                    <div className="flex gap-2 items-center">
+                        <button
+                            onClick={handleRefresh}
+                            disabled={isRefreshing}
+                            className="text-slate-500 hover:text-slate-700 p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50"
+                            title="Atualizar pessoas"
+                        >
+                            <RotateCcw size={18} className={isRefreshing ? 'animate-spin' : ''} />
+                        </button>
+                        <button
+                            onClick={openAdd}
+                            className="text-[var(--primary-color)] flex items-center gap-1 font-bold text-sm bg-blue-50 px-3 py-1.5 rounded-full hover:bg-blue-100 transition-colors"
+                        >
+                            <UserPlus size={16} /> Adicionar
+                        </button>
+                    </div>
                 </div>
 
                 {/* Tabs */}

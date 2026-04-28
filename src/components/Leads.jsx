@@ -1,14 +1,21 @@
 
 import React, { useState } from 'react';
-import { Phone, MessageCircle, Calendar, User, Tag, PlusCircle, X, Save, Trash2, Loader2 } from 'lucide-react';
+import { Phone, MessageCircle, Calendar, User, Tag, PlusCircle, X, Save, Trash2, Loader2, RotateCcw } from 'lucide-react';
 import { useLeads } from '../contexts/LeadContext';
 
 const Leads = () => {
-    const { leads, loading, addLead, updateLead, deleteLead } = useLeads();
+    const { leads, loading, addLead, updateLead, deleteLead, refreshLeads } = useLeads();
     const [activeTab, setActiveTab] = useState('active');
     const [showAddModal, setShowAddModal] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const [newLead, setNewLead] = useState({ name: '', phone: '', interest: '', budget: '', status: 'Quente' });
     const [deleteConfirm, setDeleteConfirm] = useState(null);
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        await refreshLeads();
+        setIsRefreshing(false);
+    };
 
     const handleAddLead = async () => {
         if (!newLead.name || !newLead.phone) return;
@@ -66,12 +73,22 @@ const Leads = () => {
             <header className="bg-white p-4 shadow-sm sticky top-0 z-10">
                 <div className="flex justify-between items-center">
                     <h1 className="text-xl font-bold text-slate-800">Gestão de Leads</h1>
-                    <button
-                        onClick={() => setShowAddModal(true)}
-                        className="text-[var(--primary-color)] flex items-center gap-1 font-bold text-sm bg-blue-50 px-3 py-1.5 rounded-full hover:bg-blue-100"
-                    >
-                        <PlusCircle size={16} /> Novo Lead
-                    </button>
+                    <div className="flex gap-2 items-center">
+                        <button
+                            onClick={handleRefresh}
+                            disabled={isRefreshing}
+                            className="text-slate-500 hover:text-slate-700 p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50"
+                            title="Atualizar leads"
+                        >
+                            <RotateCcw size={18} className={isRefreshing ? 'animate-spin' : ''} />
+                        </button>
+                        <button
+                            onClick={() => setShowAddModal(true)}
+                            className="text-[var(--primary-color)] flex items-center gap-1 font-bold text-sm bg-blue-50 px-3 py-1.5 rounded-full hover:bg-blue-100"
+                        >
+                            <PlusCircle size={16} /> Novo Lead
+                        </button>
+                    </div>
                 </div>
                 <div className="flex gap-4 mt-4 text-sm font-medium text-slate-500 border-b border-slate-100">
                     <button
