@@ -17,32 +17,45 @@ export const PeopleProvider = ({ children }) => {
     const refreshPeople = useCallback(async () => {
         try {
             if (supabase) {
-                const { data, error } = await supabase
-                    .from('people')
-                    .select('*')
-                    .order('created_at', { ascending: false });
+                try {
+                    const { data, error } = await supabase
+                        .from('people')
+                        .select('*')
+                        .order('created_at', { ascending: false });
 
-                if (!error && data) {
-                    // Organize por tipo
-                    const organized = {
-                        clientes: data.filter(p => p.type === 'cliente'),
-                        corretores: data.filter(p => p.type === 'corretor'),
-                        colaboradores: data.filter(p => p.type === 'colaborador'),
-                    };
-                    setPeople(organized);
-                    return;
+                    if (!error && data) {
+                        // Organize por tipo
+                        const organized = {
+                            clientes: data.filter(p => p.type === 'cliente'),
+                            corretores: data.filter(p => p.type === 'corretor'),
+                            colaboradores: data.filter(p => p.type === 'colaborador'),
+                        };
+                        setPeople(organized);
+                        console.log('✅ People carregados do Supabase:', data.length);
+                        return;
+                    } else if (error) {
+                        console.warn('⚠️ Erro Supabase:', error.message);
+                    }
+                } catch (supabaseError) {
+                    console.warn('⚠️ Erro ao conectar Supabase:', supabaseError.message);
                 }
             }
 
             // Fallback para localStorage
             const saved = localStorage.getItem('ab-people');
-            setPeople(saved ? JSON.parse(saved) : {
-                clientes: [],
-                corretores: [],
-                colaboradores: [],
-            });
+            if (saved) {
+                setPeople(JSON.parse(saved));
+                console.log('✅ People carregados do localStorage (fallback)');
+            } else {
+                setPeople({
+                    clientes: [],
+                    corretores: [],
+                    colaboradores: [],
+                });
+                console.log('ℹ️ Nenhuma pessoa salva');
+            }
         } catch (error) {
-            console.error('Erro ao carregar people:', error);
+            console.error('❌ Erro ao carregar people:', error);
             const saved = localStorage.getItem('ab-people');
             setPeople(saved ? JSON.parse(saved) : {
                 clientes: [],
@@ -59,58 +72,68 @@ export const PeopleProvider = ({ children }) => {
             await refreshPeople();
             setLoading(false);
 
-            // Subscribe to real-time changes
+            // Subscribe to real-time changes (non-critical, se falhar usa localStorage)
             if (supabase) {
-                const channel = supabase
-                    .channel('people-changes')
-                    .on(
-                        'postgres_changes',
-                        {
-                            event: '*',
-                            schema: 'public',
-                            table: 'people',
-                        },
-                        (payload) => {
-                            console.log('People atualizado em tempo real:', payload);
-                            if (payload.eventType === 'INSERT') {
-                                setPeople(prev => {
-                                    const updated = { ...prev };
-                                    const type = payload.new.type || 'clientes';
-                                    updated[type] = [payload.new, ...updated[type]];
-                                    return updated;
-                                });
-                            } else if (payload.eventType === 'UPDATE') {
-                                setPeople(prev => {
-                                    const updated = { ...prev };
-                                    const oldType = payload.old.type || 'clientes';
-                                    const newType = payload.new.type || 'clientes';
-                                    
-                                    // Remove do tipo antigo se mudou
-                                    if (oldType !== newType) {
-                                        updated[oldType] = updated[oldType].filter(p => p.id !== payload.new.id);
-                                    }
-                                    
-                                    // Atualiza no novo tipo
-                                    updated[newType] = updated[newType].map(p => 
-                                        p.id === payload.new.id ? payload.new : p
-                                    );
-                                    return updated;
-                                });
-                            } else if (payload.eventType === 'DELETE') {
-                                setPeople(prev => {
-                                    const updated = { ...prev };
-                                    const type = payload.old.type || 'clientes';
-                                    updated[type] = updated[type].filter(p => p.id !== payload.old.id);
-                                    return updated;
-                                });
+                try {
+                    const channel = supabase
+                        .channel('people-changes')
+                        .on(
+                            'postgres_changes',
+                            {
+                                event: '*',
+                                schema: 'public',
+                                table: 'people',
+                            },
+                            (payload) => {
+                                console.log('🔄 People atualizado em tempo real:', payload);
+                                if (payload.eventType === 'INSERT') {
+                                    setPeople(prev => {
+                                        const updated = { ...prev };
+                                        const type = payload.new.type || 'clientes';
+                                        updated[type] = [payload.new, ...updated[type]];
+                                        return updated;
+                                    });
+                                } else if (payload.eventType === 'UPDATE') {
+                                    setPeople(prev => {
+                                        const updated = { ...prev };
+                                        const oldType = payload.old.type || 'clientes';
+                                        const newType = payload.new.type || 'clientes';
+                                        
+                                        // Remove do tipo antigo se mudou
+                                        if (oldType !== newType) {
+                                            updated[oldType] = updated[oldType].filter(p => p.id !== payload.new.id);
+                                        }
+                                        
+                                        // Atualiza no novo tipo
+                                        updated[newType] = updated[newType].map(p => 
+                                            p.id === payload.new.id ? payload.new : p
+                                        );
+                                        return updated;
+                                    });
+                                } else if (payload.eventType === 'DELETE') {
+                                    setPeople(prev => {
+                                        const updated = { ...prev };
+                                        const type = payload.old.type || 'clientes';
+                                        updated[type] = updated[type].filter(p => p.id !== payload.old.id);
+                                        return updated;
+                                    });
+                                }
                             }
-                        }
-                    )
-                    .subscribe();
+                        )
+                        .subscribe((status) => {
+                            if (status === 'SUBSCRIBED') {
+                                console.log('✅ Real-time subscription ativa para people');
+                            } else if (status === 'CLOSED') {
+                                console.warn('⚠️ Real-time subscription fechada');
+                            }
+                        });
 
-                return () => {
-                    supabase.removeChannel(channel);
-                };
+                    return () => {
+                        supabase.removeChannel(channel);
+                    };
+                } catch (error) {
+                    console.warn('⚠️ Não foi possível ativar real-time:', error.message);
+                }
             }
         };
 

@@ -14,21 +14,35 @@ export const LeadProvider = ({ children }) => {
     const refreshLeads = useCallback(async () => {
         try {
             if (supabase) {
-                const { data, error } = await supabase
-                    .from('leads')
-                    .select('*')
-                    .order('created_at', { ascending: false });
+                try {
+                    const { data, error } = await supabase
+                        .from('leads')
+                        .select('*')
+                        .order('created_at', { ascending: false });
 
-                if (!error && data) {
-                    setLeads(data);
-                    return;
+                    if (!error && data) {
+                        setLeads(data);
+                        console.log('✅ Leads carregados do Supabase:', data.length);
+                        return;
+                    } else if (error) {
+                        console.warn('⚠️ Erro Supabase:', error.message);
+                    }
+                } catch (supabaseError) {
+                    console.warn('⚠️ Erro ao conectar Supabase:', supabaseError.message);
                 }
             }
 
+            // Fallback para localStorage
             const saved = localStorage.getItem('ab-leads');
-            setLeads(saved ? JSON.parse(saved) : []);
+            if (saved) {
+                setLeads(JSON.parse(saved));
+                console.log('✅ Leads carregados do localStorage (fallback)');
+            } else {
+                setLeads([]);
+                console.log('ℹ️ Nenhum lead salvo');
+            }
         } catch (error) {
-            console.error('Erro ao carregar leads:', error);
+            console.error('❌ Erro ao carregar leads:', error);
             setLeads([]);
         }
     }, []);
@@ -40,33 +54,43 @@ export const LeadProvider = ({ children }) => {
             await refreshLeads();
             setLoading(false);
 
-            // Subscribe to real-time changes
+            // Subscribe to real-time changes (non-critical, se falhar usa localStorage)
             if (supabase) {
-                const channel = supabase
-                    .channel('leads-changes')
-                    .on(
-                        'postgres_changes',
-                        {
-                            event: '*',
-                            schema: 'public',
-                            table: 'leads',
-                        },
-                        (payload) => {
-                            console.log('Lead atualizado em tempo real:', payload);
-                            if (payload.eventType === 'INSERT') {
-                                setLeads(prev => [payload.new, ...prev]);
-                            } else if (payload.eventType === 'UPDATE') {
-                                setLeads(prev => prev.map(l => l.id === payload.new.id ? payload.new : l));
-                            } else if (payload.eventType === 'DELETE') {
-                                setLeads(prev => prev.filter(l => l.id !== payload.old.id));
+                try {
+                    const channel = supabase
+                        .channel('leads-changes')
+                        .on(
+                            'postgres_changes',
+                            {
+                                event: '*',
+                                schema: 'public',
+                                table: 'leads',
+                            },
+                            (payload) => {
+                                console.log('🔄 Lead atualizado em tempo real:', payload);
+                                if (payload.eventType === 'INSERT') {
+                                    setLeads(prev => [payload.new, ...prev]);
+                                } else if (payload.eventType === 'UPDATE') {
+                                    setLeads(prev => prev.map(l => l.id === payload.new.id ? payload.new : l));
+                                } else if (payload.eventType === 'DELETE') {
+                                    setLeads(prev => prev.filter(l => l.id !== payload.old.id));
+                                }
                             }
-                        }
-                    )
-                    .subscribe();
+                        )
+                        .subscribe((status) => {
+                            if (status === 'SUBSCRIBED') {
+                                console.log('✅ Real-time subscription ativa para leads');
+                            } else if (status === 'CLOSED') {
+                                console.warn('⚠️ Real-time subscription fechada');
+                            }
+                        });
 
-                return () => {
-                    supabase.removeChannel(channel);
-                };
+                    return () => {
+                        supabase.removeChannel(channel);
+                    };
+                } catch (error) {
+                    console.warn('⚠️ Não foi possível ativar real-time:', error.message);
+                }
             }
         };
 
