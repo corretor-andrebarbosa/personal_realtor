@@ -23,15 +23,21 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 import { config } from './config';
 import Maintenance from './components/public/Maintenance';
+import MaintenancePage from './components/MaintenancePage';
 import { supabase } from './lib/supabaseClient';
 import { applySettingsToLocal } from './hooks/useSiteSettings';
+import { getTodayStatus } from './lib/scripturalCalendar';
 
 const App = () => {
     const location = useLocation();
     const [searchParams] = useSearchParams();
 
-    // ✅ Se tiver ?preview=true na URL, ignoramos a manutenção
+    // ✅ Se tiver ?preview=true na URL, ignoramos a manutenção do config.js
     const isPreviewMode = searchParams.get('preview') === 'true';
+
+    // 📅 Manutenção escritural: ?manutencao na URL força a pré-visualização
+    const forceMaintenancePreview = searchParams.has('manutencao');
+    const scripturalStatus = React.useMemo(() => getTodayStatus(), []);
 
     // isLoading=true impede redirect prematuro enquanto o Supabase verifica a sessão
     const [isAuthenticated, setIsAuthenticated] = React.useState(false);
@@ -106,6 +112,21 @@ const App = () => {
 
     if (isAdminPath && !isAuthenticated) {
         return <Navigate to="/login" replace />;
+    }
+
+    // 📅 Modo manutenção escritural — aplica apenas em rotas públicas
+    const isPublicPath = !isAdminPath && location.pathname !== '/login';
+    const showScripturalMaintenance =
+        isPublicPath && (forceMaintenancePreview || scripturalStatus.isRestDay);
+
+    if (showScripturalMaintenance) {
+        const previewEndsAt = new Date(Date.now() + 18 * 60 * 60 * 1000); // +18h para preview
+        return (
+            <MaintenancePage
+                name={scripturalStatus.name || 'Shabbat'}
+                endsAt={scripturalStatus.endsAt || previewEndsAt}
+            />
+        );
     }
 
     const hideNavPaths = ['/properties/new', '/website', '/login', '/admin/blog/new', '/admin/blog/edit'];
