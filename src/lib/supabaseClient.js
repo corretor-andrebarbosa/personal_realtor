@@ -19,8 +19,12 @@ const getSupabaseUrl = () => {
   const envUrl = clean(import.meta?.env?.VITE_SUPABASE_URL ?? '');
   if (envUrl.startsWith('https://') && envUrl.includes('.supabase.co')) return envUrl;
   if (typeof window !== 'undefined') {
-    const lsUrl = clean(localStorage.getItem('ab-supabase-url') ?? '');
-    if (lsUrl.startsWith('https://') && lsUrl.includes('.supabase.co')) return lsUrl;
+    try {
+      const lsUrl = clean(localStorage.getItem('ab-supabase-url') ?? '');
+      if (lsUrl.startsWith('https://') && lsUrl.includes('.supabase.co')) return lsUrl;
+    } catch (e) {
+      // localStorage pode não estar disponível em aba anônima
+    }
   }
   return FALLBACK_URL;
 };
@@ -29,11 +33,15 @@ const getSupabaseKey = () => {
   const envKey = clean(import.meta?.env?.VITE_SUPABASE_ANON_KEY ?? '');
   if (envKey.length > 20 && !envKey.includes('COLE_AQUI')) return envKey;
   if (typeof window !== 'undefined') {
-    const lsKey = clean(
-      localStorage.getItem('ab-supabase-key') ??
-      localStorage.getItem('ab-supabase-anon') ?? ''
-    );
-    if (lsKey.length > 20 && !lsKey.includes('COLE_AQUI')) return lsKey;
+    try {
+      const lsKey = clean(
+        localStorage.getItem('ab-supabase-key') ??
+        localStorage.getItem('ab-supabase-anon') ?? ''
+      );
+      if (lsKey.length > 20 && !lsKey.includes('COLE_AQUI')) return lsKey;
+    } catch (e) {
+      // localStorage pode não estar disponível em aba anônima
+    }
   }
   return FALLBACK_KEY;
 };
