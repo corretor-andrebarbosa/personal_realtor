@@ -6,7 +6,7 @@ import { translations } from '../../translations';
 const PriceDisplay = ({ brlValue, lang, propertyConsultText, isRent = false, priceType = 'fixo' }) => {
     const [localPrice, setLocalPrice] = useState(null);
     const [currencyInfo, setCurrencyInfo] = useState({ code: 'BRL', country: 'BR' });
-    const t = (key) => translations[lang][key] || translations['pt'][key] || key;
+    const t = (key) => (translations[lang] || {})[key] || translations['pt'][key] || key;
 
     useEffect(() => {
         if (!brlValue) return;

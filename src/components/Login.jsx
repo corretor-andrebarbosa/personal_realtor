@@ -14,7 +14,7 @@ export default function Login() {
   const [logoError, setLogoError] = useState(false);
 
   const [lang] = useState(localStorage.getItem('ab-user-lang') || 'pt');
-  const t = (key) => translations[lang][key] || translations['pt'][key] || key;
+  const t = (key) => (translations[lang] || {})[key] || translations['pt'][key] || key;
 
   const handleClearCache = () => {
     if (confirm(t('login_confirm_reset'))) {

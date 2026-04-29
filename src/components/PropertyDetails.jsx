@@ -149,7 +149,7 @@ const PropertyDetails = () => {
 
 
   const [lang, setLang] = useState(localStorage.getItem('ab-user-lang') || 'pt');
-  const t = (key) => translations[lang][key] || translations['pt'][key] || key;
+  const t = (key) => (translations[lang] || {})[key] || translations['pt'][key] || key;
 
   const [property, setProperty] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);

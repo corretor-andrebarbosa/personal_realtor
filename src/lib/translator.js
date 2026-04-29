@@ -1,56 +1,72 @@
+// v2 — usa Google Translate como fonte primária (melhor qualidade para PT-BR)
+// Cache versionado: ao mudar CACHE_VERSION, traduções antigas são descartadas
+const CACHE_VERSION = 'v2';
+const CACHE_STORE = `ab-translations-cache-${CACHE_VERSION}`;
 
-const cache = JSON.parse(localStorage.getItem('ab-translations-cache') || '{}');
+// Remove versões antigas do cache
+try {
+    for (const k of Object.keys(localStorage)) {
+        if (k.startsWith('ab-translations-cache') && k !== CACHE_STORE) {
+            localStorage.removeItem(k);
+        }
+    }
+} catch (_) {}
+
+const cache = (() => {
+    try { return JSON.parse(localStorage.getItem(CACHE_STORE) || '{}'); }
+    catch (_) { return {}; }
+})();
+
+function saveCache() {
+    const keys = Object.keys(cache);
+    if (keys.length > 600) delete cache[keys[0]];
+    try { localStorage.setItem(CACHE_STORE, JSON.stringify(cache)); } catch (_) {}
+}
 
 /**
- * Translates text from Portuguese to the target language using MyMemory API.
- * Includes a simple local cache to avoid redundant requests.
+ * Traduz texto de português para o idioma alvo.
+ * Fonte primária: Google Translate (gratuito, boa qualidade para PT-BR).
+ * Fallback: MyMemory API.
  */
 export const translateText = async (text, targetLang) => {
     if (!text || !targetLang || targetLang === 'pt') return text;
 
-    // Normalize language codes for MyMemory (e.g., 'es' -> 'es', 'de' -> 'de')
-    const langPair = `pt|${targetLang}`;
     const cacheKey = `${text}_${targetLang}`;
+    if (cache[cacheKey]) return cache[cacheKey];
 
-    if (cache[cacheKey]) {
-        return cache[cacheKey];
-    }
-
+    // 1) Google Translate (unofficial free endpoint — melhor para PT-BR)
     try {
-        const response = await fetch(
-            `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${langPair}`
-        );
-        const data = await response.json();
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=pt&tl=${encodeURIComponent(targetLang)}&dt=t&q=${encodeURIComponent(text)}`;
+        const res = await fetch(url);
+        const data = await res.json();
 
-        if (data.responseData && data.responseData.translatedText) {
-            const translated = data.responseData.translatedText;
-            
-            // Don't cache if it looks like an error/warning message from MyMemory
-            if (!translated.toUpperCase().includes('MYMEMORY WARNING') && 
-                !translated.toUpperCase().includes('ERROR') &&
-                !translated.includes('https://')) {
-                
+        if (data?.[0]) {
+            // Concatena todos os fragmentos retornados
+            const translated = data[0].map(c => c?.[0] || '').join('').trim();
+            if (translated && translated !== text) {
                 cache[cacheKey] = translated;
-
-                // Limit cache size to avoid localStorage bloat (keep last 500 translations)
-                const keys = Object.keys(cache);
-                if (keys.length > 500) {
-                    delete cache[keys[0]];
-                }
-
-                localStorage.setItem('ab-translations-cache', JSON.stringify(cache));
+                saveCache();
+                return translated;
             }
-            
-            // Return original text if it's an error message, otherwise return translation
-            if (translated.toUpperCase().includes('MYMEMORY WARNING') || translated.includes('https://')) {
-                return text;
-            }
-            
+        }
+    } catch (_) {}
+
+    // 2) Fallback: MyMemory
+    try {
+        const res = await fetch(
+            `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=pt|${targetLang}`
+        );
+        const data = await res.json();
+        const translated = data?.responseData?.translatedText || '';
+
+        if (translated &&
+            !translated.toUpperCase().includes('MYMEMORY WARNING') &&
+            !translated.includes('https://')) {
+            cache[cacheKey] = translated;
+            saveCache();
             return translated;
         }
-    } catch (error) {
-        console.error("Translation failed for text:", text, error);
-    }
+    } catch (_) {}
 
     return text;
 };
