@@ -42,7 +42,7 @@ const BlogPage = () => {
             {/* Nav */}
             <nav className="bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b border-slate-100 shadow-sm py-4 px-6 flex justify-between items-center">
                 <Link to="/" className="flex items-center gap-2">
-                    <img src="/newlogo.png" alt="Logo" className="h-10 object-contain" onError={e => e.target.style.display = 'none'} />
+                    <img src="/newlogo2.png" alt="Logo" className="h-10 object-contain" onError={e => e.target.style.display = 'none'} />
                 </Link>
 
                 <div className="flex items-center gap-4">

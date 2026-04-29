@@ -130,7 +130,7 @@ const BlogPostPage = () => {
                 </Link>
 
                 <Link to="/">
-                    <img src="/newlogo.png" alt="Logo" className="h-8 object-contain" onError={e => e.target.style.display = 'none'} />
+                    <img src="/newlogo2.png" alt="Logo" className="h-8 object-contain" onError={e => e.target.style.display = 'none'} />
                 </Link>
 
                 {/* Language Selector */}

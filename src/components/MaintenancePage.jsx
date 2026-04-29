@@ -129,7 +129,7 @@ const MaintenancePage = ({ endsAt }) => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 px-6">
       {/* Logo */}
       <img
-        src="/newlogo.png"
+        src="/newlogo2.png"
         alt="André Barbosa Imóveis"
         className="h-16 mb-10 object-contain"
       />

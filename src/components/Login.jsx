@@ -93,7 +93,7 @@ export default function Login() {
             <div className="relative flex items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner">
               {!logoError ? (
                 <img
-                  src={localStorage.getItem('ab-logo-url') || '/newlogo.png'}
+                  src={localStorage.getItem('ab-logo-url') || '/newlogo2.png'}
                   alt="Logo"
                   className="h-12 object-contain"
                   onError={() => setLogoError(true)}

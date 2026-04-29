@@ -187,7 +187,7 @@ const PublicHome = () => {
                 <Link to="/website" className="flex items-center gap-2">
                     <div className="relative flex items-center">
                         <img
-                            src={settings.logoUrl || '/newlogo.png'}
+                            src={settings.logoUrl || '/newlogo2.png'}
                             alt="Logo"
                             className="h-10 object-contain"
                             onError={(e) => {
