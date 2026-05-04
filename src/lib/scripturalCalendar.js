@@ -3,8 +3,7 @@
  * Portado de https://github.com/yashraal/celestial-calendar-clock-converter-c4
  *
  * Âncoras confirmadas:
- *   Ano 2025, Mês 1, Dia 1 = 13/04/2025 (Abib 1)
- *   Ano 2026, Mês 1, Dia 1 = 02/05/2026 (Abib 1) ← confirmado no código-fonte
+ *   Ano 2026, Mês 1, Dia 1 = 02/05/2026 (Abib 1) ← âncora correta confirmada no código-fonte
  *
  * Dias de descanso obrigatório:
  *   Shabbat: dias 8, 15, 22 e 29 de cada mês
@@ -17,11 +16,12 @@ import SunCalc from 'suncalc';
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const FULL_MOON_THRESHOLD = 0.98;
 
-// Âncora principal (confirmada no código-fonte do repositório)
-const ANCHOR_ISO = '2025-04-13';
-const ANCHOR_YEAR = 2025;
+// Âncora principal: 02/05/2026 = Abib 1 (Mês 1, Dia 1) do ano 2026
+// Começar da âncora mais recente e confirmada garante precisão
+const ANCHOR_ISO = '2026-05-02';
+const ANCHOR_YEAR = 2026;
 const ANCHOR_MONTH = 1;
-const MONTHS_TO_GENERATE = 48; // ~4 anos
+const MONTHS_TO_GENERATE = 48; // ~4 anos (passado e futuro)
 
 // Cache de iluminação lunar (evita recalcular)
 const illumCache = new Map();
@@ -159,12 +159,13 @@ export function getRestPeriodEnd(iso) {
 }
 
 /**
- * Retorna o status atual do dia de hoje.
+ * Retorna o status atual do dia de hoje (sempre em UTC para consistência em todos os fusos horários).
  * { isRestDay, name, endsAt }
  */
 export function getTodayStatus() {
   const now = new Date();
-  const iso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  // ✅ CRÍTICO: Usar UTC para garantir mesma data em todos os fusos horários
+  const iso = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
   const { isRestDay, name } = checkDay(iso);
   if (!isRestDay) return { isRestDay: false };
   return { isRestDay: true, name, endsAt: getRestPeriodEnd(iso) };
