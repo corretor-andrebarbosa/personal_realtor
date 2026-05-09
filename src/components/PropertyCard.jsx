@@ -1,15 +1,36 @@
 
-import React, { useState } from 'react';
-import { MapPin, BedDouble, Bath, Car, PlayCircle, Edit, Trash2, CloudOff, RefreshCw, AlertCircle } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { MapPin, BedDouble, Bath, Car, PlayCircle, Edit, Trash2, CloudOff, RefreshCw, AlertCircle, Tag } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useProperties } from '../contexts/PropertyContext';
 
 const PropertyCard = ({ property }) => {
     const isSale = property.contract === 'venda' || (!property.contract && !property.rentalPrice);
     const isBoth = property.contract === 'ambos';
-    const { deleteProperty, syncItem } = useProperties();
+    const { deleteProperty, syncItem, updateProperty } = useProperties();
     const [showConfirm, setShowConfirm] = useState(false);
     const [retrying, setRetrying] = useState(false);
+    const [showStatusMenu, setShowStatusMenu] = useState(false);
+    const [updatingStatus, setUpdatingStatus] = useState(false);
+    const statusMenuRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (statusMenuRef.current && !statusMenuRef.current.contains(e.target)) {
+                setShowStatusMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleStatusChange = async (newStatus) => {
+        if (newStatus === property.status) { setShowStatusMenu(false); return; }
+        setShowStatusMenu(false);
+        setUpdatingStatus(true);
+        await updateProperty(property.id, { status: newStatus });
+        setUpdatingStatus(false);
+    };
 
     const handleDelete = (e) => {
         e.preventDefault();
@@ -128,6 +149,39 @@ const PropertyCard = ({ property }) => {
                             <span className="flex items-center gap-1" title="Área">{property.area}m²</span>
                         </div>
                         <div className="flex items-center gap-1">
+                            {/* Botão de mudança rápida de status */}
+                            <div className="relative" ref={statusMenuRef}>
+                                <button
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowStatusMenu(v => !v); }}
+                                    disabled={updatingStatus}
+                                    className={`p-1.5 rounded-lg transition-colors flex items-center gap-1 text-[10px] font-bold border ${
+                                        property.status === 'Vendido'   ? 'bg-red-50 text-red-500 border-red-100 hover:bg-red-100' :
+                                        property.status === 'Reservado' ? 'bg-amber-50 text-amber-500 border-amber-100 hover:bg-amber-100' :
+                                                                          'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100'
+                                    }`}
+                                    title="Mudar status"
+                                >
+                                    <Tag size={12} className={updatingStatus ? 'animate-pulse' : ''} />
+                                </button>
+                                {showStatusMenu && (
+                                    <div className="absolute right-0 bottom-full mb-1 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-50 w-36">
+                                        {[
+                                            { value: 'Disponível', color: 'text-emerald-600', dot: '🟢' },
+                                            { value: 'Reservado',  color: 'text-amber-500',   dot: '🟡' },
+                                            { value: 'Vendido',    color: 'text-red-500',     dot: '🔴' },
+                                        ].map(({ value, color, dot }) => (
+                                            <button
+                                                key={value}
+                                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleStatusChange(value); }}
+                                                className={`w-full text-left px-3 py-1.5 text-xs font-bold hover:bg-slate-50 transition-colors flex items-center gap-2 ${property.status === value ? color : 'text-slate-500'}`}
+                                            >
+                                                {dot} {value}
+                                                {property.status === value && <span className="ml-auto text-[9px] opacity-60">atual</span>}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                             <Link
                                 to={`/properties/edit/${property.id}`}
                                 className="text-[var(--primary-color)] p-1.5 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"

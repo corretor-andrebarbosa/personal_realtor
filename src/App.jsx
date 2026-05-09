@@ -37,7 +37,7 @@ const App = () => {
 
     // 📅 Manutenção escritural: ?manutencao na URL força a pré-visualização
     const forceMaintenancePreview = searchParams.has('manutencao');
-    const scripturalStatus = React.useMemo(() => getTodayStatus(), []);
+    const [scripturalStatus, setScripturalStatus] = React.useState(null); // null = aguardando geolocalização
 
     // isLoading=true impede redirect prematuro enquanto o Supabase verifica a sessão
     const [isAuthenticated, setIsAuthenticated] = React.useState(false);
@@ -64,10 +64,14 @@ const App = () => {
             .then(({ data }) => { if (data) applySettingsToLocal(data); })
             .catch(() => {}); // silencioso se tabela ainda não existe
 
-        // 1) Verifica sessão atual no Supabase (resolvida antes de qualquer redirect)
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        // 1) Verifica sessão + calendário escritural em paralelo
+        Promise.all([
+            supabase.auth.getSession().catch(() => ({ data: { session: null } })),
+            getTodayStatus().catch(() => ({ isRestDay: false })),
+        ]).then(([{ data: { session } }, status]) => {
             setIsAuthenticated(!!session);
             _syncLocalSession(session || null);
+            setScripturalStatus(status);
             setIsLoading(false);
         });
 
@@ -117,7 +121,7 @@ const App = () => {
     // 📅 Modo manutenção escritural — aplica apenas em rotas públicas
     const isPublicPath = !isAdminPath && location.pathname !== '/login';
     const showScripturalMaintenance =
-        isPublicPath && (forceMaintenancePreview || scripturalStatus.isRestDay);
+        isPublicPath && (forceMaintenancePreview || scripturalStatus?.isRestDay === true);
 
     if (showScripturalMaintenance) {
         const previewEndsAt = new Date(Date.now() + 18 * 60 * 60 * 1000); // +18h para preview

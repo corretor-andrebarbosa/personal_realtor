@@ -117,7 +117,7 @@ const PublicHome = () => {
 
     // Filter Logic
     const filteredProperties = properties.filter(p => {
-        if (p.status !== 'Disponível') return false;
+        if (p.status !== 'Disponível' && p.status !== 'Vendido') return false;
 
         if (filters.contract === 'venda') {
             const hasSalePrice = Number(p.price || p.salePrice || 0) > 0;
@@ -142,7 +142,7 @@ const PublicHome = () => {
     const isFiltering = Object.values(filters).some(Boolean);
 
     const validProperties = properties.filter(p =>
-        p.status === 'Disponível' && p.title
+        (p.status === 'Disponível' || p.status === 'Vendido') && p.title
     );
 
     const displayedProperties = isFiltering ? filteredProperties.filter(p => validProperties.includes(p)) : validProperties;
@@ -529,24 +529,32 @@ const PublicHome = () => {
                                 <div
                                     key={property.id}
                                     onClick={() => {
+                                        if (property.status === 'Vendido') return;
                                         const url = `/properties/${property.id}`;
                                         window.open(url, '_blank', 'noopener,noreferrer');
                                     }}
-                                    className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 group ring-1 ring-slate-100 hover:ring-2 cursor-pointer"
+                                    className={`bg-white rounded-2xl overflow-hidden shadow-sm transition-all duration-300 group ring-1 ring-slate-100 ${property.status === 'Vendido' ? 'cursor-default opacity-90' : 'hover:shadow-2xl hover:ring-2 cursor-pointer'}`}
                                     style={{ '--tw-ring-color': `${settings.primaryColor}20` }}
                                 >
                                     <div className="relative h-64 overflow-hidden bg-slate-100">
                                         <img
                                             src={displayImage}
                                             alt={property.title}
-                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                            className={`w-full h-full object-cover transition-transform duration-700 ${property.status === 'Vendido' ? 'grayscale' : 'group-hover:scale-110'}`}
                                             onError={(e) => {
-                                                // Fallback final se a imagem do youtube ou a original falharem
                                                 if (e.target.src !== "https://ui-avatars.com/api/?name=IMOVEL&size=600&background=cbd5e1&color=334155") {
                                                     e.target.src = "https://ui-avatars.com/api/?name=IMOVEL&size=600&background=cbd5e1&color=334155";
                                                 }
                                             }}
                                         />
+                                        {/* Overlay VENDIDO */}
+                                        {property.status === 'Vendido' && (
+                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+                                                <div className="bg-red-600 text-white font-extrabold text-xl px-6 py-2 rounded-lg uppercase tracking-widest shadow-2xl border-2 border-white/40 -rotate-12 select-none">
+                                                    VENDIDO
+                                                </div>
+                                            </div>
+                                        )}
                                         {/* Badge de Vídeo se tiver vídeo e não tiver foto real */}
                                         {videoThumb && !primaryImage && (
                                             <div className="absolute top-4 left-4 bg-red-600 text-white px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 shadow-lg">
@@ -619,18 +627,24 @@ const PublicHome = () => {
                                             </div>
                                         )}
 
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                openWhatsApp(`Olá! Tenho interesse no imóvel: ${property.title} - R$ ${(property.price || property.rentalPrice || 0).toLocaleString('pt-BR')}`, settings.whatsapp);
-                                            }}
-                                            className="w-full mt-2 bg-slate-50 text-slate-600 font-bold py-3 rounded-xl border border-slate-200 hover:text-white hover:border-transparent transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-2"
-                                            style={{ '--tw-bg-opacity': 1 }}
-                                            onMouseEnter={e => { e.target.style.backgroundColor = settings.primaryColor; e.target.style.color = 'white'; }}
-                                            onMouseLeave={e => { e.target.style.backgroundColor = ''; e.target.style.color = ''; }}
-                                        >
-                                            <TT k="property_interest" /> <ArrowUpRight size={14} />
-                                        </button>
+                                        {property.status === 'Vendido' ? (
+                                            <div className="w-full mt-2 bg-red-50 text-red-400 font-bold py-3 rounded-xl border border-red-100 uppercase text-xs tracking-widest flex items-center justify-center gap-2 select-none">
+                                                Negociação Encerrada
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openWhatsApp(`Olá! Tenho interesse no imóvel: ${property.title} - R$ ${(property.price || property.rentalPrice || 0).toLocaleString('pt-BR')}`, settings.whatsapp);
+                                                }}
+                                                className="w-full mt-2 bg-slate-50 text-slate-600 font-bold py-3 rounded-xl border border-slate-200 hover:text-white hover:border-transparent transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-2"
+                                                style={{ '--tw-bg-opacity': 1 }}
+                                                onMouseEnter={e => { e.target.style.backgroundColor = settings.primaryColor; e.target.style.color = 'white'; }}
+                                                onMouseLeave={e => { e.target.style.backgroundColor = ''; e.target.style.color = ''; }}
+                                            >
+                                                <TT k="property_interest" /> <ArrowUpRight size={14} />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             );

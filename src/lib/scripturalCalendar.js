@@ -16,6 +16,10 @@ import SunCalc from 'suncalc';
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const FULL_MOON_THRESHOLD = 0.98;
 
+// Coordenadas de João Pessoa, PB — fronteira do dia escritural (nascer do sol)
+const LAT = -7.12;
+const LON = -34.86;
+
 // Âncora principal: 02/05/2026 = Abib 1 (Mês 1, Dia 1) do ano 2026
 // Começar da âncora mais recente e confirmada garante precisão
 const ANCHOR_ISO = '2026-05-02';
@@ -139,9 +143,9 @@ export function checkDay(iso) {
 
 /**
  * Retorna a data/hora em que o período de descanso termina.
- * O dia escritural começa ao amanhecer — usa 06:00 local como aproximação.
+ * O dia escritural termina na alvorada do dia seguinte, no local do usuário.
  */
-export function getRestPeriodEnd(iso) {
+export function getRestPeriodEnd(iso, lat = LAT, lon = LON) {
   const startDayNum = isoToDayNum(iso);
   let dayNum = startDayNum;
 
@@ -152,21 +156,52 @@ export function getRestPeriodEnd(iso) {
     dayNum++;
   }
 
-  // Retorna 06:00 local do dia seguinte ao último dia de descanso
-  const nextDayISO = dayNumToISO(dayNum + 1);
-  const [y, mo, d] = nextDayISO.split('-').map(Number);
-  return new Date(y, mo - 1, d, 6, 0, 0, 0);
+  // Alvorada do dia calendário seguinte — usar meio-dia UTC para evitar o mesmo problema
+  // de SunCalc retornar a alvorada errada quando passamos meia-noite UTC
+  const nextDayNoon = new Date((dayNum + 1) * MS_PER_DAY + 12 * 3600 * 1000);
+  return SunCalc.getTimes(nextDayNoon, lat, lon).sunrise;
 }
 
 /**
- * Retorna o status atual do dia de hoje (sempre em UTC para consistência em todos os fusos horários).
+ * Retorna o status escritural atual de forma assíncrona.
+ * Usa a geolocalização do browser para calcular a alvorada local do visitante.
+ * O dia escritural começa na alvorada — antes dela ainda é o dia anterior.
+ * Fallback: João Pessoa, PB (coordenadas padrão do corretor).
  * { isRestDay, name, endsAt }
  */
-export function getTodayStatus() {
+export async function getTodayStatus() {
   const now = new Date();
-  // ✅ CRÍTICO: Usar UTC para garantir mesma data em todos os fusos horários
-  const iso = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
+
+  // Tenta obter coordenadas reais do visitante
+  let lat = LAT, lon = LON;
+  try {
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      const pos = await new Promise((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          timeout: 4000,
+          maximumAge: 3600000, // aceita cache de até 1 hora
+          enableHighAccuracy: false,
+        })
+      );
+      lat = pos.coords.latitude;
+      lon = pos.coords.longitude;
+    }
+  } catch {
+    // Permissão negada ou timeout — usa coordenadas padrão (João Pessoa)
+  }
+
+  // SunCalc.getTimes(now) retorna a alvorada do dia solar EM CURSO, não do próximo nascer.
+  // Para obter a alvorada correta do dia calendário UTC, passamos o meio-dia UTC desse dia.
+  const utcNoon = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 12, 0, 0));
+  const todaySunrise = SunCalc.getTimes(utcNoon, lat, lon).sunrise;
+
+  // Antes da alvorada, o dia escritural ativo ainda é o anterior
+  const scriptDay = now < todaySunrise
+    ? new Date(now.getTime() - MS_PER_DAY)
+    : now;
+
+  const iso = `${scriptDay.getUTCFullYear()}-${String(scriptDay.getUTCMonth() + 1).padStart(2, '0')}-${String(scriptDay.getUTCDate()).padStart(2, '0')}`;
   const { isRestDay, name } = checkDay(iso);
   if (!isRestDay) return { isRestDay: false };
-  return { isRestDay: true, name, endsAt: getRestPeriodEnd(iso) };
+  return { isRestDay: true, name, endsAt: getRestPeriodEnd(iso, lat, lon) };
 }

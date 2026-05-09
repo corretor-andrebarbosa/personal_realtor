@@ -50,6 +50,7 @@ const normalizeExistingPropertyToForm = (existing) => {
   return {
     title: existing?.title || '',
     type: existing?.type || 'Apartamento',
+    status: existing?.status || 'Disponível',
     salePrice: existing?.price || existing?.salePrice || existing?.sale_price || '',
     rentalPrice: existing?.rentalPrice || existing?.rental_price || '',
     contract: existing?.contract || 'venda',
@@ -83,6 +84,7 @@ const PropertyForm = () => {
   const [formData, setFormData] = useState({
     title: '',
     type: 'Apartamento',
+    status: 'Disponível',
     salePrice: '',
     rentalPrice: '',
     contract: 'venda',
@@ -281,7 +283,7 @@ const PropertyForm = () => {
       caucao: formData.caucao || false,
       fiador: formData.fiador || false,
 
-      status: 'Disponível'
+      status: formData.status || 'Disponível'
     };
   };
 
@@ -425,6 +427,30 @@ const PropertyForm = () => {
                 <option value="Loja">Loja</option>
                 <option value="Galpão">Galpão</option>
               </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-500 mb-1">Status do Imóvel</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { value: 'Disponível', bg: 'bg-emerald-500', ring: 'ring-emerald-500' },
+                  { value: 'Reservado',  bg: 'bg-amber-500',   ring: 'ring-amber-500'   },
+                  { value: 'Vendido',    bg: 'bg-red-500',     ring: 'ring-red-500'     },
+                ].map(({ value, bg, ring }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, status: value }))}
+                    className={`py-2.5 rounded-xl font-bold text-xs border-2 transition-all ${
+                      formData.status === value
+                        ? `${bg} text-white border-transparent ring-2 ${ring} ring-offset-1 shadow-md`
+                        : 'bg-white text-slate-400 border-slate-200'
+                    }`}
+                  >
+                    {value}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
