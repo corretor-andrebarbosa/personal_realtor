@@ -113,7 +113,10 @@ export const translations = {
         sell_title: "Tem um imóvel para vender ou alugar?",
         sell_subtitle: "Entre em contato agora e descubra o verdadeiro potencial do seu imóvel.",
         sell_cta: "Falar com André no WhatsApp",
-        sell_coming_soon: "Em breve: cadastre seu imóvel gratuitamente com fotos e vídeos diretamente pela plataforma — sem intermediários, sem burocracia."
+        sell_coming_soon: "Em breve: cadastre seu imóvel gratuitamente com fotos e vídeos diretamente pela plataforma — sem intermediários, sem burocracia.",
+
+        status_sold: "VENDIDO",
+        status_negotiation_closed: "Negociação Encerrada"
     },
     en: {
         nav_properties: "Properties",
@@ -229,7 +232,10 @@ export const translations = {
         sell_title: "Have a property to sell or rent?",
         sell_subtitle: "Contact us now and discover the true potential of your property.",
         sell_cta: "Talk to André on WhatsApp",
-        sell_coming_soon: "Coming soon: list your property for free with photos and videos directly on the platform — no middlemen, no hassle."
+        sell_coming_soon: "Coming soon: list your property for free with photos and videos directly on the platform — no middlemen, no hassle.",
+
+        status_sold: "SOLD",
+        status_negotiation_closed: "Negotiation Closed"
     },
     de: {
         nav_properties: "Immobilien",
@@ -345,7 +351,10 @@ export const translations = {
         sell_title: "Haben Sie eine Immobilie zu verkaufen oder vermieten?",
         sell_subtitle: "Kontaktieren Sie uns jetzt und entdecken Sie das wahre Potenzial Ihrer Immobilie.",
         sell_cta: "Mit André auf WhatsApp sprechen",
-        sell_coming_soon: "Bald verfügbar: listen Sie Ihre Immobilie kostenlos mit Fotos und Videos direkt auf der Plattform — ohne Zwischenhändler, ohne Bürokratie."
+        sell_coming_soon: "Bald verfügbar: listen Sie Ihre Immobilie kostenlos mit Fotos und Videos direkt auf der Plattform — ohne Zwischenhändler, ohne Bürokratie.",
+
+        status_sold: "VERKAUFT",
+        status_negotiation_closed: "Verhandlung Abgeschlossen"
     },
     es: {
         nav_properties: "Inmuebles",
@@ -461,6 +470,9 @@ export const translations = {
         sell_title: "¿Tiene un inmueble para vender o alquilar?",
         sell_subtitle: "Contáctenos ahora y descubra el verdadero potencial de su inmueble.",
         sell_cta: "Hablar con André en WhatsApp",
-        sell_coming_soon: "Próximamente: registre su inmueble gratuitamente con fotos y vídeos directamente en la plataforma — sin intermediarios, sin burocracia."
+        sell_coming_soon: "Próximamente: registre su inmueble gratuitamente con fotos y vídeos directamente en la plataforma — sin intermediarios, sin burocracia.",
+
+        status_sold: "VENDIDO",
+        status_negotiation_closed: "Negociación Cerrada"
     }
 };

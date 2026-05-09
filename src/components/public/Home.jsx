@@ -551,7 +551,7 @@ const PublicHome = () => {
                                         {property.status === 'Vendido' && (
                                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
                                                 <div className="bg-red-600 text-white font-extrabold text-xl px-6 py-2 rounded-lg uppercase tracking-widest shadow-2xl border-2 border-white/40 -rotate-12 select-none">
-                                                    VENDIDO
+                                                    <TT k="status_sold" />
                                                 </div>
                                             </div>
                                         )}
@@ -629,7 +629,7 @@ const PublicHome = () => {
 
                                         {property.status === 'Vendido' ? (
                                             <div className="w-full mt-2 bg-red-50 text-red-400 font-bold py-3 rounded-xl border border-red-100 uppercase text-xs tracking-widest flex items-center justify-center gap-2 select-none">
-                                                Negociação Encerrada
+                                                <TT k="status_negotiation_closed" />
                                             </div>
                                         ) : (
                                             <button
