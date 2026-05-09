@@ -7,6 +7,7 @@ export const translations = {
         nav_admin: "Admin",
         nav_logout: "Sair",
         nav_fale_comigo: "Fale Comigo",
+        nav_smart_search: "Busca Inteligente",
 
         hero_title: "Exclusividade e Alto Padrão em Cada Detalhe",
         hero_subtitle: "Sua jornada para encontrar o imóvel perfeito começa aqui. Atendimento personalizado em João Pessoa e região.",
@@ -126,6 +127,7 @@ export const translations = {
         nav_admin: "Admin",
         nav_logout: "Logout",
         nav_fale_comigo: "Contact Me",
+        nav_smart_search: "Smart Search",
 
         hero_title: "Exclusivity and High Standards in Every Detail",
         hero_subtitle: "Your journey to find the perfect property starts here. Personalized service in João Pessoa and region.",
@@ -245,6 +247,7 @@ export const translations = {
         nav_admin: "Admin",
         nav_logout: "Abmelden",
         nav_fale_comigo: "Kontaktieren",
+        nav_smart_search: "Intelligente Suche",
 
         hero_title: "Exklusivität und hohe Standards in jedem Detail",
         hero_subtitle: "Ihre Reise zur perfekten Immobilie beginnt hier. Personalisierter Service in João Pessoa und Region.",
@@ -364,6 +367,7 @@ export const translations = {
         nav_admin: "Admin",
         nav_logout: "Salir",
         nav_fale_comigo: "Contáctame",
+        nav_smart_search: "Búsqueda Inteligente",
 
         hero_title: "Exclusividad y Alta Calidad en Cada Detalle",
         hero_subtitle: "Su viaje para encontrar la propiedad perfecta comienza aquí. Atención personalizada en João Pessoa y región.",

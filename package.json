@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:full": "concurrently --names \"worker,vite\" --prefix-colors \"yellow,cyan\" \"npm run dev --prefix workers/busca-imoveis\" \"vite\"",
+    "setup:busca": "node workers/busca-imoveis/setup.mjs",
+    "deploy:busca": "node scripts/deploy-busca.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "optimize:images": "node tools/optimize-images.mjs"
@@ -26,6 +29,7 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^9.2.1",
     "eslint": "^10.0.1",
     "eslint-plugin-react": "^7.22.0",
     "eslint-plugin-react-hooks": "^4.6.2",
