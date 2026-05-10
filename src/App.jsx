@@ -19,6 +19,7 @@ import BlogList from './components/BlogList';
 import BlogForm from './components/BlogForm';
 import BlogPage from './components/public/BlogPage';
 import BlogPostPage from './components/public/BlogPostPage';
+import BuscaInteligente from './pages/BuscaInteligente';
 import ErrorBoundary from './components/ErrorBoundary';
 
 import { config } from './config';
@@ -94,7 +95,7 @@ const App = () => {
     }, []); // ← sem dependência de pathname: subscription vive durante toda a sessão
 
 
-    const adminPrefixes = ['/admin', '/kaleb', '/leads', '/people', '/settings'];
+    const adminPrefixes = ['/admin', '/kaleb', '/leads', '/people', '/settings', '/busca-inteligente'];
 
     const isAdminPropertyRoute =
         location.pathname === '/properties' ||
@@ -133,7 +134,7 @@ const App = () => {
         );
     }
 
-    const hideNavPaths = ['/properties/new', '/website', '/login', '/admin/blog/new', '/admin/blog/edit'];
+    const hideNavPaths = ['/properties/new', '/website', '/login', '/admin/blog/new', '/admin/blog/edit', '/blog'];
     const showNav = isAuthenticated
         && location.pathname !== '/'
         && !hideNavPaths.some(p => location.pathname.includes(p))
@@ -151,6 +152,7 @@ const App = () => {
                             {/* Public routes */}
                             <Route path="/blog" element={<BlogPage />} />
                             <Route path="/blog/:id" element={<BlogPostPage />} />
+                            <Route path="/busca-inteligente" element={<BuscaInteligente />} />
                             <Route
                                 path="/"
                                 element={

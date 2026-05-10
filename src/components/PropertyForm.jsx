@@ -61,6 +61,7 @@ const normalizeExistingPropertyToForm = (existing) => {
     address: existing?.address || '',
     description: existing?.description || '',
     videoLink: existing?.videoLink || existing?.video || existing?.video_url || existing?.video_link || '',
+    contact_agent: existing?.contact_agent || '',
     priceType: existing?.price_type || existing?.priceType || 'fixo',
     caucao: existing?.caucao ?? false,
     fiador: existing?.fiador ?? false,
@@ -98,6 +99,7 @@ const PropertyForm = () => {
     address: '',
     description: '',
     videoLink: '',
+    contact_agent: '',
     images: [],
     image: ''
   });
@@ -642,6 +644,21 @@ const PropertyForm = () => {
             rows="4"
             className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[var(--primary-color)] outline-none transition-colors resize-none leading-relaxed"
             placeholder="Descreva o imóvel em detalhes: acabamento, diferenciais, condomínio..."
+          />
+        </section>
+
+        <section className="bg-amber-50 border border-amber-200 p-5 rounded-2xl shadow-sm">
+          <h2 className="font-bold text-amber-800 mb-1 text-sm uppercase tracking-wider flex items-center gap-2">
+            🔒 Contato do Agente Parceiro
+          </h2>
+          <p className="text-xs text-amber-700 mb-3">Visível apenas para você (admin). Nunca exibido ao visitante do site.</p>
+          <input
+            type="text"
+            name="contact_agent"
+            value={formData.contact_agent}
+            onChange={handleChange}
+            className="w-full p-3 bg-white border border-amber-200 rounded-xl focus:border-amber-400 outline-none transition-colors text-sm"
+            placeholder="Ex: João Silva — (83) 99999-9999 — CRECI/PB 12345"
           />
         </section>
 

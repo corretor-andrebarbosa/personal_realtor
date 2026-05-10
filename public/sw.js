@@ -1,5 +1,5 @@
-// Simple Service Worker for PWA offline shell - v6 [2026-05-08 network-first]
-const CACHE_NAME = 'ab-imoveis-v6';
+// Simple Service Worker for PWA offline shell - v7 [2026-05-09 network-first]
+const CACHE_NAME = 'ab-imoveis-v7';
 const urlsToCache = ['/'];
 
 self.addEventListener('install', (event) => {
@@ -23,6 +23,11 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+    // 0. Em desenvolvimento (localhost), nunca interceptar — deixa o Vite servir tudo
+    if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1') {
+        return;
+    }
+
     // 1. Ignorar completamente chamadas de API externas (Supabase, etc.)
     if (!event.request.url.startsWith(self.location.origin)) {
         return;
