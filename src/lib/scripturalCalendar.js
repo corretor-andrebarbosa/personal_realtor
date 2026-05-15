@@ -126,9 +126,13 @@ export function checkDay(iso) {
   }
 
   // Festas do Mês 1 (Abib)
+  // Apenas os dias de convocação sagrada têm manutenção (não todos os 7 dias do Chag)
   if (m.month === 1) {
-    if (dayInMonth === 14) return { isRestDay: true, name: 'Pesach' };
-    if (dayInMonth >= 15 && dayInMonth <= 21) return { isRestDay: true, name: 'Chag HaMatzot' };
+    // Pesach começa no pôr do sol do dia 14 — manutenção só a partir do entardecer
+    if (dayInMonth === 14) return { isRestDay: true, name: 'Pesach', startsAtSunset: true };
+    // Dia 15 (Shabbat + 1º dia do Chag) já é capturado pela regra de Shabbat acima
+    // Último dia do Chag HaMatzot — dia de convocação sagrada
+    if (dayInMonth === 21) return { isRestDay: true, name: 'Chag HaMatzot (último dia)' };
   }
 
   // Festas do Mês 7
@@ -201,7 +205,21 @@ export async function getTodayStatus() {
     : now;
 
   const iso = `${scriptDay.getUTCFullYear()}-${String(scriptDay.getUTCMonth() + 1).padStart(2, '0')}-${String(scriptDay.getUTCDate()).padStart(2, '0')}`;
-  const { isRestDay, name } = checkDay(iso);
+  const { isRestDay, name, startsAtSunset } = checkDay(iso);
   if (!isRestDay) return { isRestDay: false };
+
+  // Dias que só entram em descanso a partir do pôr do sol (ex: Pesach, dia 14 do mês 1)
+  if (startsAtSunset) {
+    // Usa o meio-dia UTC do dia escritural (não do dia UTC atual) para obter o pôr do sol correto
+    const scriptDayNoon = new Date(Date.UTC(
+      scriptDay.getUTCFullYear(),
+      scriptDay.getUTCMonth(),
+      scriptDay.getUTCDate(),
+      12, 0, 0
+    ));
+    const todaySunset = SunCalc.getTimes(scriptDayNoon, lat, lon).sunset;
+    if (now < todaySunset) return { isRestDay: false };
+  }
+
   return { isRestDay: true, name, endsAt: getRestPeriodEnd(iso, lat, lon) };
 }
