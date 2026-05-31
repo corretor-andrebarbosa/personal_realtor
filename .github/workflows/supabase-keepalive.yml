@@ -1,0 +1,22 @@
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    # Executa a cada 3 dias às 9h UTC (6h BRT) — evita pausa por inatividade
+    - cron: '0 9 */3 * *'
+  workflow_dispatch: # permite rodar manualmente pelo GitHub
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase (properties)
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ secrets.VITE_SUPABASE_URL }}/rest/v1/properties?select=id&limit=1" \
+            -H "apikey: ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.VITE_SUPABASE_ANON_KEY }}")
+          echo "Supabase respondeu: $STATUS"
+          if [ "$STATUS" != "200" ] && [ "$STATUS" != "204" ]; then
+            echo "::warning::Supabase retornou $STATUS — verificar projeto"
+          fi
