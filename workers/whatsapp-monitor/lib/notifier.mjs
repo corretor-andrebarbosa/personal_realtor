@@ -1,7 +1,13 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { createClient } from '@supabase/supabase-js';
+import ws from 'ws';
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+let _sb;
+const supabase = () => (_sb ??= createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY,
+  { realtime: { transport: ws } }
+));
 
 let _bot = null;
 function bot() {
@@ -51,7 +57,7 @@ function escMd(str) {
 }
 
 export async function saveMatch(data) {
-  const { error } = await supabase.from('whatsapp_matches').insert([{
+  const { error } = await supabase().from('whatsapp_matches').insert([{
     sender_name:        data.senderName,
     sender_phone:       data.senderPhone,
     group_name:         data.groupName,

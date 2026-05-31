@@ -1,7 +1,3 @@
-// Utilitário: lista todos os grupos do WhatsApp e seus IDs
-// Execute: npm run list-groups
-// Cole os IDs ou nomes desejados em WA_GROUPS no .env
-
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -17,30 +13,62 @@ try {
   });
 } catch { /* ignora */ }
 
-import pkg from 'whatsapp-web.js';
-const { Client, LocalAuth } = pkg;
+import makeWASocket, { DisconnectReason, useMultiFileAuthState } from '@whiskeysockets/baileys';
+import { Boom } from '@hapi/boom';
 import qrcode from 'qrcode-terminal';
+import pino from 'pino';
 
-const client = new Client({
-  authStrategy: new LocalAuth({ dataPath: '.wwebjs_auth' }),
-  puppeteer: { headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] },
+const { state, saveCreds } = await useMultiFileAuthState('.baileys_auth');
+
+const PHONE = process.env.WA_PHONE || '5583996828008';
+
+const sock = makeWASocket({
+  auth: state,
+  printQRInTerminal: false,
+  logger: pino({ level: 'silent' }),
 });
 
-client.on('qr', qr => {
-  console.log('\n📱 Escaneie o QR code:\n');
-  qrcode.generate(qr, { small: true });
-});
+sock.ev.on('creds.update', saveCreds);
 
-client.on('ready', async () => {
-  console.log('\n📋 Grupos disponíveis:\n');
-  const chats = await client.getChats();
-  const groups = chats.filter(c => c.isGroup);
-  groups
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .forEach(g => console.log(`  "${g.name}"  →  ${g.id._serialized}`));
-  console.log(`\nTotal: ${groups.length} grupos`);
-  console.log('\nCole os IDs ou parte dos nomes em WA_GROUPS no .env\n');
-  await client.destroy();
-});
+if (!state.creds.registered) {
+  await new Promise(r => setTimeout(r, 3000));
+  try {
+    const code = await sock.requestPairingCode(PHONE);
+    console.log(`\n🔑 Código de pareamento: ${code}`);
+    console.log('   WhatsApp → Configurações → Dispositivos conectados → Vincular com número de telefone');
+    console.log('   Digite o código acima e aguarde.\n');
+  } catch (e) {
+    console.log('\n📱 Código indisponível — use o QR abaixo:\n');
+  }
+}
 
-client.initialize();
+sock.ev.on('connection.update', async (update) => {
+  const { connection, lastDisconnect, qr } = update;
+
+  if (qr) {
+    console.log('\n📱 Escaneie o QR code com o WhatsApp:\n');
+    qrcode.generate(qr, { small: true });
+  }
+
+  if (connection === 'open') {
+    console.log('\n📋 Grupos disponíveis:\n');
+    const groups = await sock.groupFetchAllParticipating();
+    const sorted = Object.entries(groups)
+      .sort(([, a], [, b]) => a.subject.localeCompare(b.subject));
+    sorted.forEach(([id, g]) => console.log(`  "${g.subject}"  →  ${id}`));
+    console.log(`\nTotal: ${sorted.length} grupos`);
+    console.log('\nCole os IDs ou parte dos nomes em WA_GROUPS no .env\n');
+    process.exit(0);
+  }
+
+  if (connection === 'close') {
+    const code = (lastDisconnect?.error instanceof Boom)
+      ? lastDisconnect.error.output.statusCode : 0;
+    if (code !== DisconnectReason.loggedOut) {
+      console.log('Reconectando...');
+    } else {
+      console.log('Sessão encerrada. Rode novamente.');
+      process.exit(1);
+    }
+  }
+});

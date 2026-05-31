@@ -1,8 +1,15 @@
 import Groq from 'groq-sdk';
 import { createClient } from '@supabase/supabase-js';
+import ws from 'ws';
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+// Lazy — inicializa apenas quando usado (env já carregado no ponto de chamada)
+let _groq, _sb;
+const groq = () => (_groq ??= new Groq({ apiKey: process.env.GROQ_API_KEY }));
+const sb   = () => (_sb   ??= createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY,
+  { realtime: { transport: ws } }
+));
 
 const SYSTEM_PROMPT = `Você analisa mensagens de corretores em grupos de WhatsApp imobiliário.
 Extraia a intenção de busca e retorne SOMENTE JSON válido:
@@ -20,7 +27,7 @@ Se não for busca de imóvel (oferta, spam, conversa), retorne is_property_searc
 
 export async function extractIntent(text) {
   try {
-    const res = await groq.chat.completions.create({
+    const res = await groq().chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
@@ -39,9 +46,9 @@ export async function extractIntent(text) {
 export async function findMatches(intent) {
   if (!intent.is_property_search) return [];
 
-  let q = supabase
+  let q = sb()
     .from('properties')
-    .select('id, title, type, address, contract, price, sale_price, rental_price, rooms, area')
+    .select('id, title, type, address, contract, price, saleprice, rental_price, rooms, area')
     .ilike('status', '%disponív%');
 
   if (intent.action === 'venda')   q = q.in('contract', ['venda', 'ambos']);
@@ -51,7 +58,7 @@ export async function findMatches(intent) {
 
   if (intent.max_price) {
     if (!intent.action || intent.action === 'venda' || intent.action === 'ambos')
-      q = q.or(`sale_price.lte.${intent.max_price},price.lte.${intent.max_price}`);
+      q = q.or(`saleprice.lte.${intent.max_price},price.lte.${intent.max_price}`);
     else
       q = q.lte('rental_price', intent.max_price);
   }
