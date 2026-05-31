@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
+import WhatsAppMatches from './WhatsAppMatches';
 import {
     DollarSign,
     Users,
@@ -237,6 +238,8 @@ const Dashboard = () => {
                 </div>
 
                 {/* Sales Funnel */}
+                <WhatsAppMatches />
+
                 <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="font-bold text-slate-800 flex items-center gap-2">
