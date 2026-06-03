@@ -1,8 +1,10 @@
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { createServer } from 'http';
 
-const envPath = join(dirname(fileURLToPath(import.meta.url)), '.env');
+const __dir = dirname(fileURLToPath(import.meta.url));
+const envPath = join(__dir, '.env');
 try {
   readFileSync(envPath, 'utf8').split('\n').forEach(line => {
     const [k, ...rest] = line.split('=');
@@ -11,11 +13,10 @@ try {
       if (v) process.env[k.trim()] = v;
     }
   });
-} catch { /* ignora */ }
+} catch { /* Railway usa env vars nativas */ }
 
-import makeWASocket, { DisconnectReason, useMultiFileAuthState } from '@whiskeysockets/baileys';
+import { makeWASocket, DisconnectReason, useMultiFileAuthState, Browsers } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
-import qrcode from 'qrcode-terminal';
 import pino from 'pino';
 
 import { isWorkingNow, msUntilNextTransition } from './lib/calendar.mjs';
@@ -25,52 +26,76 @@ import { saveMatch, sendTelegram } from './lib/notifier.mjs';
 const GROUPS_RAW = (process.env.WA_GROUPS || '').split(',').map(s => s.trim()).filter(Boolean);
 
 let sock;
-let groupCache = {}; // id → name
+let groupCache = {};
+let hasConnectedOnce = false;
+let isConnected = false;
 
-const PHONE = process.env.WA_PHONE || '5583996828008';
+// ── Health endpoint (Railway exige porta ligada) ──────────────────────────────
+const PORT = process.env.PORT || 3000;
+createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end(isConnected ? '✅ WhatsApp conectado' : '⏳ Aguardando QR scan');
+}).listen(PORT, () => console.log(`Health: http://localhost:${PORT}`));
+
+// ── QR display (funciona local e em logs do Railway) ─────────────────────────
+function printQR(qr) {
+  const url = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(qr)}`;
+  console.log('\n══════════════════════════════════════════════');
+  console.log('📱 ESCANEIE O QR CODE:');
+  console.log('   Abra a URL abaixo no browser e escaneie com o WhatsApp:');
+  console.log(`   ${url}`);
+  console.log('   WhatsApp → Dispositivos conectados → + → Escanear QR');
+  console.log('══════════════════════════════════════════════\n');
+}
 
 async function connect() {
-  const { state, saveCreds } = await useMultiFileAuthState('.baileys_auth');
+  const { state, saveCreds } = await useMultiFileAuthState(join(__dir, '.baileys_auth'));
 
   sock = makeWASocket({
     auth: state,
     printQRInTerminal: false,
+    browser: Browsers.macOS('Safari'),
     logger: pino({ level: 'silent' }),
   });
 
   sock.ev.on('creds.update', saveCreds);
 
-  if (!state.creds.registered) {
-    await new Promise(r => setTimeout(r, 2000));
-    const code = await sock.requestPairingCode(PHONE);
-    console.log(`\n🔑 Código de pareamento: ${code}`);
-    console.log('   WhatsApp → Configurações → Dispositivos conectados → Vincular com número de telefone\n');
-  }
-
   sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect, qr } = update;
 
-    if (qr) {
-      console.log('\n📱 Escaneie o QR code:\n');
-      qrcode.generate(qr, { small: true });
-    }
+    if (qr) printQR(qr);
 
     if (connection === 'open') {
+      hasConnectedOnce = true;
+      isConnected = true;
       console.log('✅ WhatsApp conectado — monitorando grupos');
       const groups = await sock.groupFetchAllParticipating();
       Object.entries(groups).forEach(([id, g]) => { groupCache[id] = g.subject; });
       console.log(`   ${Object.keys(groupCache).length} grupos carregados`);
+
+      const monitorados = GROUPS_RAW.length
+        ? Object.values(groupCache).filter(n => GROUPS_RAW.some(g => n.toLowerCase().includes(g.toLowerCase())))
+        : Object.values(groupCache);
+
+      if (GROUPS_RAW.length && !monitorados.length) {
+        console.log('   ⚠️  Nenhum grupo correspondeu ao filtro WA_GROUPS. Grupos disponíveis:');
+        Object.values(groupCache).sort().forEach(n => console.log(`      • ${n}`));
+      } else {
+        console.log(`   Monitorando: ${monitorados.join(', ')}`);
+      }
     }
 
     if (connection === 'close') {
+      isConnected = false;
       const code = (lastDisconnect?.error instanceof Boom)
         ? lastDisconnect.error.output.statusCode : 0;
-      if (code !== DisconnectReason.loggedOut) {
-        console.log('⚠️  Desconectado — reconectando em 5s...');
-        setTimeout(connect, 5000);
-      } else {
-        console.log('❌ Sessão encerrada. Rode novamente para escanear o QR.');
+
+      if (code === DisconnectReason.loggedOut && hasConnectedOnce) {
+        console.log('❌ Sessão revogada. Apague .baileys_auth e reinicie.');
         process.exit(1);
+      } else {
+        console.log(`⚠️  Desconectado (${code}) — reconectando em 5s...`);
+        setTimeout(connect, 5000);
       }
     }
   });
@@ -82,9 +107,8 @@ async function connect() {
       if (!msg.message || msg.key.fromMe) continue;
 
       const from = msg.key.remoteJid;
-      if (!from?.endsWith('@g.us')) continue; // só grupos
+      if (!from?.endsWith('@g.us')) continue;
 
-      // Verifica se é grupo monitorado
       const groupName = groupCache[from] || from;
       if (GROUPS_RAW.length > 0) {
         const monitored = GROUPS_RAW.some(g =>
@@ -93,7 +117,6 @@ async function connect() {
         if (!monitored) continue;
       }
 
-      // Ignora se fora do horário escritural
       if (!isWorkingNow()) continue;
 
       const text = msg.message.conversation
@@ -119,7 +142,6 @@ async function connect() {
   });
 }
 
-// Calendário: loga transições de estado
 function scheduleTransitionLog() {
   const ms = msUntilNextTransition();
   console.log(`📅 Estado: ${isWorkingNow() ? 'dia útil' : 'descanso'} — próx. transição em ${Math.round(ms / 60000)} min`);

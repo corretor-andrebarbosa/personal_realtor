@@ -2,3 +2,5 @@ node_modules/
 .baileys_auth/
 .wwebjs_auth/
 monitor.log
+.env
+qr.html
