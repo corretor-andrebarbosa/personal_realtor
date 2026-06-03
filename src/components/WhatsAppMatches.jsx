@@ -166,8 +166,6 @@ export default function WhatsAppMatches() {
     setMatches(prev => prev.filter(m => !m.read));
   }
 
-  if (!loading && matches.length === 0) return null;
-
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
       <div className="flex items-center justify-between mb-4">
@@ -196,7 +194,6 @@ export default function WhatsAppMatches() {
               <button
                 onClick={deleteRead}
                 className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 transition-colors"
-                title={`Excluir ${read} lido(s)`}
               >
                 <Trash2 size={12} /> Limpar lidos ({read})
               </button>
@@ -210,6 +207,8 @@ export default function WhatsAppMatches() {
           <div className="flex justify-center py-4">
             <div className="w-5 h-5 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
           </div>
+        ) : matches.length === 0 ? (
+          <p className="text-xs text-slate-400 text-center py-4">Nenhum match ainda — monitorando grupos</p>
         ) : (
           <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
             {matches.map(m => (
