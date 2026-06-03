@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MessageCircle, Phone, ChevronDown, ChevronUp, CheckCheck, ExternalLink } from 'lucide-react';
+import { MessageCircle, Phone, ChevronDown, ChevronUp, CheckCheck, ExternalLink, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 function timeAgo(iso) {
@@ -19,9 +19,16 @@ function fmtPrice(p) {
   return `R$ ${p.toLocaleString('pt-BR')}`;
 }
 
-function MatchCard({ match, onRead }) {
+function MatchCard({ match, onRead, onDelete }) {
   const [open, setOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const phone = match.sender_phone?.replace(/\D/g, '') || '';
+
+  async function handleDelete(e) {
+    e.stopPropagation();
+    setDeleting(true);
+    await onDelete(match.id);
+  }
 
   return (
     <div className={`rounded-xl border transition-colors ${match.read ? 'border-slate-100 bg-slate-50' : 'border-green-200 bg-green-50'}`}>
@@ -35,12 +42,21 @@ function MatchCard({ match, onRead }) {
           <p className="text-xs text-slate-500 truncate">{match.group_name} · {timeAgo(match.created_at)}</p>
           <p className="text-xs text-slate-600 mt-1 line-clamp-2">{match.message}</p>
         </div>
-        <span className="text-slate-400 shrink-0">{open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</span>
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="p-1 rounded hover:bg-red-100 text-slate-300 hover:text-red-400 transition-colors"
+            title="Excluir"
+          >
+            <Trash2 size={13} />
+          </button>
+          {open ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+        </div>
       </button>
 
       {open && (
         <div className="px-3 pb-3 space-y-3 border-t border-slate-100 pt-3">
-          {/* Imóveis compatíveis */}
           <div className="space-y-1.5">
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Imóveis compatíveis</p>
             {(match.matched_properties || []).map(p => {
@@ -61,7 +77,6 @@ function MatchCard({ match, onRead }) {
             })}
           </div>
 
-          {/* Ações */}
           <div className="flex gap-2">
             {phone && (
               <a
@@ -81,6 +96,13 @@ function MatchCard({ match, onRead }) {
                 <CheckCheck size={12} /> Marcar como lido
               </button>
             )}
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="flex items-center gap-1.5 text-xs font-semibold text-red-500 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors ml-auto"
+            >
+              <Trash2 size={12} /> Excluir
+            </button>
           </div>
         </div>
       )}
@@ -94,6 +116,7 @@ export default function WhatsAppMatches() {
   const [expanded, setExpanded] = useState(false);
 
   const unread = matches.filter(m => !m.read).length;
+  const read   = matches.filter(m =>  m.read).length;
 
   useEffect(() => {
     let channel;
@@ -111,7 +134,6 @@ export default function WhatsAppMatches() {
 
     load();
 
-    // Realtime: novos matches aparecem automaticamente
     channel = supabase
       .channel('whatsapp_matches_rt')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'whatsapp_matches' }, () => load())
@@ -132,6 +154,18 @@ export default function WhatsAppMatches() {
     setMatches(prev => prev.map(m => ({ ...m, read: true })));
   }
 
+  async function deleteMatch(id) {
+    await supabase.from('whatsapp_matches').delete().eq('id', id);
+    setMatches(prev => prev.filter(m => m.id !== id));
+  }
+
+  async function deleteRead() {
+    const ids = matches.filter(m => m.read).map(m => m.id);
+    if (!ids.length) return;
+    await supabase.from('whatsapp_matches').delete().in('id', ids);
+    setMatches(prev => prev.filter(m => !m.read));
+  }
+
   if (!loading && matches.length === 0) return null;
 
   return (
@@ -150,10 +184,24 @@ export default function WhatsAppMatches() {
           )}
           {expanded ? <ChevronUp size={15} className="text-slate-400" /> : <ChevronDown size={15} className="text-slate-400" />}
         </button>
-        {expanded && unread > 0 && (
-          <button onClick={markAllRead} className="text-xs text-slate-400 hover:text-slate-600 transition-colors">
-            Marcar todos como lidos
-          </button>
+
+        {expanded && (
+          <div className="flex items-center gap-3">
+            {unread > 0 && (
+              <button onClick={markAllRead} className="text-xs text-slate-400 hover:text-slate-600 transition-colors">
+                Marcar todos como lidos
+              </button>
+            )}
+            {read > 0 && (
+              <button
+                onClick={deleteRead}
+                className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 transition-colors"
+                title={`Excluir ${read} lido(s)`}
+              >
+                <Trash2 size={12} /> Limpar lidos ({read})
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -164,7 +212,9 @@ export default function WhatsAppMatches() {
           </div>
         ) : (
           <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-            {matches.map(m => <MatchCard key={m.id} match={m} onRead={markRead} />)}
+            {matches.map(m => (
+              <MatchCard key={m.id} match={m} onRead={markRead} onDelete={deleteMatch} />
+            ))}
           </div>
         )
       )}
