@@ -20,6 +20,7 @@ import BlogForm from './components/BlogForm';
 import BlogPage from './components/public/BlogPage';
 import BlogPostPage from './components/public/BlogPostPage';
 import BuscaInteligente from './pages/BuscaInteligente';
+import TabelasVenda from './pages/TabelasVenda';
 import ErrorBoundary from './components/ErrorBoundary';
 
 import { config } from './config';
@@ -178,6 +179,7 @@ const App = () => {
                             <Route path="/admin/blog" element={isAuthenticated ? <BlogList /> : <Navigate to="/login" replace />} />
                             <Route path="/admin/blog/new" element={isAuthenticated ? <BlogForm /> : <Navigate to="/login" replace />} />
                             <Route path="/admin/blog/edit/:id" element={isAuthenticated ? <BlogForm /> : <Navigate to="/login" replace />} />
+                            <Route path="/admin/tabelas" element={isAuthenticated ? <TabelasVenda /> : <Navigate to="/login" replace />} />
                         </Routes>
 
                         {showNav && <Navigation />}
