@@ -17,7 +17,7 @@ const Navigation = () => {
 
     return (
         <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-lg pb-safe z-30">
-            <div className="flex justify-around items-center h-16 max-w-md mx-auto">
+            <div className="flex justify-around items-center h-16 max-w-2xl mx-auto">
                 {navItems.map((item) => (
                     <NavLink
                         key={item.label}
