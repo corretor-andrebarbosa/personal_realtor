@@ -1,6 +1,9 @@
 
 import React, { useState } from 'react';
-import { Search, Filter, Home, DollarSign, MapPin, BedDouble } from 'lucide-react';
+import { Search, Home, DollarSign, MapPin, BedDouble } from 'lucide-react';
+
+const URBAN_TYPES = ['Apartamento', 'Casa', 'Cobertura', 'Flat', 'Kitnet'];
+const RURAL_TYPES  = ['Chácara', 'Sítio', 'Fazenda', 'Terreno'];
 
 const PropertyFilters = ({ onFilterChange, neighborhoods = [], t = (k) => k }) => {
     const [filters, setFilters] = useState({
@@ -9,7 +12,8 @@ const PropertyFilters = ({ onFilterChange, neighborhoods = [], t = (k) => k }) =
         bedrooms: '',
         minPrice: '',
         maxPrice: '',
-        contract: '' // venda ou aluguel
+        contract: '',
+        segment: '',
     });
 
     const handleChange = (e) => {
@@ -19,11 +23,46 @@ const PropertyFilters = ({ onFilterChange, neighborhoods = [], t = (k) => k }) =
         onFilterChange(newFilters);
     };
 
+    const handleSegment = (value) => {
+        const newFilters = { ...filters, segment: value, type: '', bedrooms: '' };
+        setFilters(newFilters);
+        onFilterChange(newFilters);
+    };
+
+    const typeOptions = filters.segment === 'litoral' ? URBAN_TYPES
+        : filters.segment === 'campo'   ? RURAL_TYPES
+        : [...URBAN_TYPES, ...RURAL_TYPES];
+
+    const isRuralSegment = filters.segment === 'campo';
+
     return (
         <div className="bg-white p-6 rounded-2xl shadow-lg -mt-10 relative z-30 mx-6 md:mx-auto max-w-6xl border border-slate-100">
+
+            {/* Seletor de segmento */}
+            <div className="flex gap-2 mb-5 flex-wrap">
+                <button
+                    onClick={() => handleSegment('')}
+                    className={`px-4 py-2 rounded-full text-sm font-bold border transition-all ${filters.segment === '' ? 'bg-[var(--primary-color)] text-white border-transparent shadow-sm' : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-slate-300'}`}
+                >
+                    Todos
+                </button>
+                <button
+                    onClick={() => handleSegment('litoral')}
+                    className={`px-4 py-2 rounded-full text-sm font-bold border transition-all ${filters.segment === 'litoral' ? 'bg-blue-600 text-white border-transparent shadow-sm' : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-slate-300'}`}
+                >
+                    🌊 Litoral & Cidade
+                </button>
+                <button
+                    onClick={() => handleSegment('campo')}
+                    className={`px-4 py-2 rounded-full text-sm font-bold border transition-all ${filters.segment === 'campo' ? 'bg-emerald-600 text-white border-transparent shadow-sm' : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-slate-300'}`}
+                >
+                    🌳 Campo & Interior
+                </button>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4 items-end">
 
-                {/* Contract Type */}
+                {/* Finalidade */}
                 <div className="col-span-1">
                     <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">{t('filter_contract') || 'Finalidade'}</label>
                     <select
@@ -38,24 +77,22 @@ const PropertyFilters = ({ onFilterChange, neighborhoods = [], t = (k) => k }) =
                     </select>
                 </div>
 
-                {/* Location */}
+                {/* Localização */}
                 <div className="col-span-1 md:col-span-2">
                     <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider flex items-center gap-1">
                         <MapPin size={12} /> {t('filter_neighborhood') || 'Localização'}
                     </label>
-                    <div className="relative">
-                        <input
-                            type="text"
-                            name="neighborhood"
-                            value={filters.neighborhood}
-                            onChange={handleChange}
-                            placeholder="João Pessoa..."
-                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[var(--primary-color)] outline-none"
-                        />
-                    </div>
+                    <input
+                        type="text"
+                        name="neighborhood"
+                        value={filters.neighborhood}
+                        onChange={handleChange}
+                        placeholder={isRuralSegment ? 'Mari, Brejo, Sapé, Alagoa Grande...' : 'João Pessoa, Manaíra, Tambaú...'}
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[var(--primary-color)] outline-none"
+                    />
                 </div>
 
-                {/* Type */}
+                {/* Tipo */}
                 <div className="col-span-1">
                     <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider flex items-center gap-1">
                         <Home size={12} /> {t('filter_type') || 'Tipo'}
@@ -66,35 +103,50 @@ const PropertyFilters = ({ onFilterChange, neighborhoods = [], t = (k) => k }) =
                         onChange={handleChange}
                         className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[var(--primary-color)] outline-none"
                     >
-
                         <option value="">{t('filter_any') || 'Qualquer'}</option>
-                        <option value="Apartamento">{t('type_apartment') || 'Apartamento'}</option>
-                        <option value="Casa">{t('type_house') || 'Casa'}</option>
-                        <option value="Cobertura">{t('type_penthouse') || 'Cobertura'}</option>
-                        <option value="Flat">{t('type_flat') || 'Flat'}</option>
+                        {typeOptions.map(tp => (
+                            <option key={tp} value={tp}>{tp}</option>
+                        ))}
                     </select>
                 </div>
 
-                {/* Bedrooms */}
-                <div className="col-span-1">
-                    <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider flex items-center gap-1">
-                        <BedDouble size={12} /> {t('filter_beds') || 'Quartos'}
-                    </label>
-                    <select
-                        name="bedrooms"
-                        value={filters.bedrooms}
-                        onChange={handleChange}
-                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[var(--primary-color)] outline-none"
-                    >
-                        <option value="">{t('filter_any') || 'Qualquer'}</option>
-                        <option value="1">1+</option>
-                        <option value="2">2+</option>
-                        <option value="3">3+</option>
-                        <option value="4">4+</option>
-                    </select>
-                </div>
+                {/* Quartos — só para segmento urbano */}
+                {!isRuralSegment ? (
+                    <div className="col-span-1">
+                        <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider flex items-center gap-1">
+                            <BedDouble size={12} /> {t('filter_beds') || 'Quartos'}
+                        </label>
+                        <select
+                            name="bedrooms"
+                            value={filters.bedrooms}
+                            onChange={handleChange}
+                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[var(--primary-color)] outline-none"
+                        >
+                            <option value="">{t('filter_any') || 'Qualquer'}</option>
+                            <option value="1">1+</option>
+                            <option value="2">2+</option>
+                            <option value="3">3+</option>
+                            <option value="4">4+</option>
+                        </select>
+                    </div>
+                ) : (
+                    /* Área (ha) — só para campo */
+                    <div className="col-span-1">
+                        <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">
+                            Área (m²)
+                        </label>
+                        <input
+                            type="number"
+                            name="minArea"
+                            value={filters.minArea || ''}
+                            onChange={handleChange}
+                            placeholder="Mín. m²"
+                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[var(--primary-color)] outline-none"
+                        />
+                    </div>
+                )}
 
-                {/* Price */}
+                {/* Preço */}
                 <div className="col-span-1">
                     <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider flex items-center gap-1">
                         <DollarSign size={12} /> {t('filter_max_price') || 'Preço até'}
@@ -109,7 +161,7 @@ const PropertyFilters = ({ onFilterChange, neighborhoods = [], t = (k) => k }) =
                     />
                 </div>
 
-                {/* Search Button */}
+                {/* Buscar */}
                 <div className="col-span-1">
                     <button
                         className="w-full h-[46px] bg-[var(--primary-color)] text-white font-bold rounded-xl shadow-lg hover:opacity-90 transition-all flex items-center justify-center gap-2"

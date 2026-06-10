@@ -115,6 +115,9 @@ const PublicHome = () => {
 
     const languages = [...primaryLanguages, ...moreLanguages];
 
+    const RURAL_TYPES_LC = ['chácara', 'chacara', 'sítio', 'sitio', 'fazenda', 'terreno', 'lote'];
+    const URBAN_TYPES_LC = ['apartamento', 'casa', 'cobertura', 'flat', 'kitnet'];
+
     // Filter Logic
     const filteredProperties = properties.filter(p => {
         if (p.status !== 'Disponível' && p.status !== 'Vendido') return false;
@@ -127,9 +130,16 @@ const PublicHome = () => {
             if (p.contract !== 'locacao' && p.contract !== 'ambos' && !hasRentalPrice) return false;
         }
 
+        if (filters.segment === 'campo') {
+            if (!RURAL_TYPES_LC.some(t => (p.type || '').toLowerCase().includes(t))) return false;
+        } else if (filters.segment === 'litoral') {
+            if (!URBAN_TYPES_LC.some(t => (p.type || '').toLowerCase().includes(t))) return false;
+        }
+
         if (filters.type && (p.type || '').toLowerCase() !== filters.type.toLowerCase()) return false;
         if (filters.bedrooms && (p.rooms || 0) < parseInt(filters.bedrooms || 0)) return false;
         if (filters.neighborhood && !(p.address || '').toLowerCase().includes(filters.neighborhood.toLowerCase())) return false;
+        if (filters.minArea && (p.area || 0) < parseInt(filters.minArea || 0)) return false;
         if (filters.maxPrice) {
             const price = (filters.contract === 'locacao' || (p.contract === 'locacao' && !filters.contract))
                 ? (p.rentalPrice || 0)
@@ -524,6 +534,7 @@ const PublicHome = () => {
                             const primaryImage = property.image || (property.images && property.images.length > 0 ? property.images[0] : null);
                             const videoThumb = getYoutubeThumbnail(property.videoLink);
                             const displayImage = primaryImage || videoThumb || 'https://ui-avatars.com/api/?name=IMOVEL&size=600&background=cbd5e1&color=334155&font-size=0.1';
+                            const isRuralProp = RURAL_TYPES_LC.some(t => (property.type || '').toLowerCase().includes(t));
 
                             return (
                                 <div
@@ -604,12 +615,29 @@ const PublicHome = () => {
                                             <MapPin size={16} style={{ color: settings.primaryColor }} /> <TranslatedText lang={lang}>{property.address}</TranslatedText>
                                         </p>
 
-                                        {/* Property specs */}
-                                        <div className="flex gap-3 mb-4 text-slate-500 text-xs font-medium">
-                                            {property.rooms > 0 && <span className="flex items-center gap-1"><BedDouble size={14} /> {property.rooms} <TT k="prop_rooms" /></span>}
-                                            {property.bathrooms > 0 && <span className="flex items-center gap-1"><Bath size={14} /> {property.bathrooms} <TT k="prop_baths" /></span>}
-                                            {property.garage > 0 && <span className="flex items-center gap-1"><Car size={14} /> {property.garage} <TT k="prop_garage" /></span>}
-                                            {property.area > 0 && <span>{property.area}m²</span>}
+                                        {/* Property specs — rural: área em destaque / urbano: quartos+banheiros */}
+                                        <div className="flex gap-3 mb-4 text-slate-500 text-xs font-medium flex-wrap">
+                                            {isRuralProp ? (
+                                                <>
+                                                    {property.area > 0 ? (
+                                                        <span className="flex items-center gap-1 text-emerald-700 font-bold">
+                                                            🌿 {property.area >= 10000
+                                                                ? `${(property.area / 10000).toFixed(1)} ha`
+                                                                : `${property.area.toLocaleString('pt-BR')} m²`}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-slate-400 italic text-[11px]">Área sob consulta</span>
+                                                    )}
+                                                    {property.garage > 0 && <span className="flex items-center gap-1"><Car size={14} /> {property.garage} <TT k="prop_garage" /></span>}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {property.rooms > 0 && <span className="flex items-center gap-1"><BedDouble size={14} /> {property.rooms} <TT k="prop_rooms" /></span>}
+                                                    {property.bathrooms > 0 && <span className="flex items-center gap-1"><Bath size={14} /> {property.bathrooms} <TT k="prop_baths" /></span>}
+                                                    {property.garage > 0 && <span className="flex items-center gap-1"><Car size={14} /> {property.garage} <TT k="prop_garage" /></span>}
+                                                    {property.area > 0 && <span>{property.area} m²</span>}
+                                                </>
+                                            )}
                                         </div>
 
                                         {(property.caucao || property.fiador) && (
