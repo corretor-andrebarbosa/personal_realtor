@@ -32,7 +32,7 @@ export const translations = {
         about_subtitle: "A mesma seriedade para cada cliente, em cada detalhe.",
         about_lead: "Corretor com Vivência Internacional | Litoral e Interior da Paraíba",
         about_desc_1: "Corretor com formação jurídica e vivência internacional, que atende com igual dedicação quem busca uma cobertura à beira-mar em João Pessoa e quem procura um pedaço de terra no interior para viver melhor.",
-        about_desc_2: "Falo inglês, alemão e espanhol — e converso na língua de cada cliente, sem pompa. O mesmo cuidado jurídico que protege uma negociação de alto valor garante também a segurança de quem compra sua primeira chácara.",
+        about_desc_2: "Com formação jurídica aplicada ao mercado imobiliário, garante segurança contratual em cada etapa — da cobertura à chácara no interior. Atendimento disponível em inglês, alemão e espanhol.",
         about_desc_3: "Aqui não há clientes de segunda categoria. Há imóveis e histórias diferentes — e um corretor que conhece bem os dois mundos.",
         about_cta: "Entre em contato agora",
 
@@ -152,7 +152,7 @@ export const translations = {
         about_subtitle: "The same dedication for every client, in every detail.",
         about_lead: "Broker with International Experience | Coastal & Rural Paraíba",
         about_desc_1: "Real estate broker with legal background and international experience, serving with equal commitment those searching for a beachfront penthouse in João Pessoa and those looking for a piece of land in the countryside.",
-        about_desc_2: "I speak English, German, and Spanish — and I talk with every client in their own language, without pretension. The same legal care that protects a high-value deal also ensures the security of someone buying their first rural property.",
+        about_desc_2: "With a legal background applied to real estate, ensures contractual security at every stage — from high-end apartments to rural properties. Service available in English, German and Spanish.",
         about_desc_3: "There are no second-tier clients here. There are different properties and different stories — and a broker who knows both worlds well.",
         about_cta: "Get in touch now",
 
@@ -272,7 +272,7 @@ export const translations = {
         about_subtitle: "Dasselbe Engagement für jeden Kunden, in jedem Detail.",
         about_lead: "Makler mit internationaler Erfahrung | Küste & Inland Paraíba",
         about_desc_1: "Immobilienmakler mit juristischem Hintergrund und internationaler Erfahrung — ob Strandpenthouse in João Pessoa oder Landgut im Landesinneren, jeder Kunde erhält dieselbe Sorgfalt.",
-        about_desc_2: "Ich spreche Englisch, Deutsch und Spanisch — und kommuniziere mit jedem Kunden in seiner Sprache, ohne Aufwand. Rechtliche Sicherheit gilt für jeden, unabhängig vom Transaktionswert.",
+        about_desc_2: "Mit juristischem Hintergrund im Immobilienbereich sorgt er für vertragliche Sicherheit in jeder Phase — vom Penthouse bis zur ländlichen Chácara. Beratung auf Englisch, Deutsch und Spanisch verfügbar.",
         about_desc_3: "Hier gibt es keine Kunden zweiter Klasse. Es gibt unterschiedliche Immobilien und Geschichten — und einen Makler, der beide Welten kennt.",
         about_cta: "Jetzt kontaktieren",
 
@@ -392,7 +392,7 @@ export const translations = {
         about_subtitle: "El mismo compromiso para cada cliente, en cada detalle.",
         about_lead: "Corredor con Experiencia Internacional | Costa e Interior de Paraíba",
         about_desc_1: "Corredor inmobiliario con formación jurídica y experiencia internacional, que atiende con igual dedicación a quien busca un ático frente al mar en João Pessoa y a quien busca un terreno en el interior.",
-        about_desc_2: "Hablo inglés, alemán y español — y me comunico con cada cliente en su idioma, sin pretensiones. El mismo cuidado jurídico que protege una negociación de alto valor garantiza también la seguridad de quien compra su primera propiedad rural.",
+        about_desc_2: "Con formación jurídica aplicada al sector inmobiliario, garantiza la seguridad contractual en cada etapa — desde apartamentos de lujo hasta propiedades rurales. Atención disponible en inglés, alemán y español.",
         about_desc_3: "Aquí no hay clientes de segunda categoría. Hay propiedades e historias diferentes — y un corredor que conoce bien los dos mundos.",
         about_cta: "Contacte ahora",
 
