@@ -1,11 +1,12 @@
 
 import React, { useState } from 'react';
-import { Search, Home, DollarSign, MapPin, BedDouble } from 'lucide-react';
+import { Search, Home, DollarSign, MapPin, BedDouble, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const URBAN_TYPES = ['Apartamento', 'Casa', 'Cobertura', 'Flat', 'Kitnet'];
 const RURAL_TYPES  = ['Chácara', 'Sítio', 'Fazenda', 'Terreno'];
 
-const PropertyFilters = ({ onFilterChange, neighborhoods = [], t = (k) => k }) => {
+const PropertyFilters = ({ onFilterChange, neighborhoods = [], t = (k) => k, defaultSegment = '' }) => {
     const [filters, setFilters] = useState({
         neighborhood: '',
         type: '',
@@ -13,7 +14,7 @@ const PropertyFilters = ({ onFilterChange, neighborhoods = [], t = (k) => k }) =
         minPrice: '',
         maxPrice: '',
         contract: '',
-        segment: '',
+        segment: defaultSegment,
     });
 
     const handleChange = (e) => {
@@ -37,6 +38,18 @@ const PropertyFilters = ({ onFilterChange, neighborhoods = [], t = (k) => k }) =
 
     return (
         <div className="bg-white p-6 rounded-2xl shadow-lg -mt-10 relative z-30 mx-6 md:mx-auto max-w-6xl border border-slate-100">
+
+            {/* Link de volta ao portal — só aparece quando vindo de /litoral ou /campo */}
+            {defaultSegment && (
+                <div className="mb-3">
+                    <Link
+                        to="/"
+                        className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                        <ArrowLeft size={12} /> Início — trocar segmento
+                    </Link>
+                </div>
+            )}
 
             {/* Seletor de segmento */}
             <div className="flex gap-2 mb-5 flex-wrap">

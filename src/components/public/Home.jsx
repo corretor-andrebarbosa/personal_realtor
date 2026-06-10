@@ -32,14 +32,14 @@ const getYoutubeThumbnail = (url) => {
     return null;
 };
 
-const PublicHome = () => {
+const PublicHome = ({ defaultSegment = '' }) => {
     const { properties, loading } = useProperties();
     const { addLead } = useLeads();
     const navigate = useNavigate();
     const [mobileMenu, setMobileMenu] = useState(false);
     const [contactForm, setContactForm] = useState({ name: '', phone: '', interest: '' });
     const [contactStatus, setContactStatus] = useState(null); // null | 'sending' | 'sent' | 'error'
-    const [filters, setFilters] = useState({});
+    const [filters, setFilters] = useState({ segment: defaultSegment });
     const [lang, setLang] = useState('pt');
     const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
 
@@ -443,7 +443,7 @@ const PublicHome = () => {
                 </div>
             </header>
 
-            <PropertyFilters onFilterChange={setFilters} t={t} />
+            <PropertyFilters onFilterChange={setFilters} t={t} defaultSegment={defaultSegment} />
 
             {/* Trust badges */}
             <div className="bg-white py-6 px-4 border-b border-slate-100">
@@ -512,7 +512,12 @@ const PublicHome = () => {
             {/* Featured Properties */}
             <section id="imoveis" className="py-20 px-6 max-w-7xl mx-auto w-full">
                 <div className="text-center mb-16">
-                    <h2 className="text-3xl font-bold text-slate-800 mb-4">{isFiltering ? <><TT k="featured_results" /> ({displayedProperties.length})</> : <TT k="featured_title" />}</h2>
+                    <h2 className="text-3xl font-bold text-slate-800 mb-4">
+                        {filters.segment === 'litoral' ? '🌊 Litoral & Cidade'
+                         : filters.segment === 'campo' ? '🌳 Campo & Interior'
+                         : isFiltering ? <><TT k="featured_results" /> ({displayedProperties.length})</>
+                         : <TT k="featured_title" />}
+                    </h2>
                     <div className="w-20 h-1 mx-auto rounded-full" style={{ backgroundColor: settings.primaryColor }}></div>
                     <p className="text-slate-500 mt-4 max-w-lg mx-auto"><TT k="featured_subtitle" /></p>
                 </div>
