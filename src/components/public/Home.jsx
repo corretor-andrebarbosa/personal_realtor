@@ -116,7 +116,16 @@ const PublicHome = ({ defaultSegment = '' }) => {
     const languages = [...primaryLanguages, ...moreLanguages];
 
     const RURAL_TYPES_LC = ['chácara', 'chacara', 'sítio', 'sitio', 'fazenda', 'terreno', 'lote'];
-    const URBAN_TYPES_LC = ['apartamento', 'casa', 'cobertura', 'flat', 'kitnet'];
+    // Tipos que são EXCLUSIVAMENTE urbanos — nunca aparecem no campo
+    const STRICTLY_URBAN_LC = ['apartamento', 'cobertura', 'flat', 'kitnet'];
+    // Áreas costeiras/urbanas da PB — endereços que classificam "Casa" como litoral
+    const COASTAL_AREAS_LC  = [
+        'joão pessoa', 'joao pessoa', 'manaíra', 'manaira',
+        'tambaú', 'tambau', 'cabo branco', 'bessa', 'intermares',
+        'bancários', 'bancarios', 'cabedelo', 'lucena',
+        'conde/pb', 'conde, pb', 'jacumã', 'jacuma', 'praia de', 'litoral',
+        'jardim oceania', 'altiplano', 'aeroclube', 'miramar',
+    ];
 
     // Filter Logic
     const filteredProperties = properties.filter(p => {
@@ -130,10 +139,20 @@ const PublicHome = ({ defaultSegment = '' }) => {
             if (p.contract !== 'locacao' && p.contract !== 'ambos' && !hasRentalPrice) return false;
         }
 
-        if (filters.segment === 'campo') {
-            if (!RURAL_TYPES_LC.some(t => (p.type || '').toLowerCase().includes(t))) return false;
-        } else if (filters.segment === 'litoral') {
-            if (!URBAN_TYPES_LC.some(t => (p.type || '').toLowerCase().includes(t))) return false;
+        if (filters.segment === 'campo' || filters.segment === 'litoral') {
+            const type = (p.type || '').toLowerCase();
+            const addr = (p.address || '').toLowerCase();
+            const isRuralType     = RURAL_TYPES_LC.some(t => type.includes(t));
+            const isStrictlyUrban = STRICTLY_URBAN_LC.some(t => type.includes(t));
+            const isCoastal       = COASTAL_AREAS_LC.some(a => addr.includes(a));
+
+            if (filters.segment === 'campo') {
+                // Exclui: tipos estritamente urbanos, OU casas/cond. em endereço costeiro
+                if (isStrictlyUrban || (!isRuralType && isCoastal)) return false;
+            } else {
+                // Exclui: tipos rurais, OU casas/cond. cujo endereço NÃO é costeiro
+                if (isRuralType || (!isStrictlyUrban && !isCoastal)) return false;
+            }
         }
 
         if (filters.type && (p.type || '').toLowerCase() !== filters.type.toLowerCase()) return false;
