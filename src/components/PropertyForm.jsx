@@ -420,14 +420,26 @@ const PropertyForm = () => {
                 onChange={handleChange}
                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[var(--primary-color)] outline-none transition-colors"
               >
-                <option value="Apartamento">Apartamento</option>
-                <option value="Casa">Casa</option>
-                <option value="Studio">Studio</option>
-                <option value="Cobertura">Cobertura</option>
-                <option value="Sala Comercial">Sala Comercial</option>
-                <option value="Terreno">Terreno</option>
-                <option value="Loja">Loja</option>
-                <option value="Galpão">Galpão</option>
+                <optgroup label="🌊 Urbano / Litoral">
+                  <option value="Apartamento">Apartamento</option>
+                  <option value="Casa">Casa</option>
+                  <option value="Studio">Studio</option>
+                  <option value="Cobertura">Cobertura</option>
+                  <option value="Flat">Flat</option>
+                  <option value="Kitnet">Kitnet</option>
+                </optgroup>
+                <optgroup label="🏢 Comercial">
+                  <option value="Sala Comercial">Sala Comercial</option>
+                  <option value="Loja">Loja</option>
+                  <option value="Galpão">Galpão</option>
+                </optgroup>
+                <optgroup label="🌳 Campo / Interior">
+                  <option value="Chácara">Chácara</option>
+                  <option value="Sítio">Sítio</option>
+                  <option value="Fazenda">Fazenda</option>
+                  <option value="Terreno">Terreno</option>
+                  <option value="Lote">Lote</option>
+                </optgroup>
               </select>
             </div>
 

@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { Search, Home, DollarSign, MapPin, BedDouble, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const URBAN_TYPES = ['Apartamento', 'Casa', 'Cobertura', 'Flat', 'Kitnet'];
-const RURAL_TYPES  = ['Chácara', 'Sítio', 'Fazenda', 'Terreno'];
+const URBAN_TYPES = ['Apartamento', 'Casa', 'Studio', 'Cobertura', 'Flat', 'Kitnet'];
+const RURAL_TYPES  = ['Chácara', 'Sítio', 'Fazenda', 'Terreno', 'Lote'];
 
 const PropertyFilters = ({ onFilterChange, neighborhoods = [], t = (k) => k, defaultSegment = '' }) => {
     const [filters, setFilters] = useState({
