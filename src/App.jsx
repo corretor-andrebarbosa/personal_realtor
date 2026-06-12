@@ -22,6 +22,7 @@ import BlogPostPage from './components/public/BlogPostPage';
 import BuscaInteligente from './pages/BuscaInteligente';
 import TabelasVenda from './pages/TabelasVenda';
 import PortalEntrada from './pages/PortalEntrada';
+import IntroVideo from './pages/IntroVideo';
 import ErrorBoundary from './components/ErrorBoundary';
 
 import { config } from './config';
@@ -136,7 +137,7 @@ const App = () => {
         );
     }
 
-    const hideNavPaths = ['/properties/new', '/website', '/login', '/admin/blog/new', '/admin/blog/edit', '/blog', '/litoral', '/campo', '/imoveis'];
+    const hideNavPaths = ['/properties/new', '/website', '/login', '/admin/blog/new', '/admin/blog/edit', '/blog', '/litoral', '/campo', '/imoveis', '/portal'];
     const showNav = isAuthenticated
         && location.pathname !== '/'
         && !hideNavPaths.some(p => location.pathname.includes(p))
@@ -160,9 +161,10 @@ const App = () => {
                                 element={
                                     (config.maintenance.enabled && !isPreviewMode)
                                         ? <Maintenance expectedReturnDate={config.maintenance.returnDate} />
-                                        : <PortalEntrada />
+                                        : <IntroVideo />
                                 }
                             />
+                            <Route path="/portal"  element={<PortalEntrada />} />
                             <Route path="/litoral" element={<PublicHome defaultSegment="litoral" />} />
                             <Route path="/campo"   element={<PublicHome defaultSegment="campo" />} />
                             <Route path="/imoveis" element={<PublicHome />} />
