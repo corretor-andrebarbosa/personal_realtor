@@ -129,6 +129,7 @@ const PublicHome = ({ defaultSegment = '' }) => {
 
     // Filter Logic
     const filteredProperties = properties.filter(p => {
+        if (p.hidden) return false; // temporariamente oculto pelo corretor
         if (p.status !== 'Disponível' && p.status !== 'Vendido') return false;
 
         if (filters.contract === 'venda') {

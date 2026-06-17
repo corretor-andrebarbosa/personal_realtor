@@ -65,6 +65,7 @@ const normalizeExistingPropertyToForm = (existing) => {
     priceType: existing?.price_type || existing?.priceType || 'fixo',
     caucao: existing?.caucao ?? false,
     fiador: existing?.fiador ?? false,
+    hidden: existing?.hidden ?? false,
     images: images || [],
     image: cover
   };
@@ -86,6 +87,7 @@ const PropertyForm = () => {
     title: '',
     type: 'Apartamento',
     status: 'Disponível',
+    hidden: false,
     salePrice: '',
     rentalPrice: '',
     contract: 'venda',
@@ -285,7 +287,8 @@ const PropertyForm = () => {
       caucao: formData.caucao || false,
       fiador: formData.fiador || false,
 
-      status: formData.status || 'Disponível'
+      status: formData.status || 'Disponível',
+      hidden: formData.hidden ?? false,
     };
   };
 
@@ -464,6 +467,28 @@ const PropertyForm = () => {
                     {value}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Visibilidade no site público */}
+            <div
+              onClick={() => setFormData(prev => ({ ...prev, hidden: !prev.hidden }))}
+              className={`flex items-center justify-between p-3.5 rounded-xl border-2 cursor-pointer transition-all select-none ${
+                formData.hidden
+                  ? 'border-slate-400 bg-slate-100'
+                  : 'border-emerald-400 bg-emerald-50'
+              }`}
+            >
+              <div>
+                <p className="text-xs font-bold text-slate-700">
+                  {formData.hidden ? '👁️‍🗨️ Oculto no site público' : '👁️ Visível no site público'}
+                </p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  {formData.hidden ? 'Apenas você vê este imóvel' : 'Clique para ocultar temporariamente'}
+                </p>
+              </div>
+              <div className={`w-11 h-6 rounded-full flex items-center transition-all ${formData.hidden ? 'bg-slate-400' : 'bg-emerald-500'}`}>
+                <div className={`w-5 h-5 bg-white rounded-full shadow-sm transition-all mx-0.5 ${formData.hidden ? 'translate-x-0' : 'translate-x-5'}`} />
               </div>
             </div>
 

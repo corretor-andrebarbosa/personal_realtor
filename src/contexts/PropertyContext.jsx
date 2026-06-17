@@ -119,7 +119,8 @@ export const PropertyProvider = ({ children }) => {
                             return [];
                         })(),
                         image: p.image ?? p.image_url ?? p.main_image ?? p.capa ?? '',
-                        price_type: p.price_type ?? 'fixo'
+                        price_type: p.price_type ?? 'fixo',
+                        hidden: p.hidden ?? false,
                     }));
 
 
@@ -190,6 +191,7 @@ export const PropertyProvider = ({ children }) => {
             price_type: data.priceType ?? data.price_type ?? 'fixo',
             caucao: data.caucao ?? false,
             fiador: data.fiador ?? false,
+            hidden: data.hidden ?? false,
         };
 
         if (cols && cols.length > 0) {

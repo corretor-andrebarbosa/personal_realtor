@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useProperties } from '../contexts/PropertyContext';
 import PropertyCard from './PropertyCard';
-import { Filter, Search, PlusCircle, RefreshCcw } from 'lucide-react';
+import { Filter, Search, PlusCircle, RefreshCcw, EyeOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const PropertyList = () => {
@@ -22,7 +22,11 @@ const PropertyList = () => {
         const matchesContract = filterContract === 'all' ||
             (filterContract === 'venda' && (p.contract === 'venda' || p.contract === 'ambos' || Number(p.price || p.salePrice || 0) > 0)) ||
             (filterContract === 'locacao' && (p.contract === 'locacao' || p.contract === 'ambos' || Number(p.rentalPrice || 0) > 0));
-        const matchesStatus = filterStatus === 'all' || p.status === filterStatus;
+        const matchesStatus = filterStatus === 'all'
+            ? true
+            : filterStatus === '__hidden__'
+                ? p.hidden === true
+                : p.status === filterStatus && !p.hidden;
         const matchesSearch = (p.title || '').toLowerCase().includes(search.toLowerCase()) ||
             (p.address || '').toLowerCase().includes(search.toLowerCase());
         return matchesContract && matchesStatus && matchesSearch;
@@ -93,6 +97,7 @@ const PropertyList = () => {
                         <option value="Disponível">Disponível</option>
                         <option value="Reservado">Reservado</option>
                         <option value="Vendido">Vendido</option>
+                        <option value="__hidden__">Ocultos no site</option>
                     </select>
                 </div>
 
@@ -100,7 +105,16 @@ const PropertyList = () => {
                 <div className="space-y-4">
                     {filteredProperties.length > 0 ? (
                         filteredProperties.map(property => (
-                            <PropertyCard key={property.id} property={property} />
+                            <div key={property.id} className="relative">
+                                {property.hidden && (
+                                    <div className="absolute top-2 left-2 z-10 flex items-center gap-1 bg-slate-700/90 text-white text-[10px] font-bold px-2 py-1 rounded-full">
+                                        <EyeOff size={10} /> Oculto no site
+                                    </div>
+                                )}
+                                <div className={property.hidden ? 'opacity-50' : ''}>
+                                    <PropertyCard property={property} />
+                                </div>
+                            </div>
                         ))
                     ) : (
                         <div className="text-center py-10 text-slate-400">
