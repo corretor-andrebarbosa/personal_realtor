@@ -156,6 +156,7 @@ const PropertyDetails = () => {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [activeVideoIdx, setActiveVideoIdx] = useState(0);
   const [showGallery, setShowGallery] = useState(false);
 
   // define “voltar” de forma inteligente
@@ -218,7 +219,15 @@ const PropertyDetails = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showGallery, showVideoModal, showDeleteModal, allImages.length]);
 
-  const youtubeId = property ? getYoutubeId(property.videoLink || property.video || property.video_url || property.video_link) : null;
+  // Suporta múltiplos vídeos (novo) e retro-compatibilidade (único link legado)
+  const youtubeIds = useMemo(() => {
+    if (!property) return [];
+    const links = Array.isArray(property.videoLinks) && property.videoLinks.length > 0
+      ? property.videoLinks
+      : [property.videoLink || property.video || property.video_url || property.video_link || ''];
+    return links.map(getYoutubeId).filter(Boolean);
+  }, [property]);
+  const youtubeId = youtubeIds[activeVideoIdx] || youtubeIds[0] || null;
 
   const generatePDF = () => {
     if (!property) return;
@@ -510,17 +519,38 @@ const PropertyDetails = () => {
           </p>
         </div>
 
-        {/* YouTube Video Embed */}
-        {youtubeId && (
+        {/* YouTube Video(s) Embed */}
+        {youtubeIds.length > 0 && (
           <div className="mb-8">
-            <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2">
-
-              <Video size={18} className="text-red-500" /> {t('details_video_title')}
+            <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
+              <Video size={18} className="text-red-500" />
+              {youtubeIds.length > 1 ? `Vídeos (${youtubeIds.length})` : t('details_video_title')}
             </h3>
+
+            {/* Seletor de vídeo — só aparece se houver mais de um */}
+            {youtubeIds.length > 1 && (
+              <div className="flex gap-2 mb-3 flex-wrap">
+                {youtubeIds.map((vid, idx) => (
+                  <button
+                    key={vid}
+                    onClick={() => setActiveVideoIdx(idx)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all flex items-center gap-1 ${
+                      activeVideoIdx === idx
+                        ? 'bg-red-500 text-white border-red-500'
+                        : 'bg-white text-slate-500 border-slate-200 hover:border-red-300'
+                    }`}
+                  >
+                    <Video size={11} /> Vídeo {idx + 1}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-md">
               <iframe
-                src={`https://www.youtube.com/embed/${youtubeId}`}
-                title="Vídeo do Imóvel"
+                key={youtubeIds[activeVideoIdx]}
+                src={`https://www.youtube.com/embed/${youtubeIds[activeVideoIdx]}`}
+                title={`Vídeo ${activeVideoIdx + 1}`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
                 className="w-full h-full"
@@ -659,6 +689,7 @@ const PropertyDetails = () => {
               <X size={28} />
             </button>
             <iframe
+              key={youtubeId}
               src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
               title="Vídeo"
               allow="autoplay; encrypted-media"

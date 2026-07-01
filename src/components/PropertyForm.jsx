@@ -60,7 +60,12 @@ const normalizeExistingPropertyToForm = (existing) => {
     garage: Number(existing?.garage || 0),
     address: existing?.address || '',
     description: existing?.description || '',
-    videoLink: existing?.videoLink || existing?.video || existing?.video_url || existing?.video_link || '',
+    videoLinks: (() => {
+      const vl = existing?.videoLinks;
+      if (Array.isArray(vl) && vl.length > 0) return vl.filter(Boolean);
+      const single = existing?.videoLink || existing?.video || existing?.video_url || existing?.video_link || '';
+      return single ? [single] : [];
+    })(),
     contact_agent: existing?.contact_agent || '',
     priceType: existing?.price_type || existing?.priceType || 'fixo',
     caucao: existing?.caucao ?? false,
@@ -100,7 +105,7 @@ const PropertyForm = () => {
     garage: 0,
     address: '',
     description: '',
-    videoLink: '',
+    videoLinks: [],
     contact_agent: '',
     images: [],
     image: ''
@@ -272,11 +277,12 @@ const PropertyForm = () => {
       address: formData.address,
       description: formData.description,
 
-      // Envia todas variações de nome de campo para garantir gravação
-      videoLink: formData.videoLink,
-      video_url: formData.videoLink,
-      video: formData.videoLink,
-      video_link: formData.videoLink,
+      // Vídeos — salva array e também o primeiro em campos legados
+      video_links: (formData.videoLinks || []).filter(Boolean),
+      videoLink: (formData.videoLinks || [])[0] || '',
+      video_url: (formData.videoLinks || [])[0] || '',
+      video: (formData.videoLinks || [])[0] || '',
+      video_link: (formData.videoLinks || [])[0] || '',
 
       images: (formData.images || []).filter(Boolean),
       image: formData.image || (formData.images?.[0] || ''),
@@ -778,20 +784,42 @@ const PropertyForm = () => {
           )}
 
           <div>
-            <label className="block text-xs font-bold text-slate-500 mb-1">Link de Vídeo (YouTube)</label>
-            <div className="relative">
-              <Youtube className="absolute left-3 top-1/2 -translate-y-1/2 text-red-500" size={18} />
-              <input
-                type="url"
-                name="videoLink"
-                value={formData.videoLink}
-                onChange={handleChange}
-                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[var(--primary-color)] outline-none transition-colors"
-                placeholder="https://youtube.com/watch?v=..."
-              />
+            <label className="block text-xs font-bold text-slate-500 mb-2">Vídeos do YouTube</label>
+            <div className="space-y-2">
+              {(formData.videoLinks || []).map((url, idx) => (
+                <div key={idx} className="relative flex items-center gap-2">
+                  <Youtube className="absolute left-3 text-red-500 shrink-0" size={16} />
+                  <input
+                    type="url"
+                    value={url}
+                    onChange={e => {
+                      const next = [...(formData.videoLinks || [])];
+                      next[idx] = e.target.value;
+                      setFormData(prev => ({ ...prev, videoLinks: next }));
+                    }}
+                    className="w-full pl-9 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[var(--primary-color)] outline-none transition-colors text-sm"
+                    placeholder="https://youtube.com/watch?v=..."
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, videoLinks: prev.videoLinks.filter((_, i) => i !== idx) }))}
+                    className="shrink-0 p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Remover"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, videoLinks: [...(prev.videoLinks || []), ''] }))}
+                className="flex items-center gap-2 text-xs font-bold text-red-500 hover:text-red-700 py-2 px-3 border border-dashed border-red-300 rounded-xl w-full justify-center hover:bg-red-50 transition-colors"
+              >
+                <Youtube size={14} /> + Adicionar vídeo
+              </button>
             </div>
-            <p className="text-[10px] text-slate-400 mt-2 flex items-center gap-1">
-              Este vídeo será exibido com destaque na página de detalhes.
+            <p className="text-[10px] text-slate-400 mt-2">
+              Todos os vídeos serão exibidos na página de detalhes do imóvel.
             </p>
           </div>
         </section>

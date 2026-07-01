@@ -98,8 +98,17 @@ export const PropertyProvider = ({ children }) => {
                         // Normalização de Área
                         area: p.area ?? p.total_area ?? p.m2 ?? p.square_meters ?? 0,
 
-                        // Normalização de Vídeo
+                        // Normalização de Vídeo (suporta múltiplos)
                         videoLink: p.video_link ?? p.video_url ?? p.videoLink ?? p.video ?? '',
+                        videoLinks: (() => {
+                            const raw = p.video_links;
+                            if (Array.isArray(raw) && raw.length > 0) return raw.filter(Boolean);
+                            if (typeof raw === 'string' && raw) {
+                                try { const parsed = JSON.parse(raw); if (Array.isArray(parsed)) return parsed.filter(Boolean); } catch {}
+                            }
+                            const single = p.video_link ?? p.video_url ?? p.videoLink ?? p.video ?? '';
+                            return single ? [single] : [];
+                        })(),
 
                         // Normalização de Imagens
                         images: (function () {
@@ -184,10 +193,11 @@ export const PropertyProvider = ({ children }) => {
             sale_price: (data.contract === 'venda' || data.contract === 'ambos') ? Number(data.salePrice || 0) : 0,
             rentalPrice: (data.contract === 'locacao' || data.contract === 'ambos') ? Number(data.rentalPrice || 0) : 0,
             rental_price: (data.contract === 'locacao' || data.contract === 'ambos') ? Number(data.rentalPrice || 0) : 0,
-            videoLink: data.videoLink || '',
-            video_link: data.videoLink || '',
-            video_url: data.videoLink || '',
-            video: data.videoLink || '',
+            videoLink: (Array.isArray(data.videoLinks) ? data.videoLinks[0] : data.videoLink) || '',
+            video_link: (Array.isArray(data.videoLinks) ? data.videoLinks[0] : data.videoLink) || '',
+            video_url: (Array.isArray(data.videoLinks) ? data.videoLinks[0] : data.videoLink) || '',
+            video: (Array.isArray(data.videoLinks) ? data.videoLinks[0] : data.videoLink) || '',
+            video_links: Array.isArray(data.videoLinks) ? data.videoLinks.filter(Boolean) : [],
             price_type: data.priceType ?? data.price_type ?? 'fixo',
             caucao: data.caucao ?? false,
             fiador: data.fiador ?? false,

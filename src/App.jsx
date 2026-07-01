@@ -186,6 +186,9 @@ const App = () => {
                             <Route path="/admin/blog/new" element={isAuthenticated ? <BlogForm /> : <Navigate to="/login" replace />} />
                             <Route path="/admin/blog/edit/:id" element={isAuthenticated ? <BlogForm /> : <Navigate to="/login" replace />} />
                             <Route path="/admin/tabelas" element={isAuthenticated ? <TabelasVenda /> : <Navigate to="/login" replace />} />
+
+                            {/* Rota desconhecida → volta para o início */}
+                            <Route path="*" element={<Navigate to="/" replace />} />
                         </Routes>
 
                         {showNav && <Navigation />}

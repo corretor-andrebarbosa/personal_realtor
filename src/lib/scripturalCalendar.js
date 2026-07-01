@@ -2,224 +2,227 @@
  * Calendário Escritural Celestial
  * Portado de https://github.com/yashraal/celestial-calendar-clock-converter-c4
  *
- * Âncoras confirmadas:
- *   Ano 2026, Mês 1, Dia 1 = 02/05/2026 (Abib 1) ← âncora correta confirmada no código-fonte
+ * Regra de comprimento mensal (exatamente como o site de referência):
+ *   Meses ímpares  (1,3,5,7,9,11) = 30 dias
+ *   Meses pares    (2,4,6,8,10,12) = 29 dias
+ *   Mês 13 (ano bissexto)          = 30 dias
+ *
+ * Anos bissextos (13 meses): ano 6000, depois a cada 3 anos (6003, 6006 …)
+ *
+ * Âncoras confirmadas no código-fonte de referência:
+ *   Ano 6000, Mês 1, Dia 1 = 13/04/2025
+ *   Ano 6001, Mês 1, Dia 1 = 02/05/2026
  *
  * Dias de descanso obrigatório:
- *   Shabbat: dias 8, 15, 22 e 29 de cada mês
- *   Festas: Pesach, Chag HaMatzot, Yom Teruah, Yom Kippur, Sukkot
- *   Lua Nova: dia 1 de cada mês
+ *   Lua Nova : dia 1 de cada mês
+ *   Shabbat  : dias 8, 15, 22 e 29 de cada mês
+ *   Festas   : Pesach (14/1), Chag HaMatzot último dia (21/1),
+ *              Yom Teruah (1/7), Yom Kippur (10/7), Sukkot (15-21/7)
  */
 
 import SunCalc from 'suncalc';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
-const FULL_MOON_THRESHOLD = 0.98;
 
-// Coordenadas de João Pessoa, PB — fronteira do dia escritural (nascer do sol)
+// Coordenadas de João Pessoa, PB
 const LAT = -7.12;
 const LON = -34.86;
 
-// Âncora principal: 02/05/2026 = Abib 1 (Mês 1, Dia 1) do ano 2026
-// Começar da âncora mais recente e confirmada garante precisão
-const ANCHOR_ISO = '2026-05-02';
-const ANCHOR_YEAR = 2026;
-const ANCHOR_MONTH = 1;
-const MONTHS_TO_GENERATE = 48; // ~4 anos (passado e futuro)
+// Âncoras (mesmo valor do site de referência)
+const ANCHOR_6000_ISO = '2025-04-13'; // Ano 6000, Mês 1, Dia 1
+const ANCHOR_6001_ISO = '2026-05-02'; // Ano 6001, Mês 1, Dia 1
 
-// Cache de iluminação lunar (evita recalcular)
-const illumCache = new Map();
+// ─── Funções de data UTC ───────────────────────────────────────────────────
 
 function isoToDayNum(iso) {
-  const [y, m, d] = iso.split('-').map(Number);
-  return Math.floor(Date.UTC(y, m - 1, d) / MS_PER_DAY);
-}
-
-function dayNumToDate(dayNum) {
-  return new Date(dayNum * MS_PER_DAY);
+    const [y, m, d] = iso.split('-').map(Number);
+    return Math.floor(Date.UTC(y, m - 1, d) / MS_PER_DAY);
 }
 
 function dayNumToISO(dayNum) {
-  const d = dayNumToDate(dayNum);
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(d.getUTCDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+    const d = new Date(dayNum * MS_PER_DAY);
+    return [
+        d.getUTCFullYear(),
+        String(d.getUTCMonth() + 1).padStart(2, '0'),
+        String(d.getUTCDate()).padStart(2, '0'),
+    ].join('-');
 }
 
-function maxIlluminationForDay(dayNum) {
-  if (illumCache.has(dayNum)) return illumCache.get(dayNum);
-  let max = 0;
-  const baseMs = dayNum * MS_PER_DAY;
-  for (let hour = 0; hour < 24; hour++) {
-    const t = new Date(baseMs + hour * 3600 * 1000);
-    const frac = SunCalc.getMoonIllumination(t).fraction;
-    if (frac > max) max = frac;
-  }
-  illumCache.set(dayNum, max);
-  return max;
+// ─── Regras do calendário escritural ──────────────────────────────────────
+
+function isLeapYear(scriptYear) {
+    if (scriptYear === 6000) return true;
+    if (scriptYear === 6001) return false;
+    return (scriptYear - 6000) % 3 === 0;
 }
 
-function decideMonthLength(startDayNum) {
-  const day29 = startDayNum + 28;
-  const day30 = startDayNum + 29;
-  const i29 = maxIlluminationForDay(day29);
-  const i30 = maxIlluminationForDay(day30);
-  if (i29 >= FULL_MOON_THRESHOLD) {
-    return i30 >= FULL_MOON_THRESHOLD ? 30 : 29;
-  }
-  return 30;
+// Comprimento mensal conforme o site de referência: ímpar=30, par=29, mês 13=30
+function getMonthLength(monthIndex) {
+    if (monthIndex === 13) return 30;
+    return (monthIndex % 2 === 1) ? 30 : 29;
 }
 
-// Calendário gerado uma única vez
-let calendar = null;
+function daysInScripturalYear(scriptYear) {
+    const maxM = isLeapYear(scriptYear) ? 13 : 12;
+    let total = 0;
+    for (let m = 1; m <= maxM; m++) total += getMonthLength(m);
+    return total; // 354 comum, 384 bissexto
+}
+
+// ─── Construção do calendário ──────────────────────────────────────────────
+
+let _calendar = null;
 
 function buildCalendar() {
-  if (calendar) return calendar;
+    if (_calendar) return _calendar;
 
-  const months = [];
-  let startDayNum = isoToDayNum(ANCHOR_ISO);
-  let month = ANCHOR_MONTH;
-  let year = ANCHOR_YEAR;
+    const months = [];
 
-  for (let i = 0; i < MONTHS_TO_GENERATE; i++) {
-    const length = decideMonthLength(startDayNum);
-    months.push({ year, month, startDayNum, length });
-    startDayNum += length;
-    month++;
-    if (month > 13) { month = 1; year++; }
-  }
+    // Ponto de partida: âncora de 2026 (ano 6001, mês 1)
+    const anchorDayNum = isoToDayNum(ANCHOR_6001_ISO);
 
-  calendar = months;
-  return months;
+    // Recua 2 anos escriturais para cobrir 2025 e datas anteriores
+    let startDayNum = anchorDayNum;
+    let year = 6001;
+    const backYears = 2;
+    for (let i = 0; i < backYears; i++) {
+        year--;
+        startDayNum -= daysInScripturalYear(year);
+    }
+    let month = 1;
+
+    // Gera 72 meses (~6 anos, para cobrir o passado e o futuro)
+    for (let i = 0; i < 72; i++) {
+        const maxM = isLeapYear(year) ? 13 : 12;
+        const length = getMonthLength(month);
+        months.push({ year, month, startDayNum, length });
+        startDayNum += length;
+        month++;
+        if (month > maxM) { month = 1; year++; }
+    }
+
+    _calendar = months;
+    return months;
 }
 
 function findMonth(dayNum) {
-  const months = buildCalendar();
-  for (let i = months.length - 1; i >= 0; i--) {
-    if (dayNum >= months[i].startDayNum) return months[i];
-  }
-  return null;
+    const months = buildCalendar();
+    for (let i = months.length - 1; i >= 0; i--) {
+        if (dayNum >= months[i].startDayNum) return months[i];
+    }
+    return null;
 }
 
+// ─── API pública ───────────────────────────────────────────────────────────
+
 /**
- * Verifica se uma data ISO é dia de descanso escritural.
- * Retorna { isRestDay, name } ou { isRestDay: false }
+ * Verifica se uma data ISO (UTC) é dia de descanso escritural.
  */
 export function checkDay(iso) {
-  const dayNum = isoToDayNum(iso);
-  const m = findMonth(dayNum);
+    const dayNum = isoToDayNum(iso);
+    const m = findMonth(dayNum);
+    if (!m) return { isRestDay: false };
 
-  if (!m) return { isRestDay: false };
+    const dayInMonth = dayNum - m.startDayNum + 1;
+    if (dayInMonth < 1 || dayInMonth > m.length) return { isRestDay: false };
 
-  const dayInMonth = dayNum - m.startDayNum + 1;
-  if (dayInMonth < 1 || dayInMonth > m.length) return { isRestDay: false };
+    // Lua Nova (Dia 1)
+    if (dayInMonth === 1) {
+        return { isRestDay: true, name: 'Lua Nova (Rosh Chodesh)' };
+    }
 
-  // Lua Nova (Dia 1) — observância
-  if (dayInMonth === 1) {
-    return { isRestDay: true, name: 'Lua Nova (Rosh Chodesh)' };
-  }
+    // Shabbat semanal
+    if ([8, 15, 22, 29].includes(dayInMonth)) {
+        return { isRestDay: true, name: 'Shabbat' };
+    }
 
-  // Shabbat semanal
-  if ([8, 15, 22, 29].includes(dayInMonth)) {
-    return { isRestDay: true, name: 'Shabbat' };
-  }
+    // Festas do Mês 1 (Abib)
+    if (m.month === 1) {
+        if (dayInMonth === 14) return { isRestDay: true, name: 'Pesach', startsAtSunset: true };
+        if (dayInMonth === 21) return { isRestDay: true, name: 'Chag HaMatzot (último dia)' };
+    }
 
-  // Festas do Mês 1 (Abib)
-  // Apenas os dias de convocação sagrada têm manutenção (não todos os 7 dias do Chag)
-  if (m.month === 1) {
-    // Pesach começa no pôr do sol do dia 14 — manutenção só a partir do entardecer
-    if (dayInMonth === 14) return { isRestDay: true, name: 'Pesach', startsAtSunset: true };
-    // Dia 15 (Shabbat + 1º dia do Chag) já é capturado pela regra de Shabbat acima
-    // Último dia do Chag HaMatzot — dia de convocação sagrada
-    if (dayInMonth === 21) return { isRestDay: true, name: 'Chag HaMatzot (último dia)' };
-  }
+    // Festas do Mês 7
+    if (m.month === 7) {
+        if (dayInMonth === 1)  return { isRestDay: true, name: 'Yom Teruah' };
+        if (dayInMonth === 10) return { isRestDay: true, name: 'Yom Kippur' };
+        if (dayInMonth >= 15 && dayInMonth <= 21) return { isRestDay: true, name: 'Sukkot' };
+    }
 
-  // Festas do Mês 7
-  if (m.month === 7) {
-    if (dayInMonth === 1) return { isRestDay: true, name: 'Yom Teruah' };
-    if (dayInMonth === 10) return { isRestDay: true, name: 'Yom Kippur' };
-    if (dayInMonth >= 15 && dayInMonth <= 21) return { isRestDay: true, name: 'Sukkot' };
-  }
-
-  return { isRestDay: false };
+    return { isRestDay: false };
 }
 
 /**
- * Retorna a data/hora em que o período de descanso termina.
- * O dia escritural termina na alvorada do dia seguinte, no local do usuário.
+ * Retorna a data/hora em que o período de descanso termina
+ * (alvorada do primeiro dia útil após a sequência de descanso).
  */
 export function getRestPeriodEnd(iso, lat = LAT, lon = LON) {
-  const startDayNum = isoToDayNum(iso);
-  let dayNum = startDayNum;
+    let dayNum = isoToDayNum(iso);
 
-  // Avança até encontrar o último dia consecutivo de descanso
-  while (true) {
-    const nextISO = dayNumToISO(dayNum + 1);
-    if (!checkDay(nextISO).isRestDay) break;
-    dayNum++;
-  }
+    // Avança enquanto o próximo dia também for de descanso
+    while (true) {
+        const nextISO = dayNumToISO(dayNum + 1);
+        if (!checkDay(nextISO).isRestDay) break;
+        dayNum++;
+    }
 
-  // Alvorada do dia calendário seguinte — usar meio-dia UTC para evitar o mesmo problema
-  // de SunCalc retornar a alvorada errada quando passamos meia-noite UTC
-  const nextDayNoon = new Date((dayNum + 1) * MS_PER_DAY + 12 * 3600 * 1000);
-  return SunCalc.getTimes(nextDayNoon, lat, lon).sunrise;
+    // Alvorada do dia seguinte ao último dia de descanso
+    const nextDayNoon = new Date((dayNum + 1) * MS_PER_DAY + 12 * 3600 * 1000);
+    return SunCalc.getTimes(nextDayNoon, lat, lon).sunrise;
 }
 
 /**
- * Retorna o status escritural atual de forma assíncrona.
- * Usa a geolocalização do browser para calcular a alvorada local do visitante.
- * O dia escritural começa na alvorada — antes dela ainda é o dia anterior.
- * Fallback: João Pessoa, PB (coordenadas padrão do corretor).
- * { isRestDay, name, endsAt }
+ * Status escritural atual (assíncrono).
+ * O dia escritural começa na alvorada; antes dela ainda é o dia anterior.
  */
 export async function getTodayStatus() {
-  const now = new Date();
+    const now = new Date();
 
-  // Tenta obter coordenadas reais do visitante
-  let lat = LAT, lon = LON;
-  try {
-    if (typeof navigator !== 'undefined' && navigator.geolocation) {
-      const pos = await new Promise((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          timeout: 4000,
-          maximumAge: 3600000, // aceita cache de até 1 hora
-          enableHighAccuracy: false,
-        })
-      );
-      lat = pos.coords.latitude;
-      lon = pos.coords.longitude;
+    // Tenta obter coordenadas reais do visitante
+    let lat = LAT, lon = LON;
+    try {
+        if (typeof navigator !== 'undefined' && navigator.geolocation) {
+            const pos = await new Promise((resolve, reject) =>
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    timeout: 4000,
+                    maximumAge: 3600000,
+                    enableHighAccuracy: false,
+                })
+            );
+            lat = pos.coords.latitude;
+            lon = pos.coords.longitude;
+        }
+    } catch { /* usa coordenadas padrão */ }
+
+    // Alvorada do dia UTC atual (calculada ao meio-dia UTC para evitar ambiguidade)
+    const utcNoon = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 12, 0, 0));
+    const todaySunrise = SunCalc.getTimes(utcNoon, lat, lon).sunrise;
+
+    // Antes da alvorada → dia escritural ativo ainda é o anterior
+    const scriptDay = now < todaySunrise
+        ? new Date(now.getTime() - MS_PER_DAY)
+        : now;
+
+    const iso = [
+        scriptDay.getUTCFullYear(),
+        String(scriptDay.getUTCMonth() + 1).padStart(2, '0'),
+        String(scriptDay.getUTCDate()).padStart(2, '0'),
+    ].join('-');
+
+    const { isRestDay, name, startsAtSunset } = checkDay(iso);
+    if (!isRestDay) return { isRestDay: false };
+
+    // Dias que só entram em descanso a partir do pôr do sol (ex.: Pesach dia 14)
+    if (startsAtSunset) {
+        const scriptDayNoon = new Date(Date.UTC(
+            scriptDay.getUTCFullYear(),
+            scriptDay.getUTCMonth(),
+            scriptDay.getUTCDate(),
+            12, 0, 0
+        ));
+        const todaySunset = SunCalc.getTimes(scriptDayNoon, lat, lon).sunset;
+        if (now < todaySunset) return { isRestDay: false };
     }
-  } catch {
-    // Permissão negada ou timeout — usa coordenadas padrão (João Pessoa)
-  }
 
-  // SunCalc.getTimes(now) retorna a alvorada do dia solar EM CURSO, não do próximo nascer.
-  // Para obter a alvorada correta do dia calendário UTC, passamos o meio-dia UTC desse dia.
-  const utcNoon = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 12, 0, 0));
-  const todaySunrise = SunCalc.getTimes(utcNoon, lat, lon).sunrise;
-
-  // Antes da alvorada, o dia escritural ativo ainda é o anterior
-  const scriptDay = now < todaySunrise
-    ? new Date(now.getTime() - MS_PER_DAY)
-    : now;
-
-  const iso = `${scriptDay.getUTCFullYear()}-${String(scriptDay.getUTCMonth() + 1).padStart(2, '0')}-${String(scriptDay.getUTCDate()).padStart(2, '0')}`;
-  const { isRestDay, name, startsAtSunset } = checkDay(iso);
-  if (!isRestDay) return { isRestDay: false };
-
-  // Dias que só entram em descanso a partir do pôr do sol (ex: Pesach, dia 14 do mês 1)
-  if (startsAtSunset) {
-    // Usa o meio-dia UTC do dia escritural (não do dia UTC atual) para obter o pôr do sol correto
-    const scriptDayNoon = new Date(Date.UTC(
-      scriptDay.getUTCFullYear(),
-      scriptDay.getUTCMonth(),
-      scriptDay.getUTCDate(),
-      12, 0, 0
-    ));
-    const todaySunset = SunCalc.getTimes(scriptDayNoon, lat, lon).sunset;
-    if (now < todaySunset) return { isRestDay: false };
-  }
-
-  return { isRestDay: true, name, endsAt: getRestPeriodEnd(iso, lat, lon) };
+    return { isRestDay: true, name, endsAt: getRestPeriodEnd(iso, lat, lon) };
 }

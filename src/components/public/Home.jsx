@@ -557,7 +557,8 @@ const PublicHome = ({ defaultSegment = '' }) => {
                         {displayedProperties.map((property) => {
                             // ✅ Lógica de Imagem com Fallback de Vídeo
                             const primaryImage = property.image || (property.images && property.images.length > 0 ? property.images[0] : null);
-                            const videoThumb = getYoutubeThumbnail(property.videoLink);
+                            const firstVideoLink = (Array.isArray(property.videoLinks) && property.videoLinks[0]) || property.videoLink || '';
+                            const videoThumb = getYoutubeThumbnail(firstVideoLink);
                             const displayImage = primaryImage || videoThumb || 'https://ui-avatars.com/api/?name=IMOVEL&size=600&background=cbd5e1&color=334155&font-size=0.1';
                             const isRuralProp = RURAL_TYPES_LC.some(t => (property.type || '').toLowerCase().includes(t));
 
