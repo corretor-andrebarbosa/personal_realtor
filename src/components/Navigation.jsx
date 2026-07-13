@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Home, Building2, Users, UserCircle, Settings, BookOpen, Search, TableProperties } from 'lucide-react';
+import { Home, Building2, Users, UserCircle, Settings, BookOpen, Search, TableProperties, Handshake } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 const Navigation = () => {
@@ -12,6 +12,7 @@ const Navigation = () => {
         { icon: TableProperties, label: 'Tabelas', path: '/admin/tabelas' },
         { icon: Search, label: 'Buscador', path: '/busca-inteligente' },
         { icon: BookOpen, label: 'Blog', path: '/admin/blog' },
+        { icon: Handshake, label: 'Parceiros', path: '/admin/parceiros' },
         { icon: Settings, label: 'Config', path: '/settings' },
     ];
 

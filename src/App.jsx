@@ -19,6 +19,10 @@ import BlogList from './components/BlogList';
 import BlogForm from './components/BlogForm';
 import BlogPage from './components/public/BlogPage';
 import BlogPostPage from './components/public/BlogPostPage';
+import { PartnerProvider } from './contexts/PartnerContext';
+import PartnerList from './components/PartnerList';
+import PartnerForm from './components/PartnerForm';
+import PartnersPage from './components/public/PartnersPage';
 import BuscaInteligente from './pages/BuscaInteligente';
 import TabelasVenda from './pages/TabelasVenda';
 import PortalEntrada from './pages/PortalEntrada';
@@ -137,7 +141,7 @@ const App = () => {
         );
     }
 
-    const hideNavPaths = ['/properties/new', '/website', '/login', '/admin/blog/new', '/admin/blog/edit', '/blog', '/litoral', '/campo', '/imoveis', '/portal'];
+    const hideNavPaths = ['/properties/new', '/website', '/login', '/admin/blog/new', '/admin/blog/edit', '/blog', '/admin/parceiros/new', '/admin/parceiros/edit', '/parceiros', '/litoral', '/campo', '/imoveis', '/portal'];
     const showNav = isAuthenticated
         && location.pathname !== '/'
         && !hideNavPaths.some(p => location.pathname.includes(p))
@@ -150,11 +154,13 @@ const App = () => {
                 <LeadProvider>
                 <PeopleProvider>
                 <BlogProvider>
+                <PartnerProvider>
                     <div className="font-['Manrope'] antialiased text-slate-900 bg-slate-50 min-h-screen">
                         <Routes>
                             {/* Public routes */}
                             <Route path="/blog" element={<BlogPage />} />
                             <Route path="/blog/:id" element={<BlogPostPage />} />
+                            <Route path="/parceiros" element={<PartnersPage />} />
                             <Route path="/busca-inteligente" element={<BuscaInteligente />} />
                             <Route
                                 path="/"
@@ -186,6 +192,10 @@ const App = () => {
                             <Route path="/admin/blog/new" element={isAuthenticated ? <BlogForm /> : <Navigate to="/login" replace />} />
                             <Route path="/admin/blog/edit/:id" element={isAuthenticated ? <BlogForm /> : <Navigate to="/login" replace />} />
                             <Route path="/admin/tabelas" element={isAuthenticated ? <TabelasVenda /> : <Navigate to="/login" replace />} />
+                            {/* Admin partners routes */}
+                            <Route path="/admin/parceiros" element={isAuthenticated ? <PartnerList /> : <Navigate to="/login" replace />} />
+                            <Route path="/admin/parceiros/new" element={isAuthenticated ? <PartnerForm /> : <Navigate to="/login" replace />} />
+                            <Route path="/admin/parceiros/edit/:id" element={isAuthenticated ? <PartnerForm /> : <Navigate to="/login" replace />} />
 
                             {/* Rota desconhecida → volta para o início */}
                             <Route path="*" element={<Navigate to="/" replace />} />
@@ -193,6 +203,7 @@ const App = () => {
 
                         {showNav && <Navigation />}
                     </div>
+                </PartnerProvider>
                 </BlogProvider>
                 </PeopleProvider>
                 </LeadProvider>

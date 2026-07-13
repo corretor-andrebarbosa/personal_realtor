@@ -261,6 +261,7 @@ const PublicHome = ({ defaultSegment = '' }) => {
                     <a href="#vender" className="hover:text-amber-500 transition-colors font-semibold text-amber-600"><TT k="sell_badge" /></a>
                     <a href="#contato" className="hover:text-[#166b9c] transition-colors"><TT k="nav_contact" /></a>
                     <Link to="/blog" className="hover:text-[#166b9c] transition-colors">Blog</Link>
+                    <Link to="/parceiros" className="hover:text-[#166b9c] transition-colors">Parceiros</Link>
 
                     <div className="flex items-center gap-4 pl-4 border-l border-slate-200">
                         {settings.socials.instagram && (
@@ -368,6 +369,7 @@ const PublicHome = ({ defaultSegment = '' }) => {
                         <a href="#vender" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-amber-600 py-2 border-b border-slate-100"><TT k="sell_badge" /></a>
                         <a href="#contato" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100"><TT k="nav_contact" /></a>
                         <Link to="/blog" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">Blog</Link>
+                        <Link to="/parceiros" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">Parceiros</Link>
                         {localStorage.getItem('ab-auth-session') ? (
                             <>
                                 <Link to="/admin" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100 flex items-center gap-2">
@@ -867,6 +869,7 @@ const PublicHome = ({ defaultSegment = '' }) => {
                                 <li><a href="#sobre" className="hover:text-white transition-colors"><TT k="nav_about" /></a></li>
                                 <li><a href="#contato" className="hover:text-white transition-colors"><TT k="nav_contact" /></a></li>
                                 <li><Link to="/blog" className="hover:text-white transition-colors">Blog</Link></li>
+                                <li><Link to="/parceiros" className="hover:text-white transition-colors">Parceiros</Link></li>
                                 <li><Link to="/login" className="hover:text-white transition-colors"><TT k="nav_login" /></Link></li>
                             </ul>
                         </div>
