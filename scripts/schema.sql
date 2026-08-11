@@ -111,6 +111,7 @@ CREATE TABLE IF NOT EXISTS site_settings (
   id            text PRIMARY KEY DEFAULT 'default',
   updated_at    timestamptz DEFAULT now(),
   whatsapp      text,
+  telegram      text,
   socials       text,
   primary_color text DEFAULT '#166b9c',
   system_prompt text,

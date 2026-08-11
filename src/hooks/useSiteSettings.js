@@ -6,6 +6,7 @@ const ROW_ID = 'default';
 
 export const DEFAULT_SITE_SETTINGS = {
   whatsapp: '',
+  telegram: '',
   socials: { instagram: '', linkedin: '', facebook: '', youtube: '', tiktok: '' },
   primary_color: '#166b9c',
   system_prompt: '',
@@ -21,6 +22,7 @@ export const DEFAULT_SITE_SETTINGS = {
 export const applySettingsToLocal = (s) => {
   if (!s) return;
   if (s.whatsapp) localStorage.setItem('ab-whatsapp', s.whatsapp);
+  if (s.telegram) localStorage.setItem('ab-telegram', s.telegram);
   if (s.socials && Object.keys(s.socials).length)
     localStorage.setItem('ab-socials', JSON.stringify(s.socials));
   if (s.primary_color) localStorage.setItem('ab-primary-color', s.primary_color);
@@ -56,6 +58,7 @@ export const useSiteSettings = () => {
           setSettings({
             ...DEFAULT_SITE_SETTINGS,
             whatsapp: localStorage.getItem('ab-whatsapp') || '',
+            telegram: localStorage.getItem('ab-telegram') || '',
             socials: JSON.parse(localStorage.getItem('ab-socials') || '{}'),
             primary_color: localStorage.getItem('ab-primary-color') || '#166b9c',
             system_prompt: localStorage.getItem('ab-system-prompt') || '',

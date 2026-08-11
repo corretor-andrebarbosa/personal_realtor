@@ -12,6 +12,7 @@ import {
   Video,
   Phone,
   MessageCircle,
+  Send,
   Edit,
   Trash2,
   ChevronLeft,
@@ -22,6 +23,7 @@ import jsPDF from 'jspdf';
 
 import { systemConfig } from '../system-config';
 import { openWhatsApp } from '../whatsapp';
+import { openTelegram } from '../telegram';
 import { translations } from '../translations';
 import TranslatedText from './common/TranslatedText';
 import PriceDisplay from './common/PriceDisplay';
@@ -324,6 +326,14 @@ const PropertyDetails = () => {
     openWhatsApp(text, whatsapp);
   };
 
+  const handleTelegram = () => {
+    if (!property) return;
+    const price = Number(property.price || property.rentalPrice || 0);
+    const text = `Olá! Tenho interesse no imóvel: ${property.title} - R$ ${price.toLocaleString('pt-BR')}`;
+    const telegram = localStorage.getItem('ab-telegram') || systemConfig.telegramUsername;
+    openTelegram(text, telegram);
+  };
+
   const handleCall = () => {
     const whatsapp = localStorage.getItem('ab-whatsapp') || systemConfig.whatsappNumber;
     if (whatsapp) {
@@ -601,6 +611,13 @@ const PropertyDetails = () => {
         </div>
 
         <div className="flex gap-2">
+          <button
+            onClick={handleTelegram}
+            title={t('details_telegram')}
+            className="bg-[#229ED9] text-white p-3 rounded-xl shadow-lg shadow-sky-500/30 hover:bg-[#1b7fae] transition-all flex items-center justify-center group"
+          >
+            <Send size={20} className="group-hover:scale-110 transition-transform" />
+          </button>
           <button
             onClick={handleWhatsApp}
             className="bg-[#25D366] text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-emerald-500/30 hover:bg-[#128C7E] transition-all flex items-center gap-2 group"

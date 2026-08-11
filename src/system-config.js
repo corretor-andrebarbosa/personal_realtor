@@ -15,6 +15,12 @@ export const systemConfig = {
     // Mensagem padrão ao abrir WhatsApp genérico
     whatsappDefaultMessage: "Olá! Gostaria de saber mais sobre seus imóveis.",
 
+    // Usuário do Telegram SEM @ (ex: andrebarbosa)
+    telegramUsername: "corretorandrebarbosa",
+
+    // Mensagem padrão ao abrir Telegram genérico
+    telegramDefaultMessage: "Olá! Gostaria de saber mais sobre seus imóveis.",
+
     // Email de contato
     email: "andre_barbosa@creci.org.br",
 

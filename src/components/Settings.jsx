@@ -12,6 +12,7 @@ const Settings = () => {
     const [primaryColor, setPrimaryColor] = useState(localStorage.getItem('ab-primary-color') || '#166b9c');
     const [logoUrl, setLogoUrl] = useState(localStorage.getItem('ab-logo-url') || '');
     const [whatsapp, setWhatsapp] = useState(localStorage.getItem('ab-whatsapp') || '');
+    const [telegram, setTelegram] = useState(localStorage.getItem('ab-telegram') || '');
     const [socials, setSocials] = useState(JSON.parse(localStorage.getItem('ab-socials') || '{"instagram":"","linkedin":"","facebook":"","youtube":"","tiktok":""}'));
     const [systemPrompt, setSystemPrompt] = useState(localStorage.getItem('ab-system-prompt') || `Você é Kaleb, um assistente especializado em vendas de imóveis de alto padrão. Seu objetivo é ajudar o corretor ${systemConfig.brokerName} a fechar mais negócios. Utilize uma linguagem profissional, proativa e direta. Sempre pergunte sobre o próximo passo.`);
     const [geminiKey, setGeminiKey] = useState(localStorage.getItem('ab-gemini-key') || '');
@@ -41,6 +42,7 @@ const Settings = () => {
     useEffect(() => {
         if (cloudLoading || !cloudSettings) return;
         if (cloudSettings.whatsapp) setWhatsapp(cloudSettings.whatsapp);
+        if (cloudSettings.telegram) setTelegram(cloudSettings.telegram);
         if (cloudSettings.socials && Object.keys(cloudSettings.socials).length)
             setSocials(prev => ({ ...prev, ...cloudSettings.socials }));
         if (cloudSettings.primary_color) setPrimaryColor(cloudSettings.primary_color);
@@ -91,11 +93,13 @@ const Settings = () => {
     const handleSave = async () => {
         // ✅ mudança pontual: whatsapp sempre só dígitos
         const whatsappDigits = String(whatsapp || '').replace(/\D/g, '');
+        const telegramUsername = String(telegram || '').replace(/^@/, '').trim();
 
         // Salva no localStorage (cache local para leitura rápida)
         localStorage.setItem('ab-primary-color', primaryColor);
         localStorage.setItem('ab-logo-url', logoUrl);
         localStorage.setItem('ab-whatsapp', whatsappDigits);
+        localStorage.setItem('ab-telegram', telegramUsername);
         localStorage.setItem('ab-socials', JSON.stringify(socials));
         localStorage.setItem('ab-system-prompt', systemPrompt);
         localStorage.setItem('ab-gemini-key', geminiKey);
@@ -106,6 +110,7 @@ const Settings = () => {
         // Salva no Supabase (persistência permanente, sobrevive a limpeza de cache)
         await saveCloudSettings({
             whatsapp: whatsappDigits,
+            telegram: telegramUsername,
             socials,
             primary_color: primaryColor,
             system_prompt: systemPrompt,
@@ -122,6 +127,7 @@ const Settings = () => {
 
         // mantém o input atualizado já sanitizado
         setWhatsapp(whatsappDigits);
+        setTelegram(telegramUsername);
 
         // Salva metas do dashboard no Supabase
         await saveDashConfig({
@@ -247,6 +253,17 @@ const Settings = () => {
                                 value={whatsapp}
                                 onChange={(e) => setWhatsapp(e.target.value)}
                                 placeholder="5581999999999"
+                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 mb-1">Telegram (usuário, sem @)</label>
+                            <input
+                                type="text"
+                                value={telegram}
+                                onChange={(e) => setTelegram(e.target.value)}
+                                placeholder="andrebarbosa"
                                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"
                             />
                         </div>

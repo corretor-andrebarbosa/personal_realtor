@@ -6,6 +6,7 @@ import { MapPin, ArrowUpRight, Phone, Instagram, Linkedin, MessageCircle, PlayCi
 import { Link, useNavigate } from 'react-router-dom';
 import PropertyFilters from './PropertyFilters';
 import { openWhatsApp } from '../../whatsapp';
+import { getTelegramUrl } from '../../telegram';
 import { translations } from '../../translations';
 import { systemConfig } from '../../system-config';
 import TranslatedText from '../common/TranslatedText';
@@ -181,17 +182,20 @@ const PublicHome = ({ defaultSegment = '' }) => {
         primaryColor: '#166b9c',
         logoUrl: '',
         whatsapp: '',
+        telegram: '',
         profilePhoto: '',
         socials: { instagram: '', linkedin: '', facebook: '', youtube: '', tiktok: '' }
     });
 
     useEffect(() => {
         const storedWhatsapp = localStorage.getItem('ab-whatsapp');
+        const storedTelegram = localStorage.getItem('ab-telegram');
         setSettings({
             primaryColor: localStorage.getItem('ab-primary-color') || '#166b9c',
             logoUrl: localStorage.getItem('ab-logo-url') || '',
 
             whatsapp: (storedWhatsapp && storedWhatsapp.trim()) ? storedWhatsapp : systemConfig.whatsappNumber,
+            telegram: (storedTelegram && storedTelegram.trim()) ? storedTelegram : systemConfig.telegramUsername,
             profilePhoto: localStorage.getItem('ab-profile-photo') || '',
             socials: JSON.parse(localStorage.getItem('ab-socials') || JSON.stringify(systemConfig.socialLinks || { instagram: '', linkedin: '', facebook: '', youtube: '', tiktok: '' }))
         });
@@ -200,6 +204,7 @@ const PublicHome = ({ defaultSegment = '' }) => {
     const whatsappNumber = settings.whatsapp; // já vem só com dígitos
     const whatsappLink = whatsappNumber ? buildWaMeLink(whatsappNumber) : '#contato';
     const whatsappDigits = String(whatsappNumber || '').replace(/\D/g, '');
+    const telegramLink = getTelegramUrl(systemConfig.telegramDefaultMessage, settings.telegram);
     const sellWhatsappLink = whatsappDigits
         ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent('Olá! Tenho um imóvel que gostaria de avaliar para venda ou locação. Pode me ajudar?')}`
         : '#vender';
@@ -759,6 +764,18 @@ const PublicHome = ({ defaultSegment = '' }) => {
                     </div>
                 </div>
             </section>
+
+            <a
+                href={telegramLink}
+                target="_blank"
+                rel="noreferrer"
+                className="fixed bottom-24 right-6 z-50 bg-[#229ED9] text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform flex items-center justify-center"
+                title="Fale comigo no Telegram"
+            >
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="white">
+                    <path d="M21.94 4.36c.28-1.13-.42-1.67-1.15-1.4L2.42 10.4c-1.1.44-1.08 1.06-.2 1.32l4.6 1.44 10.66-6.72c.5-.32.96-.14.58.2L9.6 14.62l-.35 5.02c.5 0 .72-.23.98-.5l2.34-2.28 4.85 3.58c.9.5 1.53.24 1.76-.83l3.76-15.25z" />
+                </svg>
+            </a>
 
             <a
                 href={whatsappLink}
