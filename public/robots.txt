@@ -1,0 +1,19 @@
+# robots.txt — André Barbosa Imóveis
+
+User-agent: *
+Allow: /
+
+# Área administrativa e telas internas — sem valor de busca, só desperdiçam
+# orçamento de rastreamento e não devem aparecer no Google
+Disallow: /admin
+Disallow: /login
+Disallow: /leads
+Disallow: /people
+Disallow: /settings
+Disallow: /kaleb
+Disallow: /properties/new
+Disallow: /properties/edit/
+Disallow: /website
+Disallow: /portal
+
+Sitemap: https://andrebarbosaimoveis.com/sitemap.xml

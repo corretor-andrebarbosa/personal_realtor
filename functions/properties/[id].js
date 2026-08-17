@@ -1,14 +1,18 @@
 /**
  * Cloudflare Pages Function — /properties/[id]
  *
- * Detecta bots (WhatsApp, Facebook, etc.) e serve OG tags corretas.
- * Usuários normais são redirecionados para o SPA (index.html).
+ * Detecta crawlers de redes sociais (WhatsApp, Facebook, etc.) e serve OG tags
+ * pré-renderizadas para a prévia do link. Usuários normais E motores de busca
+ * (Googlebot/Bingbot) recebem o SPA de verdade — eles renderizam JS e devem
+ * indexar a página completa (preço, descrição, galeria, JSON-LD), não este
+ * resumo raso. Incluir googlebot/bingbot aqui seria servir conteúdo mais pobre
+ * pro Google do que pro usuário — o oposto do que se quer para SEO.
  *
  * Equivalente ao middleware.js do Vercel, mas para Cloudflare Pages.
  */
 
 const BOT_REGEX =
-    /WhatsApp|facebookexternalhit|Twitterbot|LinkedInBot|TelegramBot|Slackbot|googlebot|bingbot|Discordbot/i;
+    /WhatsApp|facebookexternalhit|Twitterbot|LinkedInBot|TelegramBot|Slackbot|Discordbot/i;
 
 export async function onRequest(context) {
     const { request, params, env } = context;

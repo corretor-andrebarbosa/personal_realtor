@@ -1,13 +1,15 @@
 /**
  * Cloudflare Pages Function — /blog/:slug
- * Detecta bots (WhatsApp, Facebook, etc.) e serve OG tags corretas.
- * Usuários normais são redirecionados para o SPA (index.html).
+ * Detecta crawlers de redes sociais (WhatsApp, Facebook, etc.) e serve OG tags
+ * pré-renderizadas para a prévia do link. Googlebot/Bingbot ficam de fora —
+ * eles devem receber o SPA completo (artigo inteiro) para indexar, não este
+ * resumo raso feito só para preview de link.
  */
 
 const SITE_URL = 'https://andrebarbosaimoveis.com';
 
 const BOT_REGEX =
-    /WhatsApp|facebookexternalhit|Twitterbot|LinkedInBot|TelegramBot|Slackbot|googlebot|bingbot|Discordbot/i;
+    /WhatsApp|facebookexternalhit|Twitterbot|LinkedInBot|TelegramBot|Slackbot|Discordbot/i;
 
 function esc(str) {
     return String(str || '')
