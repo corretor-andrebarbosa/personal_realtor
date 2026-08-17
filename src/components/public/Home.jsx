@@ -33,7 +33,7 @@ const getYoutubeThumbnail = (url) => {
     return null;
 };
 
-const PublicHome = ({ defaultSegment = '' }) => {
+const PublicHome = ({ defaultSegment = '', forcedLang = null }) => {
     const { properties, loading } = useProperties();
     const { addLead } = useLeads();
     const navigate = useNavigate();
@@ -41,11 +41,53 @@ const PublicHome = ({ defaultSegment = '' }) => {
     const [contactForm, setContactForm] = useState({ name: '', phone: '', interest: '' });
     const [contactStatus, setContactStatus] = useState(null); // null | 'sending' | 'sent' | 'error'
     const [filters, setFilters] = useState({ segment: defaultSegment });
-    const [lang, setLang] = useState('pt');
+    const [lang, setLang] = useState(forcedLang || 'pt');
     const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+
+    // Página dedicada (ex: /en) — título, <html lang>, canonical e OG próprios,
+    // restaurados ao sair para não vazar para as outras rotas da SPA
+    useEffect(() => {
+        if (forcedLang !== 'en') return;
+
+        const ENGLISH_TITLE = 'André Barbosa | Real Estate Broker in João Pessoa & Rural Paraíba, Brazil';
+        const ENGLISH_DESC = 'André Barbosa — English-speaking real estate broker in João Pessoa, Brazil. Apartments and penthouses on the coast, farms and rural land inland. Licensed (CRECI). International clients welcome.';
+        const EN_URL = 'https://andrebarbosaimoveis.com/en';
+
+        const restore = [];
+        const setContent = (selector, attr, value) => {
+            const el = document.querySelector(selector);
+            if (!el) return;
+            restore.push([el, attr, el.getAttribute(attr)]);
+            el.setAttribute(attr, value);
+        };
+
+        const prevTitle = document.title;
+        const prevHtmlLang = document.documentElement.lang;
+        document.title = ENGLISH_TITLE;
+        document.documentElement.lang = 'en';
+
+        setContent('meta[name="description"]', 'content', ENGLISH_DESC);
+        setContent('link[rel="canonical"]', 'href', EN_URL);
+        setContent('meta[property="og:url"]', 'content', EN_URL);
+        setContent('meta[property="og:title"]', 'content', ENGLISH_TITLE);
+        setContent('meta[property="og:description"]', 'content', ENGLISH_DESC);
+        setContent('meta[property="og:locale"]', 'content', 'en_US');
+        setContent('meta[name="twitter:url"]', 'content', EN_URL);
+        setContent('meta[name="twitter:title"]', 'content', ENGLISH_TITLE);
+        setContent('meta[name="twitter:description"]', 'content', ENGLISH_DESC);
+
+        return () => {
+            document.title = prevTitle;
+            document.documentElement.lang = prevHtmlLang;
+            restore.forEach(([el, attr, value]) => {
+                if (value != null) el.setAttribute(attr, value);
+            });
+        };
+    }, [forcedLang]);
 
     // Language Detection
     useEffect(() => {
+        if (forcedLang) return; // idioma fixo pela rota (ex: /en) — não sobrescrever
         const detectLanguage = async () => {
             // Priority 1: User selection in LocalStorage
             const savedLang = localStorage.getItem('ab-user-lang');
@@ -76,7 +118,7 @@ const PublicHome = ({ defaultSegment = '' }) => {
             }
         };
         detectLanguage();
-    }, []);
+    }, [forcedLang]);
 
     const t = (key) => (translations[lang] || {})[key] || translations['pt'][key] || key;
 
@@ -89,9 +131,21 @@ const PublicHome = ({ defaultSegment = '' }) => {
     };
 
     const handleLangChange = (newLang) => {
-        setLang(newLang);
         localStorage.setItem('ab-user-lang', newLang);
         setIsLangMenuOpen(false);
+
+        // Inglês tem página própria em /en — troca de rota, não só de texto
+        if (newLang === 'en' && !forcedLang) {
+            navigate('/en');
+            return;
+        }
+        // Saindo da página dedicada /en para qualquer outro idioma — volta para "/"
+        if (newLang !== 'en' && forcedLang === 'en') {
+            navigate('/');
+            return;
+        }
+
+        setLang(newLang);
     };
 
     // Idiomas que o corretor fala — destaque principal

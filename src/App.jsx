@@ -141,7 +141,7 @@ const App = () => {
         );
     }
 
-    const hideNavPaths = ['/properties/new', '/website', '/login', '/admin/blog/new', '/admin/blog/edit', '/blog', '/admin/parceiros/new', '/admin/parceiros/edit', '/parceiros', '/litoral', '/campo', '/imoveis', '/portal'];
+    const hideNavPaths = ['/properties/new', '/website', '/login', '/admin/blog/new', '/admin/blog/edit', '/blog', '/admin/parceiros/new', '/admin/parceiros/edit', '/parceiros', '/litoral', '/campo', '/imoveis', '/portal', '/en'];
     const showNav = isAuthenticated
         && location.pathname !== '/'
         && !hideNavPaths.some(p => location.pathname.includes(p))
@@ -174,6 +174,7 @@ const App = () => {
                             <Route path="/litoral" element={<PublicHome defaultSegment="litoral" />} />
                             <Route path="/campo"   element={<PublicHome defaultSegment="campo" />} />
                             <Route path="/imoveis" element={<PublicHome />} />
+                            <Route path="/en" element={<PublicHome forcedLang="en" />} />
                             <Route path="/website" element={<Navigate to="/" replace />} />
                             <Route path="/login" element={<Login />} />
 
