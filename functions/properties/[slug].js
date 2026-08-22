@@ -1,5 +1,5 @@
 /**
- * Cloudflare Pages Function — /properties/[id]
+ * Cloudflare Pages Function — /properties/[slug]
  *
  * Detecta crawlers de redes sociais (WhatsApp, Facebook, etc.) e serve OG tags
  * pré-renderizadas para a prévia do link. Usuários normais E motores de busca
@@ -8,20 +8,32 @@
  * resumo raso. Incluir googlebot/bingbot aqui seria servir conteúdo mais pobre
  * pro Google do que pro usuário — o oposto do que se quer para SEO.
  *
+ * Aceita tanto a URL amigável nova (/properties/apartamento-3-quartos-jardim-oceania-4)
+ * quanto o id numérico antigo (/properties/4) — extrai o id do fim do slug pra
+ * buscar o imóvel, e sempre monta og:url com a URL canônica (com slug).
+ *
  * Equivalente ao middleware.js do Vercel, mas para Cloudflare Pages.
  */
 
 const BOT_REGEX =
     /WhatsApp|facebookexternalhit|Twitterbot|LinkedInBot|TelegramBot|Slackbot|Discordbot/i;
 
+const SITE_URL = 'https://andrebarbosaimoveis.com';
+
+function extractIdFromSlug(value) {
+    const match = String(value || '').match(/-(\d+)$/);
+    if (match) return match[1];
+    return /^\d+$/.test(String(value || '')) ? String(value) : null;
+}
+
 export async function onRequest(context) {
     const { request, params, env } = context;
     const userAgent = request.headers.get('user-agent') || '';
     const isBot = BOT_REGEX.test(userAgent);
 
-    const id = params.id;
+    const slugParam = params.slug;
 
-    if (!isBot || !id) {
+    if (!isBot || !slugParam) {
         // Usuário normal — devolve o index.html do SPA
         return env.ASSETS.fetch(new Request(new URL('/', request.url)));
     }
@@ -35,18 +47,29 @@ export async function onRequest(context) {
             return env.ASSETS.fetch(new Request(new URL('/', request.url)));
         }
 
-        const res = await fetch(
-            `${supabaseUrl}/rest/v1/properties?id=eq.${encodeURIComponent(id)}&select=title,description,image,images`,
-            {
-                headers: {
-                    apikey: supabaseKey,
-                    Authorization: `Bearer ${supabaseKey}`,
-                },
-            }
-        );
+        const headers = { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` };
+        const select = 'id,slug,title,description,image,images';
 
-        const data = await res.json();
-        const property = Array.isArray(data) ? data[0] : null;
+        // 1) tenta casar pelo slug exato
+        let res = await fetch(
+            `${supabaseUrl}/rest/v1/properties?slug=eq.${encodeURIComponent(slugParam)}&select=${select}`,
+            { headers }
+        );
+        let data = await res.json();
+        let property = Array.isArray(data) ? data[0] : null;
+
+        // 2) fallback: extrai o id do fim do slug (ou id puro, pra links antigos)
+        if (!property) {
+            const id = extractIdFromSlug(slugParam);
+            if (id) {
+                res = await fetch(
+                    `${supabaseUrl}/rest/v1/properties?id=eq.${encodeURIComponent(id)}&select=${select}`,
+                    { headers }
+                );
+                data = await res.json();
+                property = Array.isArray(data) ? data[0] : null;
+            }
+        }
 
         if (!property) {
             return env.ASSETS.fetch(new Request(new URL('/', request.url)));
@@ -61,7 +84,8 @@ export async function onRequest(context) {
                 : null) ||
             'https://andrebarbosaimoveis.com/newlogo.png';
 
-        const pageUrl = request.url;
+        // URL canônica: sempre a versão com slug, mesmo que o crawler tenha batido no id antigo
+        const pageUrl = `${SITE_URL}/properties/${property.slug || property.id}`;
 
         const html = `<!DOCTYPE html>
 <html lang="pt-BR">

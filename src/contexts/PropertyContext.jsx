@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase, getKeys } from '../lib/supabaseClient';
+import { buildPropertySlug } from '../lib/slug';
 
 const PropertyContext = createContext();
 
@@ -315,14 +316,27 @@ export const PropertyProvider = ({ children }) => {
             const { data, error } = await insertAdaptive(payload);
 
             if (!error && data) {
+                let inserted = data[0];
+
+                // Gera a URL amigável do imóvel (estado + cidade + bairro + quartos + destaque + id)
+                // só depois do insert, pois o slug depende do id real gerado pelo banco.
+                // O "destaque" vem do que o corretor escreveu no formulário (ou da sugestão
+                // automática, se ele não mexeu no campo).
+                if (!inserted.slug && (!cols || cols.includes('slug'))) {
+                    const feature = (localProp.slugFeature || '').trim();
+                    const slug = buildPropertySlug({ ...localProp, feature }, inserted.id);
+                    const { error: slugError } = await updateAdaptive(inserted.id, { slug, slug_feature: feature || null });
+                    if (!slugError) inserted = { ...inserted, slug, slug_feature: feature || null };
+                }
+
                 const synced = {
-                    ...data[0],
-                    salePrice: data[0].sale_price ?? data[0].salePrice ?? data[0].price,
-                    price: data[0].price ?? data[0].sale_price ?? data[0].salePrice,
-                    rentalPrice: data[0].rental_price ?? data[0].rentalPrice ?? 0,
-                    videoLink: data[0].video_link ?? data[0].videoLink ?? data[0].video,
-                    image: data[0].image ?? data[0].image_url ?? data[0].main_image,
-                    images: Array.isArray(data[0].images) ? data[0].images : (Array.isArray(data[0].gallery) ? data[0].gallery : [])
+                    ...inserted,
+                    salePrice: inserted.sale_price ?? inserted.salePrice ?? inserted.price,
+                    price: inserted.price ?? inserted.sale_price ?? inserted.salePrice,
+                    rentalPrice: inserted.rental_price ?? inserted.rentalPrice ?? 0,
+                    videoLink: inserted.video_link ?? inserted.videoLink ?? inserted.video,
+                    image: inserted.image ?? inserted.image_url ?? inserted.main_image,
+                    images: Array.isArray(inserted.images) ? inserted.images : (Array.isArray(inserted.gallery) ? inserted.gallery : [])
                 };
                 setProperties(prev => prev.map(p => p.id === localProp.id ? synced : p));
                 return true;
@@ -368,6 +382,20 @@ export const PropertyProvider = ({ children }) => {
         if (supabase && !String(id).startsWith('local-')) {
             try {
                 const payload = { ...updated };
+                // "slugFeature" não é o nome real da coluna (é "slug_feature") —
+                // trata à parte, junto com o próprio slug.
+                const rawFeature = payload.slugFeature;
+                delete payload.slugFeature;
+
+                // Só recalcula a URL se: (a) o imóvel ainda não tinha slug (legado), ou
+                // (b) o corretor mudou o destaque no formulário. Assim a URL fica estável
+                // entre edições que não mexem nisso — bom pro SEO já indexado.
+                const featureChanged = rawFeature !== undefined && rawFeature !== (prevItem?.slug_feature || '');
+                if (!prevItem?.slug || featureChanged) {
+                    payload.slug = buildPropertySlug({ ...prevItem, ...updated, feature: rawFeature }, id);
+                    payload.slug_feature = (rawFeature || '').trim() || null;
+                }
+
                 const { error } = await updateAdaptive(id, payload);
                 if (error) {
                     const msg = error.message || JSON.stringify(error);

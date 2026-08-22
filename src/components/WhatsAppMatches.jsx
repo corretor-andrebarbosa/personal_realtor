@@ -65,7 +65,7 @@ function MatchCard({ match, onRead, onDelete }) {
               return (
                 <a
                   key={p.id}
-                  href={`/properties/${p.id}`}
+                  href={`/properties/${p.slug || p.id}`}
                   className="flex items-center justify-between gap-2 bg-white rounded-lg px-3 py-2 border border-slate-100 hover:border-[var(--primary-color)] transition-colors"
                 >
                   <span className="text-xs text-slate-700 truncate">{p.type || 'Imóvel'}{addr ? ` — ${addr}` : ''}</span>

@@ -4,6 +4,7 @@ import { useProperties } from '../contexts/PropertyContext';
 import { ArrowLeft, MapPin, Youtube, Upload, Save, Image, Trash2, RefreshCcw } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
+import { suggestSlugFeature, buildPropertySlugBase } from '../lib/slug';
 
 const STORAGE_BUCKET = 'property-images'; // você vai criar esse bucket no Supabase (passo a passo abaixo)
 
@@ -72,7 +73,9 @@ const normalizeExistingPropertyToForm = (existing) => {
     fiador: existing?.fiador ?? false,
     hidden: existing?.hidden ?? false,
     images: images || [],
-    image: cover
+    image: cover,
+    slugFeature: existing?.slug_feature || '',
+    slug: existing?.slug || '',
   };
 };
 
@@ -108,8 +111,14 @@ const PropertyForm = () => {
     videoLinks: [],
     contact_agent: '',
     images: [],
-    image: ''
+    image: '',
+    slugFeature: '',
+    slug: '',
   });
+
+  // Enquanto o corretor não mexer no campo "Destaque para a URL", ele
+  // acompanha uma sugestão automática gerada a partir do título.
+  const [slugFeatureManual, setSlugFeatureManual] = useState(false);
 
   const [original, setOriginal] = useState(null);
 
@@ -156,6 +165,9 @@ const PropertyForm = () => {
       const normalized = normalizeExistingPropertyToForm(existing);
       setFormData(normalized);
       setOriginal(normalized);
+      // Se já existe um destaque salvo (ou um slug publicado), respeita —
+      // não sobrescreve o que o corretor já escolheu.
+      setSlugFeatureManual(!!(normalized.slugFeature || normalized.slug));
       isInitialized.current = id; // Marca como carregado para este ID
     }
   }, [id, isEditing, properties]);
@@ -163,6 +175,14 @@ const PropertyForm = () => {
   useEffect(() => {
     if (isEditing && hasBase64) setShowBase64Warning(true);
   }, [isEditing, hasBase64]);
+
+  // Sugestão automática do destaque da URL — só roda enquanto o corretor
+  // não editou o campo manualmente.
+  useEffect(() => {
+    if (slugFeatureManual) return;
+    const suggestion = suggestSlugFeature(formData.title, formData.type, formData.rooms);
+    setFormData(prev => (prev.slugFeature === suggestion ? prev : { ...prev, slugFeature: suggestion }));
+  }, [formData.title, formData.type, formData.rooms, slugFeatureManual]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -295,6 +315,8 @@ const PropertyForm = () => {
 
       status: formData.status || 'Disponível',
       hidden: formData.hidden ?? false,
+
+      slugFeature: (formData.slugFeature || '').trim(),
     };
   };
 
@@ -673,6 +695,43 @@ const PropertyForm = () => {
               className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[var(--primary-color)] outline-none transition-colors"
               placeholder="Endereço Completo (Rua, Número, Bairro...)"
             />
+          </div>
+        </section>
+
+        <section className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+          <h2 className="font-bold text-slate-800 mb-1 text-sm uppercase tracking-wider text-[var(--primary-color)]">
+            URL do Imóvel
+          </h2>
+          <p className="text-xs text-slate-400 mb-3">
+            Estado, cidade, bairro e quartos são preenchidos sozinhos. O destaque é o diferencial do anúncio — curto e direto funciona melhor.
+          </p>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1">Destaque para a URL</label>
+            <input
+              type="text"
+              value={formData.slugFeature}
+              onChange={e => { setSlugFeatureManual(true); setFormData(prev => ({ ...prev, slugFeature: e.target.value })); }}
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[var(--primary-color)] outline-none transition-colors text-sm"
+              placeholder="Ex: vista mar definitiva e panoramica"
+            />
+            {!slugFeatureManual && (
+              <p className="text-[11px] text-slate-400 mt-1">Sugestão automática a partir do título — edite à vontade.</p>
+            )}
+          </div>
+          <div className="mt-3 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 overflow-x-auto">
+            <span className="text-[11px] font-mono text-slate-400 whitespace-nowrap">
+              andrebarbosaimoveis.com/properties/
+              <span className="text-slate-700 font-bold">
+                {buildPropertySlugBase({
+                  type: formData.type,
+                  rooms: formData.rooms,
+                  address: formData.address,
+                  title: formData.title,
+                  feature: formData.slugFeature,
+                }) || '...'}
+              </span>
+              -{isEditing ? id : '<id>'}
+            </span>
           </div>
         </section>
 

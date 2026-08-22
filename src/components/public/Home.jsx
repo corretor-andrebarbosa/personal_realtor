@@ -628,7 +628,7 @@ const PublicHome = ({ defaultSegment = '', forcedLang = null }) => {
                                     key={property.id}
                                     onClick={() => {
                                         if (property.status === 'Vendido') return;
-                                        const url = `/properties/${property.id}`;
+                                        const url = `/properties/${property.slug || property.id}`;
                                         window.open(url, '_blank', 'noopener,noreferrer');
                                     }}
                                     className={`bg-white rounded-2xl overflow-hidden shadow-sm transition-all duration-300 group ring-1 ring-slate-100 ${property.status === 'Vendido' ? 'cursor-default opacity-90' : 'hover:shadow-2xl hover:ring-2 cursor-pointer'}`}

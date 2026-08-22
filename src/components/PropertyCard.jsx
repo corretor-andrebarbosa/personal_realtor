@@ -74,7 +74,7 @@ const PropertyCard = ({ property }) => {
                         </button>
                     </div>
                 )}
-                <Link to={`/properties/${property.id}`} className="block">
+                <Link to={`/properties/${property.slug || property.id}`} className="block">
                     <div className="relative aspect-[16/9] bg-slate-200">
                         {property.image ? (
                             <img src={property.image} alt={property.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -105,7 +105,7 @@ const PropertyCard = ({ property }) => {
 
                 <div className="p-4">
                     <div className="flex justify-between items-start mb-2">
-                        <Link to={`/properties/${property.id}`} className="block flex-1">
+                        <Link to={`/properties/${property.slug || property.id}`} className="block flex-1">
                             <h3 className="font-bold text-slate-800 text-lg line-clamp-1">{property.title}</h3>
                         </Link>
                         <div className="text-right ml-2 text-sm">

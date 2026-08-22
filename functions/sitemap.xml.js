@@ -49,7 +49,7 @@ export async function onRequest(context) {
         const headers = { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` };
 
         const [propsRes, blogRes] = await Promise.all([
-            fetch(`${supabaseUrl}/rest/v1/properties?select=id,status,hidden,created_at`, { headers }),
+            fetch(`${supabaseUrl}/rest/v1/properties?select=id,slug,status,hidden,created_at`, { headers }),
             fetch(`${supabaseUrl}/rest/v1/blog_posts?select=slug,created_at,updated_at`, { headers }),
         ]);
 
@@ -60,7 +60,7 @@ export async function onRequest(context) {
             // mesmo filtro de visibilidade usado na Home pública: nada de oculto,
             // só status que realmente aparece pro visitante
             .filter((p) => !p.hidden && (p.status === 'Disponível' || p.status === 'Vendido'))
-            .map((p) => urlEntry(`/properties/${p.id}`, { lastmod: p.created_at ? p.created_at.slice(0, 10) : undefined }));
+            .map((p) => urlEntry(`/properties/${p.slug || p.id}`, { lastmod: p.created_at ? p.created_at.slice(0, 10) : undefined }));
 
         const blogEntries = (Array.isArray(posts) ? posts : [])
             .filter((p) => p.slug)

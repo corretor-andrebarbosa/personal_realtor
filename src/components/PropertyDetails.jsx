@@ -27,6 +27,7 @@ import { openTelegram } from '../telegram';
 import { translations } from '../translations';
 import TranslatedText from './common/TranslatedText';
 import PriceDisplay from './common/PriceDisplay';
+import { extractIdFromSlug } from '../lib/slug';
 
 const isValidSession = () => {
   try {
@@ -166,10 +167,49 @@ const PropertyDetails = () => {
   const backHref = authed ? '/properties' : '/#imoveis';
 
   useEffect(() => {
-    const found = properties.find(p => String(p.id) === String(id));
+    // Aceita tanto o slug novo (apartamento-3-quartos-jardim-oceania-4)
+    // quanto o id numérico antigo (4), pra não quebrar links já compartilhados/indexados.
+    let found = properties.find(p => p.slug && p.slug === id);
+    if (!found) {
+      const numericId = extractIdFromSlug(id);
+      found = properties.find(p => String(p.id) === String(numericId ?? id));
+    }
     setProperty(found || null);
     setCurrentImageIndex(0);
-  }, [id, properties]);
+
+    // Consolida o SEO na URL canônica quando alguém acessa via id antigo ou slug desatualizado
+    if (found && found.slug && found.slug !== id) {
+      navigate(`/properties/${found.slug}`, { replace: true });
+    }
+  }, [id, properties, navigate]);
+
+  // Título da aba + <link rel="canonical"> na URL amigável — evita que o Google
+  // veja a URL antiga (id) e a nova (slug) como páginas duplicadas.
+  useEffect(() => {
+    if (!property) return;
+    const prevTitle = document.title;
+    document.title = `${property.title || 'Imóvel'} | André Barbosa Imóveis`;
+
+    const canonicalHref = `${window.location.origin}/properties/${property.slug || property.id}`;
+    let link = document.querySelector('link[rel="canonical"]');
+    const hadLink = !!link;
+    if (!link) {
+      link = document.createElement('link');
+      link.setAttribute('rel', 'canonical');
+      document.head.appendChild(link);
+    }
+    const prevHref = link.getAttribute('href');
+    link.setAttribute('href', canonicalHref);
+
+    return () => {
+      document.title = prevTitle;
+      if (!hadLink) {
+        link.remove();
+      } else if (prevHref) {
+        link.setAttribute('href', prevHref);
+      }
+    };
+  }, [property]);
 
   const allImages = useMemo(() => normalizeImages(property), [property]);
 
@@ -313,7 +353,8 @@ const PropertyDetails = () => {
   };
 
   const handleDelete = async () => {
-    await deleteProperty(id);
+    if (!property) return;
+    await deleteProperty(property.id);
     navigate('/properties');
   };
 
