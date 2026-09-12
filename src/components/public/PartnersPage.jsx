@@ -227,7 +227,7 @@ const PartnersPage = () => {
 
             {/* Footer */}
             <footer className="bg-slate-800 text-slate-400 text-center py-8 text-sm">
-                <p>© {new Date().getFullYear()} {systemConfig.brokerName} · <TranslatedText lang={lang}>Todos os direitos reservados</TranslatedText></p>
+                <p>© {new Date().getFullYear()} {systemConfig.brokerName} · <TranslatedText lang={lang}>Todos os direitos reservados</TranslatedText> · <Link to="/politica-de-privacidade" className="hover:text-white transition-colors">Política de Privacidade</Link></p>
                 <Link to="/" className="mt-2 inline-block text-slate-400 hover:text-white transition-colors text-xs">
                     ← <TranslatedText lang={lang}>Voltar ao site</TranslatedText>
                 </Link>

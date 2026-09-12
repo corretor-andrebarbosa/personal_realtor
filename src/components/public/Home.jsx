@@ -941,6 +941,7 @@ const PublicHome = ({ defaultSegment = '', forcedLang = null }) => {
                                 <li><a href="#contato" className="hover:text-white transition-colors"><TT k="nav_contact" /></a></li>
                                 <li><Link to="/blog" className="hover:text-white transition-colors">Blog</Link></li>
                                 <li><Link to="/parceiros" className="hover:text-white transition-colors">Parceiros</Link></li>
+                                <li><Link to="/politica-de-privacidade" className="hover:text-white transition-colors">Política de Privacidade</Link></li>
                                 <li><Link to="/login" className="hover:text-white transition-colors"><TT k="nav_login" /></Link></li>
                             </ul>
                         </div>

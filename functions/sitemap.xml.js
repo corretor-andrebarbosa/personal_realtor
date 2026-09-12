@@ -17,6 +17,7 @@ const STATIC_URLS = [
     { loc: '/imoveis' },
     { loc: '/blog' },
     { loc: '/parceiros' },
+    { loc: '/politica-de-privacidade' },
     { loc: '/busca-inteligente' },
     { loc: '/ecovalle-sape/' },
     { loc: '/chacaras_do_brejo/' },

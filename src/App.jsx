@@ -23,6 +23,7 @@ import { PartnerProvider } from './contexts/PartnerContext';
 import PartnerList from './components/PartnerList';
 import PartnerForm from './components/PartnerForm';
 import PartnersPage from './components/public/PartnersPage';
+import PrivacyPolicyPage from './components/public/PrivacyPolicyPage';
 import BuscaInteligente from './pages/BuscaInteligente';
 import TabelasVenda from './pages/TabelasVenda';
 import PortalEntrada from './pages/PortalEntrada';
@@ -141,7 +142,7 @@ const App = () => {
         );
     }
 
-    const hideNavPaths = ['/properties/new', '/website', '/login', '/admin/blog/new', '/admin/blog/edit', '/blog', '/admin/parceiros/new', '/admin/parceiros/edit', '/parceiros', '/litoral', '/campo', '/imoveis', '/portal', '/en'];
+    const hideNavPaths = ['/properties/new', '/website', '/login', '/admin/blog/new', '/admin/blog/edit', '/blog', '/admin/parceiros/new', '/admin/parceiros/edit', '/parceiros', '/litoral', '/campo', '/imoveis', '/portal', '/en', '/politica-de-privacidade'];
     const showNav = isAuthenticated
         && location.pathname !== '/'
         && !hideNavPaths.some(p => location.pathname.includes(p))
@@ -161,6 +162,7 @@ const App = () => {
                             <Route path="/blog" element={<BlogPage />} />
                             <Route path="/blog/:id" element={<BlogPostPage />} />
                             <Route path="/parceiros" element={<PartnersPage />} />
+                            <Route path="/politica-de-privacidade" element={<PrivacyPolicyPage />} />
                             <Route path="/busca-inteligente" element={<BuscaInteligente />} />
                             <Route
                                 path="/"

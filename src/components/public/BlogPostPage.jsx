@@ -244,7 +244,7 @@ const BlogPostPage = () => {
 
             {/* Footer */}
             <footer className="bg-slate-800 text-slate-400 text-center py-8 text-sm mt-8">
-                <p>© {new Date().getFullYear()} {systemConfig.brokerName} · <TranslatedText lang={lang}>Todos os direitos reservados</TranslatedText></p>
+                <p>© {new Date().getFullYear()} {systemConfig.brokerName} · <TranslatedText lang={lang}>Todos os direitos reservados</TranslatedText> · <Link to="/politica-de-privacidade" className="hover:text-white transition-colors">Política de Privacidade</Link></p>
             </footer>
         </div>
     );
