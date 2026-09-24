@@ -1,0 +1,327 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 11px; color: #222; }
+  .page { max-width: 860px; margin: 0 auto; padding: 12px; background: #fff; }
+
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; border-bottom: 3px solid #1a4a8a; padding-bottom: 8px; }
+  .logo-area { display: flex; align-items: center; gap: 10px; }
+  .logo-box { width: 56px; height: 40px; background: #1a4a8a; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; font-weight: 900; letter-spacing: -2px; }
+  .logo-text { color: #1a4a8a; font-size: 14px; font-weight: 900; line-height: 1.2; }
+  .logo-sub { color: #555; font-size: 9px; font-weight: 400; letter-spacing: 1px; }
+  .title-area { text-align: right; }
+  .title-area h1 { color: #1a4a8a; font-size: 15px; font-weight: 700; }
+  .dp { color: #888; font-size: 10px; margin-top: 2px; }
+
+  .section { margin-bottom: 8px; border: 1px solid #bbb; border-radius: 3px; overflow: hidden; }
+  .section-title { background: #1a4a8a; color: #fff; font-size: 10px; font-weight: 700; padding: 4px 8px; letter-spacing: 0.5px; text-transform: uppercase; }
+  .section-body { padding: 6px 8px; background: #fff; }
+
+  .field-row { display: flex; gap: 6px; margin-bottom: 5px; flex-wrap: wrap; }
+  .field { display: flex; flex-direction: column; flex: 1; min-width: 80px; }
+  .field label { font-size: 9px; color: #1a4a8a; font-weight: 700; margin-bottom: 2px; }
+  .field input[type=text], .field input[type=date], .field select, .field textarea {
+    border: none; border-bottom: 1px solid #aaa; padding: 2px 3px; font-size: 11px; background: #fafafa; outline: none; width: 100%; font-family: Arial, sans-serif; color: #222;
+  }
+  .field input[type=text]:focus, .field select:focus, .field textarea:focus { border-bottom: 1.5px solid #1a4a8a; background: #eef4ff; }
+  .field.w2 { flex: 2; }
+  .field.w3 { flex: 3; }
+  .field.w4 { flex: 4; }
+
+  .checkbox-grid { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 4px 0; }
+  .cb-label { display: flex; align-items: center; gap: 4px; font-size: 10px; cursor: pointer; white-space: nowrap; }
+  .cb-label input[type=checkbox] { width: 12px; height: 12px; accent-color: #1a4a8a; cursor: pointer; }
+
+  .radio-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .radio-group label { display: flex; align-items: center; gap: 3px; font-size: 10px; cursor: pointer; }
+  .radio-group input[type=radio] { accent-color: #1a4a8a; }
+
+  .sub-label { font-size: 9px; font-weight: 700; color: #444; margin: 6px 0 3px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #eee; padding-bottom: 2px; }
+
+  .auth-box { border: 1px solid #1a4a8a; border-radius: 3px; padding: 8px; margin-bottom: 8px; font-size: 9.5px; color: #333; line-height: 1.5; }
+  .auth-sign { display: flex; gap: 20px; margin-top: 8px; }
+  .auth-sign .field { border-bottom: 1px solid #888; }
+
+  .btn-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+  .btn { padding: 6px 16px; border: none; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 700; }
+  .btn-print { background: #1a4a8a; color: #fff; }
+  .btn-clear { background: #eee; color: #555; border: 1px solid #bbb; }
+  .btn:hover { opacity: 0.85; }
+
+  @media print {
+    .btn-row { display: none !important; }
+    .page { padding: 0; max-width: 100%; }
+    .field input, .field select, .field textarea { background: transparent !important; border-bottom: 1px solid #aaa !important; }
+    body { font-size: 10px; }
+  }
+</style>
+
+<div class="page">
+  <h2 class="sr-only" style="position:absolute;left:-9999px">Ficha de Captação – Fazenda (Venda) – André Barbosa Corretor CRECI 16321-F</h2>
+
+  <div class="header">
+    <div class="logo-area">
+      <div class="logo-box">AB</div>
+      <div>
+        <div class="logo-text">ANDRÉ BARBOSA</div>
+        <div class="logo-sub">CORRETOR · CRECI 16321-F</div>
+      </div>
+    </div>
+    <div class="title-area">
+      <h1>Ficha de Captação – FAZENDA (Venda)</h1>
+      <div class="dp">D.P.: "21/02/2026"</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Dados do Proprietário / Empresa</div>
+    <div class="section-body">
+      <div class="field-row">
+        <div class="field w4"><label>Nome do Proprietário / Razão Social</label><input type="text" /></div>
+        <div class="field w2"><label>E-mail</label><input type="text" /></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>CPF / CNPJ</label><input type="text" /></div>
+        <div class="field"><label>Telefone</label><input type="text" /></div>
+        <div class="field w2"><label>WhatsApp / Contato no Local</label><input type="text" /></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Identificação da Propriedade</div>
+    <div class="section-body">
+      <div class="field-row">
+        <div class="field w3"><label>Nome da Fazenda</label><input type="text" /></div>
+        <div class="field w2"><label>Matrícula(s)</label><input type="text" /></div>
+        <div class="field w2"><label>NIRF / CAR</label><input type="text" /></div>
+      </div>
+      <div class="field-row">
+        <div class="field w2"><label>Município</label><input type="text" /></div>
+        <div class="field" style="max-width:60px"><label>UF</label><input type="text" /></div>
+        <div class="field">
+          <label>Zona</label>
+          <div class="radio-group" style="padding-top:3px">
+            <label><input type="radio" name="zona" value="rural" /> Rural</label>
+            <label><input type="radio" name="zona" value="expansao" /> Expansão Urbana</label>
+          </div>
+        </div>
+        <div class="field"><label>Bioma</label><input type="text" /></div>
+      </div>
+      <div class="field-row">
+        <div class="field w2">
+          <label>Acesso</label>
+          <div class="radio-group" style="padding-top:3px">
+            <label><input type="radio" name="acesso" value="asfalto" /> Asfalto</label>
+            <label><input type="radio" name="acesso" value="terra" /> Terra</label>
+            <label><input type="radio" name="acesso" value="vicinal" /> Vicinal</label>
+            <label><input type="radio" name="acesso" value="agua" /> Via d'água</label>
+          </div>
+        </div>
+        <div class="field"><label>Dist. Sede (km)</label><input type="text" /></div>
+        <div class="field">
+          <label>Georreferenciada?</label>
+          <div class="radio-group" style="padding-top:3px">
+            <label><input type="radio" name="geo" value="sim" /> Sim</label>
+            <label><input type="radio" name="geo" value="nao" /> Não</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Áreas (em Hectares)</div>
+    <div class="section-body">
+      <div class="field-row">
+        <div class="field"><label>Área Total (ha)</label><input type="text" /></div>
+        <div class="field"><label>Área Agricultável (ha)</label><input type="text" /></div>
+        <div class="field"><label>Área de Pastagem (ha)</label><input type="text" /></div>
+        <div class="field"><label>Reserva Legal (ha)</label><input type="text" /></div>
+        <div class="field"><label>APP (ha)</label><input type="text" /></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Reflorestamento (ha)</label><input type="text" /></div>
+        <div class="field"><label>Preservação Ambiental (ha)</label><input type="text" /></div>
+        <div class="field"><label>Área Irrigada (ha)</label><input type="text" /></div>
+        <div class="field"><label>Nº de Matrículas</label><input type="text" /></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Valores e Condições Comerciais</div>
+    <div class="section-body">
+      <div class="field-row">
+        <div class="field"><label>Valor Total (R$)</label><input type="text" /></div>
+        <div class="field"><label>Valor por Ha (R$)</label><input type="text" /></div>
+        <div class="field"><label>ITR Anual (R$)</label><input type="text" /></div>
+        <div class="field">
+          <label>Padrão</label>
+          <div class="radio-group" style="padding-top:3px">
+            <label><input type="radio" name="padrao" value="alto" /> Alto</label>
+            <label><input type="radio" name="padrao" value="medio" /> Médio</label>
+            <label><input type="radio" name="padrao" value="baixo" /> Baixo</label>
+          </div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field w2"><label>Condição Comercial</label><input type="text" /></div>
+        <div class="field">
+          <label>Financiado?</label>
+          <div class="radio-group" style="padding-top:3px">
+            <label><input type="radio" name="financiado" value="sim" /> Sim</label>
+            <label><input type="radio" name="financiado" value="nao" /> Não</label>
+          </div>
+        </div>
+        <div class="field">
+          <label>Autorizado?</label>
+          <div class="radio-group" style="padding-top:3px">
+            <label><input type="radio" name="autorizado" value="sim" /> Sim</label>
+            <label><input type="radio" name="autorizado" value="nao" /> Não</label>
+          </div>
+        </div>
+        <div class="field">
+          <label>Exclusividade?</label>
+          <div class="radio-group" style="padding-top:3px">
+            <label><input type="radio" name="exclusividade" value="sim" /> Sim</label>
+            <label><input type="radio" name="exclusividade" value="nao" /> Não</label>
+          </div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Início do Contrato</label><input type="text" placeholder="__/__/____" /></div>
+        <div class="field"><label>Validade (dias)</label><input type="text" /></div>
+        <div class="field w2">
+          <label>Situação</label>
+          <div class="radio-group" style="padding-top:3px">
+            <label><input type="radio" name="situacao" value="desocupada" /> Desocupada</label>
+            <label><input type="radio" name="situacao" value="arrendada" /> Arrendada</label>
+            <label><input type="radio" name="situacao" value="producao" /> Em produção</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Benfeitorias e Infraestrutura</div>
+    <div class="section-body">
+      <div class="sub-label">Edificações</div>
+      <div class="checkbox-grid">
+        <label class="cb-label"><input type="checkbox" /> Casa-sede</label>
+        <label class="cb-label"><input type="checkbox" /> Casa do Capataz</label>
+        <label class="cb-label"><input type="checkbox" /> Casa de Empregados</label>
+        <label class="cb-label"><input type="checkbox" /> Galpão/Armazém</label>
+        <label class="cb-label"><input type="checkbox" /> Silo</label>
+        <label class="cb-label"><input type="checkbox" /> Tulha</label>
+        <label class="cb-label"><input type="checkbox" /> Curral</label>
+        <label class="cb-label"><input type="checkbox" /> Estábulo</label>
+        <label class="cb-label"><input type="checkbox" /> Cocheira</label>
+        <label class="cb-label"><input type="checkbox" /> Barracão de Máquinas</label>
+        <label class="cb-label"><input type="checkbox" /> Escritório</label>
+        <label class="cb-label"><input type="checkbox" /> Oficina</label>
+      </div>
+
+      <div class="sub-label">Recursos Hídricos</div>
+      <div class="checkbox-grid">
+        <label class="cb-label"><input type="checkbox" /> Poço Artesiano</label>
+        <label class="cb-label"><input type="checkbox" /> Nascente</label>
+        <label class="cb-label"><input type="checkbox" /> Córrego</label>
+        <label class="cb-label"><input type="checkbox" /> Rio</label>
+        <label class="cb-label"><input type="checkbox" /> Lago/Açude</label>
+        <label class="cb-label"><input type="checkbox" /> Represa</label>
+        <label class="cb-label"><input type="checkbox" /> Canal de Irrigação</label>
+        <label class="cb-label"><input type="checkbox" /> Água Encanada</label>
+        <label class="cb-label"><input type="checkbox" /> Pivô Central</label>
+        <label class="cb-label"><input type="checkbox" /> Irrig. Gotejamento</label>
+        <label class="cb-label"><input type="checkbox" /> Irrig. Aspersão</label>
+      </div>
+
+      <div class="sub-label">Infraestrutura</div>
+      <div class="checkbox-grid">
+        <label class="cb-label"><input type="checkbox" /> Energia Elétrica</label>
+        <label class="cb-label"><input type="checkbox" /> Subestação Própria</label>
+        <label class="cb-label"><input type="checkbox" /> Gerador</label>
+        <label class="cb-label"><input type="checkbox" /> Energia Solar</label>
+        <label class="cb-label"><input type="checkbox" /> Internet/Fibra</label>
+        <label class="cb-label"><input type="checkbox" /> Portão Eletrônico</label>
+        <label class="cb-label"><input type="checkbox" /> Câmeras</label>
+        <label class="cb-label"><input type="checkbox" /> Cerca Elétrica</label>
+        <label class="cb-label"><input type="checkbox" /> Cercamento Total</label>
+        <label class="cb-label"><input type="checkbox" /> Balança</label>
+        <label class="cb-label"><input type="checkbox" /> Paiol</label>
+        <label class="cb-label"><input type="checkbox" /> Esgoto/Fossa</label>
+        <label class="cb-label"><input type="checkbox" /> Mobiliado (sede)</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Atividade Produtiva / Uso do Solo</div>
+    <div class="section-body">
+      <div class="sub-label">Atividades</div>
+      <div class="checkbox-grid">
+        <label class="cb-label"><input type="checkbox" /> Soja</label>
+        <label class="cb-label"><input type="checkbox" /> Milho</label>
+        <label class="cb-label"><input type="checkbox" /> Cana-de-açúcar</label>
+        <label class="cb-label"><input type="checkbox" /> Café</label>
+        <label class="cb-label"><input type="checkbox" /> Algodão</label>
+        <label class="cb-label"><input type="checkbox" /> Feijão</label>
+        <label class="cb-label"><input type="checkbox" /> Arroz</label>
+        <label class="cb-label"><input type="checkbox" /> Trigo</label>
+        <label class="cb-label"><input type="checkbox" /> Sorgo</label>
+        <label class="cb-label"><input type="checkbox" /> Fruticultura</label>
+        <label class="cb-label"><input type="checkbox" /> Olericultura</label>
+        <label class="cb-label"><input type="checkbox" /> Silvicultura</label>
+        <label class="cb-label"><input type="checkbox" /> Bov. de Corte</label>
+        <label class="cb-label"><input type="checkbox" /> Bov. de Leite</label>
+        <label class="cb-label"><input type="checkbox" /> Suinocultura</label>
+        <label class="cb-label"><input type="checkbox" /> Avicultura</label>
+        <label class="cb-label"><input type="checkbox" /> Piscicultura</label>
+        <label class="cb-label"><input type="checkbox" /> Apicultura</label>
+        <label class="cb-label"><input type="checkbox" /> Sem produção atual</label>
+      </div>
+      <div class="field-row" style="margin-top:6px">
+        <div class="field"><label>Armazenagem (sc/ton)</label><input type="text" /></div>
+        <div class="field"><label>Lotação (cab.)</label><input type="text" /></div>
+        <div class="field">
+          <label>Máquinas inclusos?</label>
+          <div class="radio-group" style="padding-top:3px">
+            <label><input type="radio" name="maquinas" value="sim" /> Sim</label>
+            <label><input type="radio" name="maquinas" value="nao" /> Não</label>
+          </div>
+        </div>
+        <div class="field w2"><label>Coordenadas GPS</label><input type="text" /></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Publicidade e Observações</div>
+    <div class="section-body">
+      <div class="field" style="margin-bottom:6px">
+        <label>Descrição para Anúncios (site/redes/jornal)</label>
+        <textarea rows="3" style="border:1px solid #ccc; padding:4px; font-size:11px; width:100%; resize:vertical; font-family:Arial; background:#fafafa; outline:none;"></textarea>
+      </div>
+      <div class="field">
+        <label>Comentário Interno / Pendências</label>
+        <textarea rows="3" style="border:1px solid #ccc; padding:4px; font-size:11px; width:100%; resize:vertical; font-family:Arial; background:#fafafa; outline:none;"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-box">
+    <strong>AUTORIZAÇÃO DE COMERCIALIZAÇÃO DO IMÓVEL</strong><br><br>
+    Fica André Barbosa (CRECI nº 16321-F) autorizado à colocação de placas, anunciar, física ou virtualmente (online), promover e intermediar a venda do imóvel (fazenda) acima descrito, reservando-se o direito de intermediação em caso de venda, comissão de 5% (cinco por cento) sobre o valor das transações, a qual será paga no ato da assinatura do contrato. Os proprietários reservam o direito de promover, também, a venda do imóvel sem que haja obrigação em pagar a André Barbosa comissões, desde que o cliente não tenha sido por ele apresentado.
+    <div class="auth-sign">
+      <div class="field w3"><label>Nome por extenso</label><input type="text" /></div>
+      <div class="field w2"><label>CPF ou CNPJ</label><input type="text" /></div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-clear" onclick="if(confirm('Limpar todos os campos?')){document.querySelectorAll('input[type=text],textarea').forEach(e=>e.value='');document.querySelectorAll('input[type=checkbox],input[type=radio]').forEach(e=>e.checked=false);}">Limpar campos</button>
+    <button class="btn btn-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+  </div>
+</div>

@@ -15,8 +15,10 @@ create table if not exists public.partners (
 
 alter table public.partners enable row level security;
 
+drop policy if exists "public read partners" on public.partners;
 create policy "public read partners" on public.partners
   for select to anon using (status = 'active');
 
+drop policy if exists "auth full partners" on public.partners;
 create policy "auth full partners" on public.partners
   for all to authenticated using (true) with check (true);

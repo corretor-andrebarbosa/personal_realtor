@@ -23,6 +23,30 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.intro-video-frame {
+  width: max(100vw, calc(100vh * 16 / 9));
+  height: max(100vh, calc(100vw * 9 / 16));
+  aspect-ratio: 16 / 9;
+  z-index: 1;
+}
+
+.intro-video-poster {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+@media (max-width: 768px) {
+  .intro-video-frame {
+    width: 100vw;
+    height: 100dvh;
+  }
+}
+
 /* Custom Utilities */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom);

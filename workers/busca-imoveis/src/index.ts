@@ -50,6 +50,9 @@ export default {
     let imoveis: Imovel[];
     try {
       imoveis = await callGroq(buildPrompt(params, catalogo, googleResults), env.GROQ_API_KEY);
+      if (imoveis.length === 0) {
+        imoveis = buildFallbackResults(catalogo, googleResults);
+      }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Erro desconhecido";
       return new Response(JSON.stringify({ error: msg }), {
@@ -86,6 +89,43 @@ interface GoogleResult {
   title: string;
   link: string;
   snippet: string;
+}
+
+function buildFallbackResults(catalogo: PropCatalogo[], google: GoogleResult[]): Imovel[] {
+  const catalogoResults = catalogo
+    .filter((prop) => prop.salePrice || prop.rentalPrice)
+    .slice(0, 3)
+    .map((prop) => {
+      const price = prop.salePrice ?? prop.rentalPrice ?? 0;
+      const priceLabel = prop.salePrice
+        ? `R$ ${prop.salePrice.toLocaleString("pt-BR")}`
+        : `R$ ${prop.rentalPrice?.toLocaleString("pt-BR")}/mês`;
+      return {
+        catalogoId: prop.id,
+        fonte: "André Barbosa",
+        nome: prop.title,
+        endereco: `${prop.address} — ${prop.area ?? "?"}m² · ${prop.rooms ?? "?"} quartos · ${prop.garage ?? 0} vagas`,
+        preco: priceLabel,
+        precoM2: prop.area ? `R$ ${Math.round(price / prop.area).toLocaleString("pt-BR")}/m²` : "Não informado",
+        destaques: [prop.type, prop.bathrooms ? `${prop.bathrooms} banheiros` : "Imóvel disponível"],
+        scores: { "custo-beneficio": "8.0", localizacao: "8.0", valorizacao: "8.0", infraestrutura: "8.0" },
+        analise: prop.description?.slice(0, 240) || "Imóvel disponível no catálogo André Barbosa.",
+      };
+    });
+
+  if (catalogoResults.length > 0) return catalogoResults;
+
+  return google.slice(0, 3).map((result) => ({
+    url: result.link,
+    fonte: "Anúncio online",
+    nome: result.title,
+    endereco: "Localização conforme anúncio",
+    preco: "Consultar anúncio",
+    precoM2: "Não informado",
+    destaques: ["Resultado online"],
+    scores: { "custo-beneficio": "7.0", localizacao: "7.0", valorizacao: "7.0", infraestrutura: "7.0" },
+    analise: result.snippet,
+  }));
 }
 
 interface PropCatalogo {
@@ -281,47 +321,56 @@ Formato exato:
 Ordene do melhor ao pior custo-benefício.`;
 }
 
-// ─── Groq (Llama 3.1) ────────────────────────────────────────────────────────
+// ─── Groq ────────────────────────────────────────────────────────────────────
 
 async function callGroq(prompt: string, apiKey: string): Promise<Imovel[]> {
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
-      messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" },
-      temperature: 0.7,
-      max_tokens: 2000,
-    }),
-  });
+  const models = [
+    "openai/gpt-oss-20b",
+    "llama-3.3-70b-versatile",
+    "llama-3.1-8b-instant",
+  ];
+  let lastError = "Groq não retornou um modelo disponível.";
 
-  if (!res.ok) {
+  for (const model of models) {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" },
+        temperature: 0.7,
+        max_tokens: 2000,
+      }),
+    });
+
+    if (res.ok) {
+      const data = await res.json() as {
+        choices: { message: { content: string } }[];
+      };
+      const raw = data.choices?.[0]?.message?.content ?? "";
+
+      let parsed: { imoveis: Imovel[] };
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        throw new Error("O modelo retornou formato inválido. Tente novamente.");
+      }
+
+      return Array.isArray(parsed.imoveis) ? parsed.imoveis : [];
+    }
+
     const err = await res.text();
-    throw new Error(`Groq ${res.status}: ${err}`);
+    lastError = `Groq ${res.status}: ${err}`;
+    if (res.status !== 400 && res.status !== 404) {
+      throw new Error(lastError);
+    }
   }
 
-  const data = await res.json() as {
-    choices: { message: { content: string } }[];
-  };
-
-  const raw = data.choices?.[0]?.message?.content ?? "";
-
-  let parsed: { imoveis: Imovel[] };
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    throw new Error("O modelo retornou formato inválido. Tente novamente.");
-  }
-
-  if (!Array.isArray(parsed.imoveis) || parsed.imoveis.length === 0) {
-    throw new Error("Nenhum resultado retornado pelo modelo.");
-  }
-
-  return parsed.imoveis;
+  throw new Error(lastError);
 }
 
 // ─── Histórico Supabase ───────────────────────────────────────────────────────

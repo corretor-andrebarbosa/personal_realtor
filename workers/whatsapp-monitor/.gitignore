@@ -4,3 +4,6 @@ node_modules/
 monitor.log
 .env
 qr.html
+
+.baileys_auth_grupo/
+.baileys_auth_dms/

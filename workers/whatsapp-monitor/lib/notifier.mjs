@@ -26,36 +26,22 @@ function fmtPrice(p) {
   return `R$ ${p.toLocaleString('pt-BR')}`;
 }
 
-function buildTelegramText(match) {
-  const { sender_name, sender_phone, group_name, message, matched_properties } = match;
-
-  const props = matched_properties.map((p, i) => {
-    const price = fmtPrice(p.sale_price || p.price) || fmtPrice(p.rental_price) || '–';
-    const addr  = (p.address || '').split(',')[0].trim();
-    return `${i + 1}\\. [${p.type || 'Imóvel'} ${addr ? '— ' + addr : ''} \\| ${price}](${BASE_URL}/properties/${p.id})`;
-  }).join('\n');
-
-  const phone = sender_phone?.replace(/\D/g, '') || '';
-  const waLink = phone ? `[Contatar no WhatsApp](https://wa.me/${phone})` : '';
-
-  return [
-    `🏠 *Match encontrado\\!*`,
-    ``,
-    `📍 *Grupo:* ${escMd(group_name)}`,
-    `👤 *Corretor:* ${escMd(sender_name)} \\(\`${escMd(sender_phone || '?')}\`\\)`,
-    `💬 *Mensagem:*\n_${escMd(message)}_`,
-    ``,
-    `*Imóveis compatíveis:*`,
-    props,
-    ``,
-    waLink,
-  ].filter(Boolean).join('\n');
-}
-
 function escMd(str) {
   return String(str || '').replace(/[_*[\]()~`>#+=|{}.!\\-]/g, '\\$&');
 }
 
+async function sendMsg(text) {
+  const b = bot();
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!b || !chatId) { console.log('[telegram] não configurado'); return; }
+  try {
+    await b.sendMessage(chatId, text, { parse_mode: 'MarkdownV2', disable_web_page_preview: false });
+  } catch (e) {
+    console.error('[telegram]', e.message);
+  }
+}
+
+// ── Match de grupo: property matching completo ────────────────────────────────
 export async function saveMatch(data) {
   const { error } = await supabase().from('whatsapp_matches').insert([{
     sender_name:        data.senderName,
@@ -70,22 +56,54 @@ export async function saveMatch(data) {
 }
 
 export async function sendTelegram(data) {
-  const b = bot();
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!b || !chatId) {
-    console.log('[telegram] não configurado — pulando envio');
-    return;
-  }
-  const text = buildTelegramText({
-    sender_name:        data.senderName,
-    sender_phone:       data.senderPhone,
-    group_name:         data.groupName,
-    message:            data.message,
-    matched_properties: data.properties,
-  });
-  try {
-    await b.sendMessage(chatId, text, { parse_mode: 'MarkdownV2', disable_web_page_preview: false });
-  } catch (e) {
-    console.error('[telegram]', e.message);
-  }
+  const props = data.properties.map((p, i) => {
+    const price = fmtPrice(p.sale_price || p.price) || fmtPrice(p.rental_price) || '–';
+    const addr  = (p.address || '').split(',')[0].trim();
+    return `${i + 1}\\. [${p.type || 'Imóvel'} ${addr ? '— ' + addr : ''} \\| ${price}](${BASE_URL}/properties/${p.id})`;
+  }).join('\n');
+
+  const phone = (data.senderPhone || '').replace(/\D/g, '');
+  const waLink = phone ? `[Contatar no WhatsApp](https://wa.me/${phone})` : '';
+
+  const text = [
+    `🏠 *Match encontrado\\!*`,
+    ``,
+    `📍 *Grupo:* ${escMd(data.groupName)}`,
+    `👤 *Corretor:* ${escMd(data.senderName)} \\(\`${escMd(data.senderPhone || '?')}\`\\)`,
+    `💬 *Mensagem:*\n_${escMd(data.message)}_`,
+    ``,
+    `*Imóveis compatíveis:*`,
+    props,
+    ``,
+    waLink,
+  ].filter(Boolean).join('\n');
+
+  await sendMsg(text);
+}
+
+// ── DM direto: alerta imediato sem property matching ─────────────────────────
+export async function sendDMAlert(data) {
+  const phone = (data.senderPhone || '').replace(/\D/g, '');
+  const waLink = phone ? `[Responder no WhatsApp](https://wa.me/${phone})` : '';
+
+  const propsSection = data.properties?.length
+    ? [``, `*Imóveis que podem interessar:*`,
+       ...data.properties.map((p, i) => {
+         const price = fmtPrice(p.sale_price || p.price) || fmtPrice(p.rental_price) || '–';
+         const addr  = (p.address || '').split(',')[0].trim();
+         return `${i + 1}\\. [${p.type || 'Imóvel'} ${addr ? '— ' + addr : ''} \\| ${price}](${BASE_URL}/properties/${p.id})`;
+       })]
+    : [];
+
+  const text = [
+    `📩 *Mensagem direta recebida\\!*`,
+    ``,
+    `👤 *De:* ${escMd(data.senderName)} \\(\`${escMd(data.senderPhone || '?')}\`\\)`,
+    `💬 *Mensagem:*\n_${escMd(data.message)}_`,
+    ...propsSection,
+    ``,
+    waLink,
+  ].filter(Boolean).join('\n');
+
+  await sendMsg(text);
 }

@@ -27,7 +27,6 @@ import PrivacyPolicyPage from './components/public/PrivacyPolicyPage';
 import BuscaInteligente from './pages/BuscaInteligente';
 import TabelasVenda from './pages/TabelasVenda';
 import PortalEntrada from './pages/PortalEntrada';
-import IntroVideo from './pages/IntroVideo';
 import ErrorBoundary from './components/ErrorBoundary';
 
 import { config } from './config';
@@ -52,6 +51,12 @@ const App = () => {
     const [isAuthenticated, setIsAuthenticated] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(true);
 
+    const withTimeout = (promise, fallback, timeout = 1500) =>
+        Promise.race([
+            promise,
+            new Promise((resolve) => setTimeout(() => resolve(fallback), timeout)),
+        ]);
+
     const _syncLocalSession = (session) => {
         if (session) {
             localStorage.setItem('ab-auth-session', JSON.stringify({ timestamp: Date.now() }));
@@ -63,6 +68,12 @@ const App = () => {
     };
 
     React.useEffect(() => {
+        if (location.pathname === '/') {
+            setScripturalStatus({ isRestDay: false });
+            setIsLoading(false);
+            return;
+        }
+
         // Sincroniza configurações do site do Supabase → localStorage em background
         // Garante que WhatsApp, redes sociais e APIs nunca somem mesmo após limpeza de cache
         supabase
@@ -75,8 +86,14 @@ const App = () => {
 
         // 1) Verifica sessão + calendário escritural em paralelo
         Promise.all([
-            supabase.auth.getSession().catch(() => ({ data: { session: null } })),
-            getTodayStatus().catch(() => ({ isRestDay: false })),
+            withTimeout(
+                supabase.auth.getSession().catch(() => ({ data: { session: null } })),
+                { data: { session: null } }
+            ),
+            withTimeout(
+                getTodayStatus().catch(() => ({ isRestDay: false })),
+                { isRestDay: false }
+            ),
         ]).then(([{ data: { session } }, status]) => {
             setIsAuthenticated(!!session);
             _syncLocalSession(session || null);
@@ -169,7 +186,7 @@ const App = () => {
                                 element={
                                     (config.maintenance.enabled && !isPreviewMode)
                                         ? <Maintenance expectedReturnDate={config.maintenance.returnDate} />
-                                        : <IntroVideo />
+                                        : <PortalEntrada />
                                 }
                             />
                             <Route path="/portal"  element={<PortalEntrada />} />
