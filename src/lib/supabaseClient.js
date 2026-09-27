@@ -9,14 +9,14 @@ import { createClient } from '@supabase/supabase-js';
  *   2. Fallback hardcoded (garante que o site nunca fica sem cliente)
  */
 
-const FALLBACK_URL = 'https://kavjusgxohdpvkeknyjz.supabase.co';
-const FALLBACK_KEY = 'sb_publishable_IJSaRoMEiCXgRDKIDLnvdA_E6rk5wEi';
+const FALLBACK_URL = 'https://wrvxuzlqxquwbwdgdhxp.supabase.co';
+const FALLBACK_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indydnh1emxxeHF1d2J3ZGdkaHhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzYwMzIsImV4cCI6MjA5NTgxMjAzMn0.73jl9ra1BKIbr8uRlmOcWTQAyqQwXIaVEXiP2gSSPVQ';
 
 const clean = (v) =>
   typeof v === 'string' ? v.trim().replace(/[\r\n"]/g, '') : '';
 
 const getSupabaseUrl = () => {
-  const envUrl = clean(import.meta?.env?.VITE_SUPABASE_URL ?? '');
+  const envUrl = clean(import.meta.env.VITE_SUPABASE_URL ?? '');
   if (envUrl.startsWith('https://') && envUrl.includes('.supabase.co')) return envUrl;
   if (typeof window !== 'undefined') {
     try {
@@ -30,7 +30,7 @@ const getSupabaseUrl = () => {
 };
 
 const getSupabaseKey = () => {
-  const envKey = clean(import.meta?.env?.VITE_SUPABASE_ANON_KEY ?? '');
+  const envKey = clean(import.meta.env.VITE_SUPABASE_ANON_KEY ?? '');
   if (envKey.length > 20 && !envKey.includes('COLE_AQUI')) return envKey;
   if (typeof window !== 'undefined') {
     try {

@@ -27,6 +27,7 @@ import PrivacyPolicyPage from './components/public/PrivacyPolicyPage';
 import BuscaInteligente from './pages/BuscaInteligente';
 import TabelasVenda from './pages/TabelasVenda';
 import PortalEntrada from './pages/PortalEntrada';
+import IntroVideo from './pages/IntroVideo';
 import ErrorBoundary from './components/ErrorBoundary';
 
 import { config } from './config';
@@ -186,7 +187,7 @@ const App = () => {
                                 element={
                                     (config.maintenance.enabled && !isPreviewMode)
                                         ? <Maintenance expectedReturnDate={config.maintenance.returnDate} />
-                                        : <PortalEntrada />
+                                        : <IntroVideo />
                                 }
                             />
                             <Route path="/portal"  element={<PortalEntrada />} />

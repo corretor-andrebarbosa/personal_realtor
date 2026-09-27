@@ -620,7 +620,7 @@ const PublicHome = ({ defaultSegment = '', forcedLang = null }) => {
                             const primaryImage = property.image || (property.images && property.images.length > 0 ? property.images[0] : null);
                             const firstVideoLink = (Array.isArray(property.videoLinks) && property.videoLinks[0]) || property.videoLink || '';
                             const videoThumb = getYoutubeThumbnail(firstVideoLink);
-                            const displayImage = primaryImage || videoThumb || 'https://ui-avatars.com/api/?name=IMOVEL&size=600&background=cbd5e1&color=334155&font-size=0.1';
+                            const displayImage = primaryImage || videoThumb || '/imovel-foto-indisponivel.webp';
                             const isRuralProp = RURAL_TYPES_LC.some(t => (property.type || '').toLowerCase().includes(t));
 
                             return (
@@ -640,9 +640,9 @@ const PublicHome = ({ defaultSegment = '', forcedLang = null }) => {
                                             alt={property.title}
                                             className={`w-full h-full object-cover transition-transform duration-700 ${property.status === 'Vendido' ? 'grayscale' : 'group-hover:scale-110'}`}
                                             onError={(e) => {
-                                                if (e.target.src !== "https://ui-avatars.com/api/?name=IMOVEL&size=600&background=cbd5e1&color=334155") {
-                                                    e.target.src = "https://ui-avatars.com/api/?name=IMOVEL&size=600&background=cbd5e1&color=334155";
-                                                }
+                                                // foto fora do ar (ex.: ImgBB): mostra a imagem padrão da marca
+                                                e.currentTarget.onerror = null;
+                                                e.currentTarget.src = '/imovel-foto-indisponivel.webp';
                                             }}
                                         />
                                         {/* Overlay VENDIDO */}

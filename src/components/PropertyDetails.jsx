@@ -156,6 +156,7 @@ const PropertyDetails = () => {
 
   const [property, setProperty] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [fotosFalhas, setFotosFalhas] = useState(0);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
@@ -411,11 +412,13 @@ const PropertyDetails = () => {
               className="w-full h-full object-cover cursor-pointer"
               onClick={() => setShowGallery(true)}
               onError={(e) => {
-                // se alguma URL falhar, tenta avançar
-                if (allImages.length > 1) {
+                // se alguma URL falhar, tenta a próxima; se todas falharem, mostra a imagem padrão da marca
+                if (fotosFalhas + 1 < allImages.length) {
+                  setFotosFalhas((n) => n + 1);
                   setCurrentImageIndex((i) => (i + 1) % allImages.length);
                 } else {
-                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/imovel-foto-indisponivel.webp';
                 }
               }}
             />
@@ -715,6 +718,7 @@ const PropertyDetails = () => {
               src={allImages[currentImageIndex]}
               alt=""
               className="block w-full h-full object-contain"
+              onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/imovel-foto-indisponivel.webp'; }}
             />
           </div>
           {/* Navigation arrows */}
