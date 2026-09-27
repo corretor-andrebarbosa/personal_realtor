@@ -45,7 +45,7 @@ async function gravarNoSupabase(env, lead) {
     const key = env.SUPABASE_SERVICE_ROLE_KEY || env.VITE_SUPABASE_ANON_KEY;
     if (!url || !key) throw new Error('Supabase não configurado');
 
-    // A tabela `leads` tem: name, phone, interest, budget, status.
+    // A tabela `leads` tem: name, phone, interest, status (sem coluna de orçamento).
     // Prazo, origem e gclid vão em `interest` (legível no painel e fácil de extrair
     // depois para importação de conversões offline no Google Ads).
     const interest = [
@@ -68,7 +68,6 @@ async function gravarNoSupabase(env, lead) {
             name: lead.nome,
             phone: lead.telefone,
             interest,
-            budget: 'R$ 1.200.000',
             status: lead.prazo === 'Imediatamente' || lead.prazo === 'Em até 3 meses' ? 'Quente' : 'Morno',
         }]),
     });
