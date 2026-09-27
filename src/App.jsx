@@ -37,6 +37,14 @@ import { supabase } from './lib/supabaseClient';
 import { applySettingsToLocal } from './hooks/useSiteSettings';
 import { getTodayStatus } from './lib/scripturalCalendar';
 
+// Rota antiga: leva à landing page estática nova.
+const RedirecionarLanding = () => {
+    React.useEffect(() => {
+        window.location.replace('/apto-parque-parahyba-1/index.html' + window.location.search);
+    }, []);
+    return null;
+};
+
 const App = () => {
     const location = useLocation();
     const [searchParams] = useSearchParams();
@@ -191,6 +199,8 @@ const App = () => {
                                 }
                             />
                             <Route path="/portal"  element={<PortalEntrada />} />
+                            {/* Landing page estática em public/apto-parque-parahyba-1/ (em produção o _redirects já faz o 301) */}
+                            <Route path="/parque-parahyba-1" element={<RedirecionarLanding />} />
                             <Route path="/litoral" element={<PublicHome defaultSegment="litoral" />} />
                             <Route path="/campo"   element={<PublicHome defaultSegment="campo" />} />
                             <Route path="/imoveis" element={<PublicHome />} />

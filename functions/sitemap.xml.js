@@ -21,6 +21,7 @@ const STATIC_URLS = [
     { loc: '/busca-inteligente' },
     { loc: '/ecovalle-sape/' },
     { loc: '/chacaras_do_brejo/' },
+    { loc: '/apto-parque-parahyba-1/' },
 ];
 
 function esc(str) {

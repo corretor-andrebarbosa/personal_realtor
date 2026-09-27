@@ -1,3 +1,13 @@
+# Landing page do Apto Parque Parahyba 1 (endereço oficial: /apto-parque-parahyba-1/)
+# 301 preserva a query string (gclid) dos anúncios antigos.
+/parque-parahyba-1 /apto-parque-parahyba-1/ 301
+/parque-parahyba-1/ /apto-parque-parahyba-1/ 301
+/parque-parahyba-1/* /apto-parque-parahyba-1/:splat 301
+/apto-parque-parahyba-I /apto-parque-parahyba-1/ 301
+/apto-parque-parahyba-I/ /apto-parque-parahyba-1/ 301
+/apto-parque-parahyba-i /apto-parque-parahyba-1/ 301
+/apto-parque-parahyba-i/ /apto-parque-parahyba-1/ 301
+/apto-parque-parahyba-1 /apto-parque-parahyba-1/ 301
 /ecovalle-sape/* /ecovalle-sape/:splat 200
 /chacaras_do_brejo/* /chacaras_do_brejo/:splat 200
 /* /index.html 200

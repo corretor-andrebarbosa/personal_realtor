@@ -32,3 +32,7 @@
   Cache-Control: public, max-age=604800
 /*.webp
   Cache-Control: public, max-age=604800
+
+# Landing page Apto Parque Parahyba 1 — imagens WebP com nome fixo
+/apto-parque-parahyba-1/assets/*
+  Cache-Control: public, max-age=604800
