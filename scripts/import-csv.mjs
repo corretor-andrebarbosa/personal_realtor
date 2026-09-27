@@ -8,7 +8,8 @@ import { join } from 'path';
 import { createClient } from '@supabase/supabase-js';
 
 const NEW_URL         = 'https://wrvxuzlqxquwbwdgdhxp.supabase.co';
-const NEW_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indydnh1emxxeHF1d2J3ZGdkaHhwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDIzNjAzMiwiZXhwIjoyMDk1ODEyMDMyfQ.LikTfE6_OP7tVsRizqvKW5BnMY5q5Hel6bs4AFFvvnI';
+const NEW_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY; // nunca escrever a chave aqui (repositório público)
+if (!NEW_SERVICE_KEY) throw new Error('Defina SUPABASE_SERVICE_KEY no ambiente antes de rodar.');
 const CSV_DIR         = 'C:\\Users\\yisra\\Documents\\Corretor_Andre_Barbosa\\andrebarbosaimoveis.com';
 
 const sb = createClient(NEW_URL, NEW_SERVICE_KEY);

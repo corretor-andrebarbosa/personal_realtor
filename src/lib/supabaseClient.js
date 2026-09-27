@@ -10,7 +10,7 @@ import { createClient } from '@supabase/supabase-js';
  */
 
 const FALLBACK_URL = 'https://wrvxuzlqxquwbwdgdhxp.supabase.co';
-const FALLBACK_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indydnh1emxxeHF1d2J3ZGdkaHhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzYwMzIsImV4cCI6MjA5NTgxMjAzMn0.73jl9ra1BKIbr8uRlmOcWTQAyqQwXIaVEXiP2gSSPVQ';
+const FALLBACK_KEY = 'sb_publishable_AA2BO6JhjmcgWVTARQPyDA_pMdiWiwM';
 
 const clean = (v) =>
   typeof v === 'string' ? v.trim().replace(/[\r\n"]/g, '') : '';

@@ -8,7 +8,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 const OLD_URL         = 'https://kavjusgxohdpvkeknyjz.supabase.co';
-const OLD_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imthdmp1c2d4b2hkcHZrZWtueWp6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTM4MjEzMiwiZXhwIjoyMDg2OTU4MTMyfQ.-XAYNhjs2isacKKjmW1I0_c-RIG3UdNt6eOBFkCkin4';
+const OLD_SERVICE_KEY = process.env.OLD_SUPABASE_SERVICE_KEY || ''; // nunca escrever a chave aqui (repositório público)
 const NEW_URL         = process.env.NEW_SUPABASE_URL         || '';
 const NEW_SERVICE_KEY = process.env.NEW_SUPABASE_SERVICE_KEY || '';
 
