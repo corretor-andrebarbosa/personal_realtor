@@ -52,7 +52,11 @@ export default function Login() {
         redirectTo: 'https://andrebarbosaimoveis.com/reset-senha',
       });
       if (error) {
-        setForgotErr(error.message);
+        if (error.message.includes("rate limit")) {
+          setForgotErr("Muitas tentativas. Aguarde alguns minutos e tente novamente.");
+        } else {
+          setForgotErr(error.message);
+        }
       } else {
         setForgotSent(true);
       }
