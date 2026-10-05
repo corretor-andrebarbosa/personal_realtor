@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { useNavigate } from "react-router-dom";
-import { Lock, Mail, ArrowRight, ShieldAlert, Globe, Trash2 } from "lucide-react";
+import { Lock, Mail, ArrowRight, ShieldAlert, Globe, Trash2, KeyRound, CheckCircle2 } from "lucide-react";
 import { translations } from "../translations";
 
 export default function Login() {
@@ -12,6 +12,12 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [logoError, setLogoError] = useState(false);
+
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotErr, setForgotErr] = useState("");
+  const [forgotSent, setForgotSent] = useState(false);
 
   const [lang] = useState(localStorage.getItem('ab-user-lang') || 'pt');
   const t = (key) => (translations[lang] || {})[key] || translations['pt'][key] || key;
@@ -34,6 +40,26 @@ export default function Login() {
       localStorage.clear();
       Object.entries(saved).forEach(([k, v]) => localStorage.setItem(k, v));
       window.location.reload();
+    }
+  };
+
+  const onForgot = async (e) => {
+    e.preventDefault();
+    setForgotErr("");
+    setForgotLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim().toLowerCase(), {
+        redirectTo: `${window.location.origin}/reset-senha`,
+      });
+      if (error) {
+        setForgotErr(error.message);
+      } else {
+        setForgotSent(true);
+      }
+    } catch {
+      setForgotErr(t('login_err_unexpected'));
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -81,6 +107,28 @@ export default function Login() {
     }
   };
 
+  const logoBlock = (
+    <div className="flex justify-center mb-8">
+      <div className="relative flex items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner">
+        {!logoError ? (
+          <img
+            src={localStorage.getItem('ab-logo-url') || '/newlogo2.png'}
+            alt="Logo"
+            className="h-12 object-contain"
+            onError={() => setLogoError(true)}
+          />
+        ) : (
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+              <Lock size={20} />
+            </div>
+            <span className="text-xl font-extrabold tracking-tight text-slate-800">PB</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-100 via-slate-50 to-indigo-50 font-['Manrope']">
       <div className="w-full max-w-[440px] bg-white rounded-[32px] shadow-2xl shadow-blue-500/10 border border-slate-100 p-8 md:p-10 relative overflow-hidden">
@@ -89,92 +137,142 @@ export default function Login() {
         <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-indigo-50 rounded-full blur-3xl opacity-50"></div>
 
         <div className="relative z-10">
-          <div className="flex justify-center mb-8">
-            <div className="relative flex items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner">
-              {!logoError ? (
-                <img
-                  src={localStorage.getItem('ab-logo-url') || '/newlogo2.png'}
-                  alt="Logo"
-                  className="h-12 object-contain"
-                  onError={() => setLogoError(true)}
-                />
+          {logoBlock}
+
+          {/* ── Modo: esqueci a senha ── */}
+          {forgotMode ? (
+            <>
+              <div className="text-center mb-8">
+                <h1 className="text-2xl font-extrabold text-slate-900 mb-1">{t('login_forgot')}</h1>
+                <p className="text-slate-400 text-sm font-medium">{t('login_forgot_desc')}</p>
+              </div>
+
+              {forgotSent ? (
+                <div className="p-5 bg-green-50 border border-green-100 text-green-700 rounded-2xl flex items-start gap-3">
+                  <CheckCircle2 size={20} className="shrink-0 mt-0.5" />
+                  <p className="text-sm font-bold leading-relaxed">{t('login_forgot_success')}</p>
+                </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg">
-                    <Lock size={20} />
-                  </div>
-                  <span className="text-xl font-extrabold tracking-tight text-slate-800">
-                    PB
-                  </span>
+                <>
+                  {forgotErr && (
+                    <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl flex items-start gap-3">
+                      <ShieldAlert size={18} className="shrink-0 mt-0.5" />
+                      <p className="text-xs font-bold leading-relaxed">{forgotErr}</p>
+                    </div>
+                  )}
+                  <form onSubmit={onForgot} className="space-y-5">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">{t('login_email')}</label>
+                      <div className="relative group">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={18} />
+                        <input
+                          type="email"
+                          value={forgotEmail}
+                          onChange={(e) => setForgotEmail(e.target.value)}
+                          autoComplete="email"
+                          className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-blue-500 transition-all font-semibold text-sm"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={forgotLoading}
+                      className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
+                    >
+                      {forgotLoading ? t('login_forgot_sending') : <><KeyRound size={18} /> {t('login_forgot_send')}</>}
+                    </button>
+                  </form>
+                </>
+              )}
+
+              <div className="mt-6 text-center">
+                <button
+                  onClick={() => { setForgotMode(false); setForgotSent(false); setForgotErr(""); }}
+                  className="text-xs font-bold text-slate-400 hover:text-blue-500 transition-colors"
+                >
+                  ← {t('login_forgot_back')}
+                </button>
+              </div>
+            </>
+          ) : (
+            /* ── Modo: login normal ── */
+            <>
+              <div className="text-center mb-8">
+                <h1 className="text-2xl font-extrabold text-slate-900 mb-1">{t('login_title')}</h1>
+                <p className="text-slate-400 text-sm font-medium">{t('login_subtitle')}</p>
+              </div>
+
+              {err && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                  <ShieldAlert size={18} className="shrink-0 mt-0.5" />
+                  <p className="text-xs font-bold leading-relaxed">{err}</p>
                 </div>
               )}
-            </div>
-          </div>
 
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-extrabold text-slate-900 mb-1">{t('login_title')}</h1>
-            <p className="text-slate-400 text-sm font-medium">{t('login_subtitle')}</p>
-          </div>
+              <form onSubmit={onSubmit} className="space-y-5">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">{t('login_email')}</label>
+                  <div className="relative group">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={18} />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      autoComplete="username"
+                      className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-blue-500 transition-all font-semibold text-sm"
+                      required
+                    />
+                  </div>
+                </div>
 
-          {err && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
-              <ShieldAlert size={18} className="shrink-0 mt-0.5" />
-              <p className="text-xs font-bold leading-relaxed">{err}</p>
-            </div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between ml-1 mr-1">
+                    <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">{t('login_password')}</label>
+                    <button
+                      type="button"
+                      onClick={() => { setForgotMode(true); setForgotEmail(email); }}
+                      className="text-[10px] font-bold text-blue-400 hover:text-blue-600 transition-colors"
+                    >
+                      {t('login_forgot')}
+                    </button>
+                  </div>
+                  <div className="relative group">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={18} />
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      autoComplete="current-password"
+                      className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-blue-500 transition-all font-semibold text-sm"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
+                >
+                  {loading ? t('login_loading') : <>{t('login_button')} <ArrowRight size={18} /></>}
+                </button>
+              </form>
+
+              <div className="mt-8 pt-6 border-t border-slate-50 text-center flex flex-col gap-3">
+                <button
+                  onClick={handleClearCache}
+                  className="text-[10px] font-bold text-slate-300 hover:text-red-400 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Trash2 size={10} /> {t('login_reset')}
+                </button>
+
+                <a href="/" className="text-xs font-bold text-slate-400 hover:text-blue-500 transition-colors inline-flex items-center justify-center gap-2">
+                  <Globe size={14} /> {t('login_view_site')}
+                </a>
+              </div>
+            </>
           )}
-
-          <form onSubmit={onSubmit} className="space-y-5">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">{t('login_email')}</label>
-              <div className="relative group">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={18} />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="username"
-                  className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-blue-500 transition-all font-semibold text-sm"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">{t('login_password')}</label>
-              <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={18} />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-blue-500 transition-all font-semibold text-sm"
-                  required
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
-            >
-              {loading ? t('login_loading') : <>{t('login_button')} <ArrowRight size={18} /></>}
-            </button>
-          </form>
-
-          <div className="mt-8 pt-6 border-t border-slate-50 text-center flex flex-col gap-3">
-            <button
-              onClick={handleClearCache}
-              className="text-[10px] font-bold text-slate-300 hover:text-red-400 transition-colors flex items-center justify-center gap-2"
-            >
-              <Trash2 size={10} /> {t('login_reset')}
-            </button>
-
-            <a href="/" className="text-xs font-bold text-slate-400 hover:text-blue-500 transition-colors inline-flex items-center justify-center gap-2">
-              <Globe size={14} /> {t('login_view_site')}
-            </a>
-          </div>
         </div>
       </div>
     </div>
