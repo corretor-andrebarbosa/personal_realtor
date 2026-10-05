@@ -18,6 +18,13 @@ export default function ResetSenha() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
+    // Detecta imediatamente erro no hash (ex: #error=access_denied&error_code=otp_expired)
+    const hash = window.location.hash;
+    if (hash.includes("error=") || hash.includes("otp_expired")) {
+      setExpired(true);
+      return;
+    }
+
     // supabase-js v2 processa automaticamente o hash #access_token=...&type=recovery
     // e dispara PASSWORD_RECOVERY via onAuthStateChange
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {

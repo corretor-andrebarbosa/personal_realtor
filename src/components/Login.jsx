@@ -49,7 +49,7 @@ export default function Login() {
     setForgotLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim().toLowerCase(), {
-        redirectTo: `${window.location.origin}/reset-senha`,
+        redirectTo: 'https://andrebarbosaimoveis.com/reset-senha',
       });
       if (error) {
         setForgotErr(error.message);
