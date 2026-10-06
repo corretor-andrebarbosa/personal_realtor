@@ -26,7 +26,6 @@ import PartnersPage from './components/public/PartnersPage';
 import PrivacyPolicyPage from './components/public/PrivacyPolicyPage';
 import BuscaInteligente from './pages/BuscaInteligente';
 import TabelasVenda from './pages/TabelasVenda';
-import ResetSenha from './pages/ResetSenha';
 import PortalEntrada from './pages/PortalEntrada';
 import IntroVideo from './pages/IntroVideo';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -169,7 +168,7 @@ const App = () => {
         );
     }
 
-    const hideNavPaths = ['/properties/new', '/website', '/login', '/reset-senha', '/admin/blog/new', '/admin/blog/edit', '/blog', '/admin/parceiros/new', '/admin/parceiros/edit', '/parceiros', '/litoral', '/campo', '/imoveis', '/portal', '/en', '/politica-de-privacidade'];
+    const hideNavPaths = ['/properties/new', '/website', '/login', '/admin/blog/new', '/admin/blog/edit', '/blog', '/admin/parceiros/new', '/admin/parceiros/edit', '/parceiros', '/litoral', '/campo', '/imoveis', '/portal', '/en', '/politica-de-privacidade'];
     const showNav = isAuthenticated
         && location.pathname !== '/'
         && !hideNavPaths.some(p => location.pathname.includes(p))
@@ -208,7 +207,6 @@ const App = () => {
                             <Route path="/en" element={<PublicHome forcedLang="en" />} />
                             <Route path="/website" element={<Navigate to="/" replace />} />
                             <Route path="/login" element={<Login />} />
-                            <Route path="/reset-senha" element={<ResetSenha />} />
 
                             {/* Admin routes */}
                             <Route path="/admin" element={<Dashboard />} />
