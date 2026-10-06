@@ -67,6 +67,8 @@ export default function Login() {
         localStorage.setItem('ab-auth-session', JSON.stringify({ timestamp: Date.now() }));
         localStorage.setItem('authToken', data.session.access_token);
         navigate("/admin");
+      } else {
+        setErr("Login processado mas sessão não retornada. Tente novamente ou verifique o Supabase dashboard.");
       }
     } catch (e2) {
       console.error('[Login] Erro inesperado:', e2);
