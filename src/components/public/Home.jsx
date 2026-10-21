@@ -372,7 +372,7 @@ const PublicHome = ({ defaultSegment = '', forcedLang = null }) => {
                         )}
                     </div>
 
-                    {localStorage.getItem('ab-auth-session') ? (
+                    {localStorage.getItem('ab-auth-session') && (
                         <div className="relative group ml-2">
                             <button className="flex items-center gap-2 text-slate-700 hover:text-[var(--primary-color)] font-bold transition-all py-1.5 px-3 rounded-full bg-slate-50 border border-slate-100">
                                 <User size={16} />
@@ -425,7 +425,7 @@ const PublicHome = ({ defaultSegment = '', forcedLang = null }) => {
                         <a href="#contato" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100"><TT k="nav_contact" /></a>
                         <Link to="/blog" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">Blog</Link>
                         <Link to="/parceiros" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100">Parceiros</Link>
-                        {localStorage.getItem('ab-auth-session') ? (
+                        {localStorage.getItem('ab-auth-session') && (
                             <>
                                 <Link to="/admin" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100 flex items-center gap-2">
                                     <LayoutDashboard size={20} /> <TT k="nav_admin" />
