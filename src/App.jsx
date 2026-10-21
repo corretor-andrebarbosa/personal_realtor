@@ -26,7 +26,9 @@ import PartnersPage from './components/public/PartnersPage';
 import PrivacyPolicyPage from './components/public/PrivacyPolicyPage';
 import BuscaInteligente from './pages/BuscaInteligente';
 import TabelasVenda from './pages/TabelasVenda';
+import AdminAnalytics from './pages/AdminAnalytics';
 import PortalEntrada from './pages/PortalEntrada';
+import { trackVisit } from './lib/analytics';
 import IntroVideo from './pages/IntroVideo';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -128,7 +130,6 @@ const App = () => {
         return () => subscription.unsubscribe();
     }, []); // ← sem dependência de pathname: subscription vive durante toda a sessão
 
-
     const adminPrefixes = ['/admin', '/kaleb', '/leads', '/people', '/settings', '/busca-inteligente'];
 
     const isAdminPropertyRoute =
@@ -139,6 +140,13 @@ const App = () => {
     const isAdminPath =
         adminPrefixes.some((p) => location.pathname.startsWith(p)) ||
         isAdminPropertyRoute;
+
+    // Rastreia visitas às páginas públicas a cada mudança de rota
+    React.useEffect(() => {
+        if (!isAdminPath && location.pathname !== '/login') {
+            trackVisit(location.pathname);
+        }
+    }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Enquanto aguarda verificação de sessão, não redireciona (evita race condition)
     if (isLoading) {
@@ -223,6 +231,7 @@ const App = () => {
                             <Route path="/admin/blog/new" element={isAuthenticated ? <BlogForm /> : <Navigate to="/login" replace />} />
                             <Route path="/admin/blog/edit/:id" element={isAuthenticated ? <BlogForm /> : <Navigate to="/login" replace />} />
                             <Route path="/admin/tabelas" element={isAuthenticated ? <TabelasVenda /> : <Navigate to="/login" replace />} />
+                            <Route path="/admin/analytics" element={isAuthenticated ? <AdminAnalytics /> : <Navigate to="/login" replace />} />
                             {/* Admin partners routes */}
                             <Route path="/admin/parceiros" element={isAuthenticated ? <PartnerList /> : <Navigate to="/login" replace />} />
                             <Route path="/admin/parceiros/new" element={isAuthenticated ? <PartnerForm /> : <Navigate to="/login" replace />} />

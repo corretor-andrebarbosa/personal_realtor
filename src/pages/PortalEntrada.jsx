@@ -74,13 +74,7 @@ export default function PortalEntrada() {
             {/* Divisor vertical sutil (desktop) */}
             <div className="hidden md:block absolute inset-y-0 left-1/2 w-px bg-white/20 z-10 pointer-events-none" />
 
-            {/* Link discreto — área do corretor */}
-            <Link
-                to="/login"
-                className="absolute bottom-5 left-1/2 -translate-x-1/2 z-30 text-white/30 text-xs hover:text-white/60 transition-colors whitespace-nowrap"
-            >
-                Área do corretor
-            </Link>
+
         </div>
     );
 }

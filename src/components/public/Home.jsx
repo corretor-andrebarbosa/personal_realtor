@@ -400,10 +400,6 @@ const PublicHome = ({ defaultSegment = '', forcedLang = null }) => {
                                 </button>
                             </div>
                         </div>
-                    ) : (
-                        <Link to="/login" className="text-slate-500 hover:text-[#166b9c] font-bold transition-colors">
-                            <TT k="nav_login" />
-                        </Link>
                     )}
 
 
@@ -445,8 +441,6 @@ const PublicHome = ({ defaultSegment = '', forcedLang = null }) => {
                                     <LogOut size={20} /> <TT k="nav_logout" />
                                 </button>
                             </>
-                        ) : (
-                            <Link to="/login" onClick={() => setMobileMenu(false)} className="text-lg font-bold text-slate-700 py-2 border-b border-slate-100"><TT k="nav_login" /></Link>
                         )}
 
                         {/* Mobile Language Selector */}
@@ -942,7 +936,6 @@ const PublicHome = ({ defaultSegment = '', forcedLang = null }) => {
                                 <li><Link to="/blog" className="hover:text-white transition-colors">Blog</Link></li>
                                 <li><Link to="/parceiros" className="hover:text-white transition-colors">Parceiros</Link></li>
                                 <li><Link to="/politica-de-privacidade" className="hover:text-white transition-colors">Política de Privacidade</Link></li>
-                                <li><Link to="/login" className="hover:text-white transition-colors"><TT k="nav_login" /></Link></li>
                             </ul>
                         </div>
 
