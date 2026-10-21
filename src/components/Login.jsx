@@ -58,7 +58,7 @@ export default function Login() {
         } else if (error.message.includes("Invalid login credentials")) {
           setErr("E-mail ou senha incorretos.");
         } else {
-          setErr(error.message);
+          setErr(error.message || `Erro: ${JSON.stringify(error)}`);
         }
         return;
       }
@@ -66,9 +66,9 @@ export default function Login() {
       if (data?.session) {
         localStorage.setItem('ab-auth-session', JSON.stringify({ timestamp: Date.now() }));
         localStorage.setItem('authToken', data.session.access_token);
-        // window.location garante que App.jsx relê a sessão do zero,
-        // evitando race condition entre onAuthStateChange e navigate()
         window.location.replace('/admin');
+      } else {
+        setErr(`Sem sessão. data=${JSON.stringify(data)}`);
       }
     } catch (e2) {
       console.error('[Login] Erro inesperado:', e2);
