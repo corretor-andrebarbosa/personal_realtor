@@ -157,6 +157,11 @@ const App = () => {
         );
     }
 
+    // Usuário autenticado acessando /login → vai direto para o admin
+    if (location.pathname === '/login' && isAuthenticated) {
+        return <Navigate to="/admin" replace />;
+    }
+
     if (isAdminPath && !isAuthenticated) {
         return <Navigate to="/login" replace />;
     }

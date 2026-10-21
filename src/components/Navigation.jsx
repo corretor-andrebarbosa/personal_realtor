@@ -19,13 +19,13 @@ const Navigation = () => {
 
     return (
         <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-lg pb-safe z-30">
-            <div className="flex justify-around items-center h-16 max-w-2xl mx-auto">
+            <div className="flex overflow-x-auto scrollbar-none items-center h-16 px-1">
                 {navItems.map((item) => (
                     <NavLink
                         key={item.label}
                         to={item.path}
                         className={({ isActive }) =>
-                            `flex flex-col items-center justify-center w-full h-full space-y-1 text-xs font-medium transition-colors ${isActive ? 'text-[var(--primary-color)]' : 'text-gray-400 hover:text-gray-600'
+                            `flex flex-col items-center justify-center shrink-0 min-w-[64px] h-full space-y-1 text-xs font-medium transition-colors px-1 ${isActive ? 'text-[var(--primary-color)]' : 'text-gray-400 hover:text-gray-600'
                             }`
                         }
                     >
