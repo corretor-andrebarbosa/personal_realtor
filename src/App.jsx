@@ -79,12 +79,6 @@ const App = () => {
     };
 
     React.useEffect(() => {
-        if (location.pathname === '/') {
-            setScripturalStatus({ isRestDay: false });
-            setIsLoading(false);
-            return;
-        }
-
         // Sincroniza configurações do site do Supabase → localStorage em background
         // Garante que WhatsApp, redes sociais e APIs nunca somem mesmo após limpeza de cache
         supabase
