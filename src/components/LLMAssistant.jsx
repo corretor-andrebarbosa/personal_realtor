@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Upload, Sparkles, Loader2, AlertCircle } from 'lucide-react';
+import { Send, Sparkles, Loader2, AlertCircle } from 'lucide-react';
 import { useProperties } from '../contexts/PropertyContext';
 import { systemConfig } from '../system-config';
 import { useSiteSettings } from '../hooks/useSiteSettings';
@@ -28,36 +28,6 @@ const LLMAssistant = () => {
         scrollToBottom();
     }, [messages, isTyping]);
 
-    const callGemini = async (prompt, apiKey) => {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-            })
-        });
-        const data = await response.json();
-        if (data.error) throw new Error(`Gemini: ${data.error.message}`);
-        return data.candidates[0].content.parts[0].text;
-    };
-
-    const callGroq = async (prompt, apiKey) => {
-        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                model: 'llama-3.1-8b-instant',
-                messages: [{ role: 'user', content: prompt }]
-            })
-        });
-        const data = await response.json();
-        if (data.error) throw new Error(`Groq: ${data.error.message}`);
-        return data.choices[0].message.content;
-    };
-
     const handleSend = async () => {
         if (!input.trim() || isTyping) return;
 
@@ -73,15 +43,10 @@ const LLMAssistant = () => {
         setInput('');
         setIsTyping(true);
 
-        // Lê as chaves do hook (Supabase) com fallback para localStorage
         const systemPrompt = siteSettings?.system_prompt
             || localStorage.getItem('ab-system-prompt')
             || `Você é Kaleb, assistente do corretor ${systemConfig.brokerName}.`;
-        const geminiKey = siteSettings?.gemini_key || localStorage.getItem('ab-gemini-key') || '';
-        const groqKey = siteSettings?.groq_key || localStorage.getItem('ab-groq-key') || '';
-        const lastProvider = localStorage.getItem('ab-last-llm-provider') || 'gemini';
 
-        // Summary of properties for context
         const propertySummary = properties.map(p =>
             `- ${p.title}: ${p.type} em ${p.address}. Preço: R$ ${p.price || p.salePrice || 0}. Aluguel: R$ ${p.rentalPrice || 0}. ${p.rooms} quartos.`
         ).join('\n');
@@ -89,38 +54,20 @@ const LLMAssistant = () => {
         const fullPrompt = `${systemPrompt}\n\nCONTEXTO DOS IMÓVEIS ATUAIS:\n${propertySummary}\n\nPERGUNTA DO USUÁRIO: ${userInput}\n\nResponda de forma curta e objetiva.`;
 
         let responseText = '';
-        let success = false;
-        const errors = [];
 
-        // Round-robin & Fallback Logic
-        const providers = lastProvider === 'gemini' ? ['groq', 'gemini'] : ['gemini', 'groq'];
-
-        for (const provider of providers) {
-            try {
-                if (provider === 'gemini' && geminiKey) {
-                    responseText = await callGemini(fullPrompt, geminiKey);
-                    localStorage.setItem('ab-last-llm-provider', 'gemini');
-                    success = true;
-                    break;
-                } else if (provider === 'groq' && groqKey) {
-                    responseText = await callGroq(fullPrompt, groqKey);
-                    localStorage.setItem('ab-last-llm-provider', 'groq');
-                    success = true;
-                    break;
-                }
-            } catch (error) {
-                errors.push(`${provider}: ${error.message}`);
-                continue;
-            }
-        }
-
-        if (!success) {
-            const noKeys = !geminiKey && !groqKey;
-            if (noKeys) {
-                responseText = "Chaves de API não encontradas. Vá em Configurações → Treinar Kaleb e salve suas chaves do Gemini e/ou Groq.";
-            } else {
-                responseText = `Não consegui responder agora. Erros:\n${errors.join('\n')}\n\nVerifique se o Brave Shield está bloqueando (ícone 🦁 na barra de endereço) ou tente novamente.`;
-            }
+        try {
+            const res = await fetch('/api/kaleb', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: fullPrompt }),
+            });
+            const data = await res.json();
+            if (!res.ok || data.error) throw new Error(data.error || `Erro ${res.status}`);
+            responseText = data.text;
+        } catch (e) {
+            responseText = e.message?.includes('configurada')
+                ? e.message
+                : `Não consegui responder agora: ${e.message}. Tente novamente.`;
         }
 
         setMessages(prev => [...prev, {
