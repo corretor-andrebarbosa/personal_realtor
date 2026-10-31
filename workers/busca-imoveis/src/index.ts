@@ -325,9 +325,9 @@ Ordene do melhor ao pior custo-benefício.`;
 
 async function callGroq(prompt: string, apiKey: string): Promise<Imovel[]> {
   const models = [
-    "openai/gpt-oss-20b",
     "llama-3.3-70b-versatile",
-    "llama-3.1-8b-instant",
+    "llama-3.1-70b-versatile",
+    "gemma2-9b-it",
   ];
   let lastError = "Groq não retornou um modelo disponível.";
 
