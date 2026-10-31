@@ -613,6 +613,35 @@ const PropertyDetails = () => {
           </div>
         )}
 
+        {/* PDF / Book Embed */}
+        {(property.pdfUrl || property.pdf_url) && (
+          <div className="mb-8">
+            <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
+              <FileText size={18} className="text-rose-500" />
+              Book do Imóvel
+            </h3>
+            <div className="relative w-full rounded-xl overflow-hidden shadow-md border border-slate-200" style={{ height: '480px' }}>
+              <iframe
+                src={property.pdfUrl || property.pdf_url}
+                title="Book do Imóvel"
+                className="w-full h-full"
+                allow="autoplay"
+              />
+            </div>
+            <p className="text-[10px] text-slate-400 mt-2 text-center">
+              Não consegue visualizar?{' '}
+              <a
+                href={property.pdfUrl || property.pdf_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-rose-500 underline"
+              >
+                Abrir em nova aba
+              </a>
+            </p>
+          </div>
+        )}
+
         <div className="mb-24">
 
           <h3 className="font-bold text-slate-800 mb-2">{t('details_location')}</h3>

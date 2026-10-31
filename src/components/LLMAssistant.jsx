@@ -137,9 +137,6 @@ const LLMAssistant = () => {
 
             <div className="p-4 bg-white border-t border-slate-100 mb-16">
                 <div className="flex gap-2 items-center bg-slate-50 p-2 rounded-full border border-slate-200 focus-within:border-blue-300 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
-                    <button className="p-2 text-slate-400 hover:text-blue-600 transition-colors">
-                        <Upload size={20} />
-                    </button>
                     <input
                         type="text"
                         value={input}

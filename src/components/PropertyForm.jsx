@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useProperties } from '../contexts/PropertyContext';
-import { ArrowLeft, MapPin, Youtube, Upload, Save, Image, Trash2, RefreshCcw } from 'lucide-react';
+import { ArrowLeft, MapPin, Youtube, Upload, Save, Image, Trash2, RefreshCcw, FileText } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { suggestSlugFeature, buildPropertySlugBase } from '../lib/slug';
@@ -76,6 +76,7 @@ const normalizeExistingPropertyToForm = (existing) => {
     image: cover,
     slugFeature: existing?.slug_feature || '',
     slug: existing?.slug || '',
+    pdfUrl: existing?.pdfUrl || existing?.pdf_url || '',
   };
 };
 
@@ -322,6 +323,8 @@ const PropertyForm = () => {
       hidden: formData.hidden ?? false,
 
       slugFeature: (formData.slugFeature || '').trim(),
+      pdfUrl: (formData.pdfUrl || '').trim(),
+      pdf_url: (formData.pdfUrl || '').trim(),
     };
   };
 
@@ -891,6 +894,24 @@ const PropertyForm = () => {
             </div>
             <p className="text-[10px] text-slate-400 mt-2">
               Todos os vídeos serão exibidos na página de detalhes do imóvel.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-2">Book / PDF do Imóvel</label>
+            <div className="relative flex items-center">
+              <FileText className="absolute left-3 text-rose-500 shrink-0" size={16} />
+              <input
+                type="url"
+                name="pdfUrl"
+                value={formData.pdfUrl}
+                onChange={handleChange}
+                className="w-full pl-9 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[var(--primary-color)] outline-none transition-colors text-sm"
+                placeholder="https://drive.google.com/file/d/.../preview"
+              />
+            </div>
+            <p className="text-[10px] text-slate-400 mt-2">
+              Cole o link do PDF (Google Drive, Dropbox, etc.). Será exibido como book incorporado na página do imóvel.
             </p>
           </div>
         </section>
