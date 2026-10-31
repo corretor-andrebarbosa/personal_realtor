@@ -616,65 +616,69 @@ const PropertyDetails = () => {
         {/* PDF / Book */}
         {(property.pdfUrl || property.pdf_url) && (() => {
           const rawUrl = (property.pdfUrl || property.pdf_url || '').trim();
-          // Converte links do Google Drive para o formato /preview que permite embed
-          const toEmbedUrl = (url) => {
-            const m = url.match(/\/file\/d\/([^/?#]+)/);
-            if (m) return `https://drive.google.com/file/d/${m[1]}/preview`;
-            const m2 = url.match(/[?&]id=([^&]+)/);
-            if (m2) return `https://drive.google.com/file/d/${m2[1]}/preview`;
-            return url;
-          };
-          const embedUrl = toEmbedUrl(rawUrl);
-          const isGoogleDrive = rawUrl.includes('drive.google.com') || rawUrl.includes('docs.google.com');
+          const fileId = rawUrl.match(/\/file\/d\/([^/?#]+)/)?.[1]
+            || rawUrl.match(/[?&]id=([^&]+)/)?.[1];
+          const openUrl = fileId
+            ? `https://drive.google.com/file/d/${fileId}/view`
+            : rawUrl;
           return (
             <div className="mb-8">
               <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
                 <FileText size={18} className="text-rose-500" />
                 Book do Imóvel
               </h3>
-              {/* Botão principal — sempre funciona */}
               <a
-                href={rawUrl}
+                href={openUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 mb-4 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl transition-colors shadow-sm text-sm"
+                className="flex items-center gap-4 w-full p-5 rounded-2xl border-2 border-rose-100 bg-gradient-to-r from-rose-50 to-white hover:border-rose-300 hover:from-rose-100 transition-all group shadow-sm"
               >
-                <FileText size={16} />
-                Abrir Book do Imóvel
+                <div className="w-14 h-14 rounded-xl bg-rose-500 flex items-center justify-center shadow-md shrink-0 group-hover:scale-105 transition-transform">
+                  <FileText size={28} className="text-white" />
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-slate-800 text-base leading-tight">Book do Imóvel</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Toque para abrir o PDF em nova aba</p>
+                  <p className="text-xs text-rose-500 font-semibold mt-1">Ver book →</p>
+                </div>
               </a>
-              {/* Iframe de preview — pode ser bloqueado pelo Google Drive dependendo das permissões */}
-              {!isGoogleDrive && (
-                <div className="relative w-full rounded-xl overflow-hidden shadow-md border border-slate-200" style={{ height: '480px' }}>
-                  <iframe
-                    src={embedUrl}
-                    title="Book do Imóvel"
-                    className="w-full h-full"
-                  />
-                </div>
-              )}
-              {isGoogleDrive && (
-                <div className="relative w-full rounded-xl overflow-hidden shadow-md border border-slate-200" style={{ height: '480px' }}>
-                  <iframe
-                    src={embedUrl}
-                    title="Book do Imóvel"
-                    className="w-full h-full"
-                    sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-                  />
-                  <p className="text-[10px] text-slate-400 mt-2 text-center absolute bottom-1 w-full">
-                    Se aparecer erro 403, o arquivo do Google Drive precisa estar com compartilhamento "Qualquer pessoa com o link".
-                  </p>
-                </div>
-              )}
             </div>
           );
         })()}
 
         <div className="mb-24">
-
           <h3 className="font-bold text-slate-800 mb-2">{t('details_location')}</h3>
-          <div className="h-40 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 font-bold border-2 border-dashed border-slate-200">
-            📍 {property.address}
-          </div>
+          {(() => {
+            const addr = property.address || '';
+            const urlMatch = addr.match(/(https?:\/\/\S+)/);
+            const mapsUrl = urlMatch ? urlMatch[1] : null;
+            const locationText = addr.replace(/(https?:\/\/\S+)/g, '').trim();
+            const display = locationText || addr;
+            if (mapsUrl) {
+              return (
+                <a
+                  href={mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-rose-300 hover:bg-rose-50 transition-colors group"
+                >
+                  <div className="w-10 h-10 rounded-full bg-rose-500 flex items-center justify-center shrink-0">
+                    <MapPin size={18} className="text-white" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-800">{display}</p>
+                    <p className="text-xs text-rose-500 group-hover:underline mt-0.5">Ver no Google Maps →</p>
+                  </div>
+                </a>
+              );
+            }
+            return (
+              <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                <MapPin size={18} className="text-rose-500 shrink-0" />
+                <p className="font-medium text-slate-700">{display}</p>
+              </div>
+            );
+          })()}
         </div>
       </div>
 
