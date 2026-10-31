@@ -512,9 +512,20 @@ const PropertyDetails = () => {
         </div>
 
         <p className="text-slate-500 text-sm mb-6 flex items-center gap-1">
-
-          <MapPin size={16} className="text-[var(--primary-color)]" />
-          <TranslatedText lang={lang}>{property.address}</TranslatedText>
+          <MapPin size={16} className="text-[var(--primary-color)] shrink-0" />
+          {(() => {
+            const addr = property.address || '';
+            const urlMatch = addr.match(/(https?:\/\/\S+)/);
+            const mapsUrl = urlMatch ? urlMatch[1] : null;
+            const locationText = addr.replace(/(https?:\/\/\S+)/g, '').trim() || addr;
+            return mapsUrl ? (
+              <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="hover:text-[var(--primary-color)] hover:underline transition-colors">
+                <TranslatedText lang={lang}>{locationText}</TranslatedText>
+              </a>
+            ) : (
+              <TranslatedText lang={lang}>{locationText}</TranslatedText>
+            );
+          })()}
         </p>
 
         {/* Badges */}
