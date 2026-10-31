@@ -186,7 +186,12 @@ const PropertyForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    // Remove separadores de milhar (ponto) para campos de preço antes de guardar
+    const priceFields = ['salePrice', 'rentalPrice'];
+    const sanitized = priceFields.includes(name)
+      ? value.replace(/\./g, '').replace(/,/g, '')
+      : value;
+    setFormData(prev => ({ ...prev, [name]: sanitized }));
   };
 
   const handleContractChange = (type) => {
@@ -562,12 +567,13 @@ const PropertyForm = () => {
               <div>
                 <label className="block text-xs font-bold text-slate-500 mb-1">Preço de Venda (R$)</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   name="salePrice"
                   value={formData.salePrice}
                   onChange={handleChange}
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[var(--primary-color)] outline-none transition-colors font-mono"
-                  placeholder="0"
+                  placeholder="Ex: 239900"
                 />
               </div>
             )}
@@ -601,12 +607,13 @@ const PropertyForm = () => {
               <div>
                 <label className="block text-xs font-bold text-slate-500 mb-1">Valor do Aluguel (R$)</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   name="rentalPrice"
                   value={formData.rentalPrice}
                   onChange={handleChange}
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[var(--primary-color)] outline-none transition-colors font-mono"
-                  placeholder="0"
+                  placeholder="Ex: 2500"
                 />
               </div>
             )}
