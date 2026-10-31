@@ -458,6 +458,11 @@ const PropertyForm = () => {
                   <option value="Cobertura">Cobertura</option>
                   <option value="Flat">Flat</option>
                   <option value="Kitnet">Kitnet</option>
+                  <option value="Chácara">Chácara</option>
+                  <option value="Sítio">Sítio</option>
+                  <option value="Fazenda">Fazenda</option>
+                  <option value="Terreno">Terreno</option>
+                  <option value="Lote">Lote</option>
                 </optgroup>
                 <optgroup label="🏢 Comercial">
                   <option value="Sala Comercial">Sala Comercial</option>
