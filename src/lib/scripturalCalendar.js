@@ -145,7 +145,8 @@ export function checkDay(iso) {
     // Festas do Mês 7
     if (m.month === 7) {
         if (dayInMonth === 1)  return { isRestDay: true, name: 'Yom Teruah' };
-        if (dayInMonth === 10) return { isRestDay: true, name: 'Yom Kippur' };
+        // Yom Kippur: começa no pôr do sol do Dia 9 e termina no pôr do sol do Dia 10
+        if (dayInMonth === 10) return { isRestDay: true, name: 'Yom Kippur', startsAtPrevDaySunset: true, endsAtSunset: true };
         if (dayInMonth >= 15 && dayInMonth <= 21) return { isRestDay: true, name: 'Sukkot' };
     }
 
@@ -153,10 +154,13 @@ export function checkDay(iso) {
 }
 
 /**
- * Retorna a data/hora em que o período de descanso termina
- * (alvorada do primeiro dia útil após a sequência de descanso).
+ * Retorna a data/hora em que o período de descanso termina.
+ * - endsAtSunset (ex.: Yom Kippur Dia 10): termina no PÔR DO SOL do próprio dia.
+ * - startsAtSunset (ex.: Pesach Dia 14): termina na ALVORADA do dia seguinte.
+ * - Demais dias: termina na ALVORADA do dia seguinte ao último dia de descanso.
  */
 export function getRestPeriodEnd(iso, lat = LAT, lon = LON) {
+    const startDay = checkDay(iso);
     let dayNum = isoToDayNum(iso);
 
     // Avança enquanto o próximo dia também for de descanso
@@ -164,6 +168,12 @@ export function getRestPeriodEnd(iso, lat = LAT, lon = LON) {
         const nextISO = dayNumToISO(dayNum + 1);
         if (!checkDay(nextISO).isRestDay) break;
         dayNum++;
+    }
+
+    // Dias que terminam no pôr do sol do próprio dia (ex.: Yom Kippur Dia 10)
+    if (startDay.endsAtSunset) {
+        const lastDayNoon = new Date(dayNum * MS_PER_DAY + 12 * 3600 * 1000);
+        return SunCalc.getTimes(lastDayNoon, lat, lon).sunset;
     }
 
     // Alvorada do dia seguinte ao último dia de descanso
@@ -209,17 +219,42 @@ export async function getTodayStatus() {
         String(scriptDay.getUTCDate()).padStart(2, '0'),
     ].join('-');
 
-    const { isRestDay, name, startsAtSunset } = checkDay(iso);
-    if (!isRestDay) return { isRestDay: false };
+    const { isRestDay, name, startsAtSunset, endsAtSunset } = checkDay(iso);
 
-    // Dias que só entram em descanso a partir do pôr do sol (ex.: Pesach dia 14)
+    const scriptDayNoon = new Date(Date.UTC(
+        scriptDay.getUTCFullYear(),
+        scriptDay.getUTCMonth(),
+        scriptDay.getUTCDate(),
+        12, 0, 0
+    ));
+
+    if (!isRestDay) {
+        // Noite anterior a dias que começam no pôr do sol do dia anterior (ex.: Yom Kippur)
+        // Estamos ainda no Dia 9 escritural mas após o pôr do sol → já é Kippur
+        const nextISO = dayNumToISO(isoToDayNum(iso) + 1);
+        const next = checkDay(nextISO);
+        if (next.isRestDay && next.startsAtPrevDaySunset) {
+            const todaySunset = SunCalc.getTimes(scriptDayNoon, lat, lon).sunset;
+            if (now >= todaySunset) {
+                // endsAt = pôr do sol do Dia 10 (próximo dia de descanso)
+                const nextDayNum = isoToDayNum(nextISO);
+                const nextNoon = new Date(nextDayNum * MS_PER_DAY + 12 * 3600 * 1000);
+                return { isRestDay: true, name: next.name, endsAt: SunCalc.getTimes(nextNoon, lat, lon).sunset };
+            }
+        }
+        return { isRestDay: false };
+    }
+
+    // Dias que terminam no pôr do sol do próprio dia (ex.: Yom Kippur Dia 10)
+    // Após o pôr do sol do Dia 10 → plataforma volta
+    if (endsAtSunset) {
+        const todaySunset = SunCalc.getTimes(scriptDayNoon, lat, lon).sunset;
+        if (now >= todaySunset) return { isRestDay: false };
+    }
+
+    // Dias que só entram em descanso a partir do pôr do sol do próprio dia (ex.: Pesach Dia 14)
+    // Antes do pôr do sol do Dia 14 → plataforma disponível
     if (startsAtSunset) {
-        const scriptDayNoon = new Date(Date.UTC(
-            scriptDay.getUTCFullYear(),
-            scriptDay.getUTCMonth(),
-            scriptDay.getUTCDate(),
-            12, 0, 0
-        ));
         const todaySunset = SunCalc.getTimes(scriptDayNoon, lat, lon).sunset;
         if (now < todaySunset) return { isRestDay: false };
     }
