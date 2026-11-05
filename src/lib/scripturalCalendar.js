@@ -145,7 +145,7 @@ export function checkDay(iso) {
     // Festas do Mês 7
     if (m.month === 7) {
         if (dayInMonth === 1)  return { isRestDay: true, name: 'Yom Teruah' };
-        if (dayInMonth === 10) return { isRestDay: true, name: 'Yom Kippur', startsAtSunset: true };
+        if (dayInMonth === 10) return { isRestDay: true, name: 'Yom Kippur' };
         if (dayInMonth >= 15 && dayInMonth <= 21) return { isRestDay: true, name: 'Sukkot' };
     }
 
@@ -153,13 +153,10 @@ export function checkDay(iso) {
 }
 
 /**
- * Retorna a data/hora em que o período de descanso termina.
- * - Dias sunset-a-sunset (startsAtSunset: true, ex.: Pesach, Yom Kippur):
- *   termina no PÔR DO SOL do dia seguinte ao último dia de descanso.
- * - Demais dias: termina na ALVORADA (aurora) do dia seguinte.
+ * Retorna a data/hora em que o período de descanso termina
+ * (alvorada do primeiro dia útil após a sequência de descanso).
  */
 export function getRestPeriodEnd(iso, lat = LAT, lon = LON) {
-    const { startsAtSunset } = checkDay(iso);
     let dayNum = isoToDayNum(iso);
 
     // Avança enquanto o próximo dia também for de descanso
@@ -169,12 +166,8 @@ export function getRestPeriodEnd(iso, lat = LAT, lon = LON) {
         dayNum++;
     }
 
+    // Alvorada do dia seguinte ao último dia de descanso
     const nextDayNoon = new Date((dayNum + 1) * MS_PER_DAY + 12 * 3600 * 1000);
-    if (startsAtSunset) {
-        // Período termina no pôr do sol do dia seguinte ao último dia de descanso
-        return SunCalc.getTimes(nextDayNoon, lat, lon).sunset;
-    }
-    // Período termina na alvorada (aurora) do dia seguinte
     return SunCalc.getTimes(nextDayNoon, lat, lon).sunrise;
 }
 
@@ -217,23 +210,9 @@ export async function getTodayStatus() {
     ].join('-');
 
     const { isRestDay, name, startsAtSunset } = checkDay(iso);
+    if (!isRestDay) return { isRestDay: false };
 
-    if (!isRestDay) {
-        // Fase 2 de dias sunset-a-sunset: o calendário escritural já virou para o
-        // dia seguinte (após a aurora), mas o período só termina no pôr do sol de hoje.
-        // Ex.: manhã do dia 11 do mês 7 — o Yom Kippur ainda está em curso.
-        const prevISO = dayNumToISO(isoToDayNum(iso) - 1);
-        const prev = checkDay(prevISO);
-        if (prev.isRestDay && prev.startsAtSunset) {
-            const todaySunset = SunCalc.getTimes(utcNoon, lat, lon).sunset;
-            if (now < todaySunset) {
-                return { isRestDay: true, name: prev.name, endsAt: todaySunset };
-            }
-        }
-        return { isRestDay: false };
-    }
-
-    // Dias que só entram em descanso a partir do pôr do sol (ex.: Pesach dia 14, Yom Kippur dia 10)
+    // Dias que só entram em descanso a partir do pôr do sol (ex.: Pesach dia 14)
     if (startsAtSunset) {
         const scriptDayNoon = new Date(Date.UTC(
             scriptDay.getUTCFullYear(),
