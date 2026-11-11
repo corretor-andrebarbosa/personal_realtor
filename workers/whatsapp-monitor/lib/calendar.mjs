@@ -1,15 +1,15 @@
 import SunCalc from 'suncalc';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
-const FULL_MOON_THRESHOLD = 0.98;
 const LAT = -7.12;
 const LON = -34.86;
-const ANCHOR_ISO = '2026-05-02';
-const ANCHOR_YEAR = 2026;
-const ANCHOR_MONTH = 1;
-const MONTHS_TO_GENERATE = 48;
 
-const illumCache = new Map();
+// Mesma regra de src/lib/scripturalCalendar.js (site) e do calendário de referência:
+//   meses ímpares = 30 dias, meses pares = 29 dias, mês 13 (ano bissexto) = 30 dias
+//   anos bissextos: 6000, depois a cada 3 anos (6003, 6006 …)
+const ANCHOR_ISO = '2026-05-02'; // Ano 6001, Mês 1, Dia 1
+const ANCHOR_YEAR = 6001;
+const MONTHS_TO_GENERATE = 72;
 
 function isoToDayNum(iso) {
   const [y, m, d] = iso.split('-').map(Number);
@@ -21,34 +21,37 @@ function dayNumToISO(n) {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
 }
 
-function maxIllum(dayNum) {
-  if (illumCache.has(dayNum)) return illumCache.get(dayNum);
-  let max = 0;
-  for (let h = 0; h < 24; h++) {
-    const f = SunCalc.getMoonIllumination(new Date(dayNum * MS_PER_DAY + h * 3600000)).fraction;
-    if (f > max) max = f;
-  }
-  illumCache.set(dayNum, max);
-  return max;
+function isLeapYear(scriptYear) {
+  if (scriptYear === 6000) return true;
+  if (scriptYear === 6001) return false;
+  return (scriptYear - 6000) % 3 === 0;
 }
 
-function monthLength(startDayNum) {
-  const i29 = maxIllum(startDayNum + 28);
-  const i30 = maxIllum(startDayNum + 29);
-  if (i29 >= FULL_MOON_THRESHOLD) return i30 >= FULL_MOON_THRESHOLD ? 30 : 29;
-  return 30;
+function monthLength(month) {
+  if (month === 13) return 30;
+  return month % 2 === 1 ? 30 : 29;
+}
+
+function daysInYear(scriptYear) {
+  const maxM = isLeapYear(scriptYear) ? 13 : 12;
+  let total = 0;
+  for (let m = 1; m <= maxM; m++) total += monthLength(m);
+  return total;
 }
 
 let _calendar = null;
 function buildCalendar() {
   if (_calendar) return _calendar;
   const months = [];
-  let start = isoToDayNum(ANCHOR_ISO), month = ANCHOR_MONTH, year = ANCHOR_YEAR;
+  // Recua 2 anos escriturais a partir da âncora, como no site
+  let start = isoToDayNum(ANCHOR_ISO), year = ANCHOR_YEAR, month = 1;
+  for (let i = 0; i < 2; i++) { year--; start -= daysInYear(year); }
   for (let i = 0; i < MONTHS_TO_GENERATE; i++) {
-    const length = monthLength(start);
+    const maxM = isLeapYear(year) ? 13 : 12;
+    const length = monthLength(month);
     months.push({ year, month, startDayNum: start, length });
     start += length;
-    if (++month > 13) { month = 1; year++; }
+    if (++month > maxM) { month = 1; year++; }
   }
   return (_calendar = months);
 }
@@ -77,7 +80,7 @@ function checkDay(iso) {
   if (m.month === 7) {
     if (d === 1)  return { isRestDay: true, name: 'Yom Teruah' };
     if (d === 10) return { isRestDay: true, name: 'Yom Kippur' };
-    if (d >= 15 && d <= 21) return { isRestDay: true, name: 'Sukkot' };
+    // Sukkot (15-21) é festa, mas com trabalho permitido: não pausa o monitor
   }
   return { isRestDay: false };
 }
