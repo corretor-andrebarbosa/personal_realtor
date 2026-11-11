@@ -13,11 +13,12 @@
  *   Ano 6000, Mês 1, Dia 1 = 13/04/2025
  *   Ano 6001, Mês 1, Dia 1 = 02/05/2026
  *
- * Dias de descanso obrigatório:
+ * Dias que ativam o descanso:
  *   Lua Nova : dia 1 de cada mês
  *   Shabbat  : dias 8, 15, 22 e 29 de cada mês
  *   Festas   : Pesach (14/1), Chag HaMatzot último dia (21/1),
- *              Yom Teruah (1/7), Yom Kippur (10/7), Sukkot (15-21/7)
+ *              Yom Teruah (1/7), Yom Kippur (10/7)
+ *   Sukkot (15-21/7) é uma festa, mas não fecha a plataforma durante toda a semana.
  */
 
 import SunCalc from 'suncalc';
@@ -147,7 +148,6 @@ export function checkDay(iso) {
         if (dayInMonth === 1)  return { isRestDay: true, name: 'Yom Teruah' };
         // Yom Kippur: começa no pôr do sol do Dia 9 e termina no pôr do sol do Dia 10
         if (dayInMonth === 10) return { isRestDay: true, name: 'Yom Kippur', startsAtPrevDaySunset: true, endsAtSunset: true };
-        if (dayInMonth >= 15 && dayInMonth <= 21) return { isRestDay: true, name: 'Sukkot' };
     }
 
     return { isRestDay: false };
