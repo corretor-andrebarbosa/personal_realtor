@@ -28,6 +28,7 @@ import { translations } from '../translations';
 import TranslatedText from './common/TranslatedText';
 import PriceDisplay from './common/PriceDisplay';
 import { extractIdFromSlug } from '../lib/slug';
+import { trackAdsConversion } from '../lib/adsConversions';
 
 const isValidSession = () => {
   try {
@@ -365,6 +366,7 @@ const PropertyDetails = () => {
     const price = Number(property.price || property.rentalPrice || 0);
     const text = `Olá! Tenho interesse no imóvel: ${property.title} - R$ ${price.toLocaleString('pt-BR')}`;
     const whatsapp = localStorage.getItem('ab-whatsapp') || systemConfig.whatsappNumber;
+    trackAdsConversion('whatsapp', property.slug || String(property.id));
     openWhatsApp(text, whatsapp);
   };
 
@@ -379,7 +381,12 @@ const PropertyDetails = () => {
   const handleCall = () => {
     const whatsapp = localStorage.getItem('ab-whatsapp') || systemConfig.whatsappNumber;
     if (whatsapp) {
-      window.open(`tel:+${whatsapp}`);
+      // Ligação só pelo WhatsApp: abre a conversa já pedindo a chamada (sem discador do telefone).
+      const text = property
+        ? `Olá! Gostaria de falar por ligação no WhatsApp sobre o imóvel: ${property.title}`
+        : 'Olá! Gostaria de falar por ligação no WhatsApp.';
+      trackAdsConversion('whatsapp', property?.slug || String(property?.id || ''));
+      openWhatsApp(text, whatsapp);
     } else {
       alert('Número de telefone não configurado. Vá em Configurações para definir.');
     }
