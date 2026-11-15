@@ -29,6 +29,7 @@ import TranslatedText from './common/TranslatedText';
 import PriceDisplay from './common/PriceDisplay';
 import { extractIdFromSlug } from '../lib/slug';
 import { trackAdsConversion } from '../lib/adsConversions';
+import FloorPlanAccess from './FloorPlanAccess';
 
 const isValidSession = () => {
   try {
@@ -663,6 +664,9 @@ const PropertyDetails = () => {
             </div>
           );
         })()}
+
+        {/* Planta baixa — liberada após o visitante deixar o contato (vira lead) */}
+        <FloorPlanAccess property={property} lang={lang} t={t} authed={authed} />
 
         <div className="mb-24">
           <h3 className="font-bold text-slate-800 mb-2">{t('details_location')}</h3>

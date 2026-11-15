@@ -1,10 +1,12 @@
-// Conversões do Google Ads nas páginas de imóvel (clique em WhatsApp e em Ligar).
+// Conversões do Google Ads nas páginas de imóvel (clique em WhatsApp, em Ligar e
+// envio do formulário da planta baixa).
 // Os rótulos vêm de /api/ads-config (variáveis de ambiente do Cloudflare Pages),
 // os mesmos usados pela landing /apto-parque-parahyba-1/. Sem rótulo configurado,
 // só o evento nomeado é registrado e nenhuma conversão é enviada.
 
-const EVENTOS = { whatsapp: 'whatsapp_click', phone: 'phone_click' };
-const VALORES = { whatsapp: 30, phone: 30 };
+// Mesmos nomes de evento e valores padrão da landing (public/apto-parque-parahyba-1/assets/lp.js).
+const EVENTOS = { whatsapp: 'whatsapp_click', phone: 'phone_click', form: 'lead_form_submit' };
+const VALORES = { whatsapp: 30, phone: 30, form: 10 };
 
 let configPromise = null;
 
@@ -18,9 +20,9 @@ function carregarConfig() {
 }
 
 /**
- * Registra o clique de contato. Nunca lança erro nem atrasa a abertura do
- * WhatsApp/telefone: o envio acontece em segundo plano.
- * @param {'whatsapp'|'phone'} tipo
+ * Registra o contato (clique ou formulário enviado). Nunca lança erro nem atrasa
+ * a abertura do WhatsApp/telefone/planta: o envio acontece em segundo plano.
+ * @param {'whatsapp'|'phone'|'form'} tipo
  * @param {string} [rotulo] identificação do imóvel (ex.: slug)
  */
 export function trackAdsConversion(tipo, rotulo) {

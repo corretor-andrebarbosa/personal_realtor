@@ -1,10 +1,11 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useProperties } from '../contexts/PropertyContext';
-import { ArrowLeft, MapPin, Youtube, Upload, Save, Image, Trash2, RefreshCcw, FileText } from 'lucide-react';
+import { ArrowLeft, MapPin, Youtube, Upload, Save, Image, Trash2, RefreshCcw, FileText, LockKeyhole } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { suggestSlugFeature, buildPropertySlugBase } from '../lib/slug';
+import { fetchFloorPlanUrl } from '../lib/floorPlan';
 
 const STORAGE_BUCKET = 'property-images'; // você vai criar esse bucket no Supabase (passo a passo abaixo)
 
@@ -81,7 +82,7 @@ const normalizeExistingPropertyToForm = (existing) => {
 };
 
 const PropertyForm = () => {
-  const { addProperty, updateProperty, properties } = useProperties();
+  const { addProperty, updateProperty, saveFloorPlan, properties } = useProperties();
   const navigate = useNavigate();
   const { id } = useParams();
   const fileInputRef = useRef(null);
@@ -127,7 +128,19 @@ const PropertyForm = () => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState('');
+  // Título do aviso de erro e para onde ir ao fechá-lo (usados quando o imóvel
+  // foi salvo, mas a planta baixa não).
+  const [saveErrorTitle, setSaveErrorTitle] = useState('');
+  const [afterErrorPath, setAfterErrorPath] = useState('');
   const [imageUrlInput, setImageUrlInput] = useState('');
+
+  // Planta baixa: o link fica fora de `formData` porque não é coluna de `properties`
+  // (mora em property_floor_plans, que o visitante não lê) e porque `formData` é
+  // sobrescrito quando os dados do imóvel carregam.
+  const [floorPlanUrl, setFloorPlanUrl] = useState('');
+  const [floorPlanOriginal, setFloorPlanOriginal] = useState('');
+  const [floorPlanAvailable, setFloorPlanAvailable] = useState(true);
+  const floorPlanTouched = useRef(false);
   const [showBase64Warning, setShowBase64Warning] = useState(false);
 
   const hasBase64 = useMemo(() => {
@@ -176,6 +189,21 @@ const PropertyForm = () => {
   useEffect(() => {
     if (isEditing && hasBase64) setShowBase64Warning(true);
   }, [isEditing, hasBase64]);
+
+  // Planta baixa: busca o link já cadastrado (só o admin autenticado consegue ler)
+  // e descobre se o banco já tem a estrutura da planta. Em "novo imóvel" consulta
+  // um id inexistente só para saber se a estrutura existe.
+  useEffect(() => {
+    let cancelled = false;
+    fetchFloorPlanUrl(isEditing ? id : 0).then(({ url, available }) => {
+      if (cancelled) return;
+      setFloorPlanAvailable(available);
+      setFloorPlanOriginal(url);
+      // não atropela o que o corretor já começou a digitar
+      if (!floorPlanTouched.current) setFloorPlanUrl(url);
+    });
+    return () => { cancelled = true; };
+  }, [id, isEditing]);
 
   // Sugestão automática do destaque da URL — só roda enquanto o corretor
   // não editou o campo manualmente.
@@ -340,10 +368,31 @@ const PropertyForm = () => {
     return false;
   };
 
+  // Fecha o aviso de erro. Se o imóvel foi criado mas a planta baixa não foi gravada,
+  // segue para a edição dele (evita cadastrar o mesmo imóvel duas vezes).
+  const dismissSaveError = () => {
+    const goTo = afterErrorPath;
+    setSaveError('');
+    setSaveErrorTitle('');
+    setAfterErrorPath('');
+    if (goTo) navigate(goTo);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSaving(true);
     setSaveError('');
+    setSaveErrorTitle('');
+    setAfterErrorPath('');
+
+    // Planta baixa: confere o link antes de gravar qualquer coisa
+    const nextFloorPlan = floorPlanUrl.trim();
+    const floorPlanChanged = floorPlanAvailable && nextFloorPlan !== floorPlanOriginal;
+    if (floorPlanChanged && nextFloorPlan && !/^https?:\/\//i.test(nextFloorPlan)) {
+      setSaveError('O link da planta baixa precisa começar com http:// ou https://');
+      return;
+    }
+
+    setSaving(true);
 
     try {
       const propertyData = buildPropertyData();
@@ -356,11 +405,25 @@ const PropertyForm = () => {
       }
 
       let success = false;
+      // id real do imóvel no banco (na criação só existe depois do insert)
+      let savedId = isEditing ? id : null;
 
       if (isEditing) {
         success = await updateProperty(id, propertyData);
       } else {
-        success = await addProperty(propertyData);
+        success = await addProperty(propertyData, { onSynced: (row) => { savedId = row?.id ?? null; } });
+      }
+
+      if (success === true && floorPlanChanged) {
+        const floorPlanResult = await saveFloorPlan(savedId, nextFloorPlan);
+        if (floorPlanResult !== true) {
+          // O imóvel já está salvo; só a planta ficou de fora.
+          setSaveErrorTitle('Imóvel salvo, mas a planta baixa não');
+          setSaveError(`A planta baixa não foi gravada: ${floorPlanResult}`);
+          if (!isEditing) setAfterErrorPath(savedId != null ? `/properties/edit/${savedId}` : '/properties');
+          return;
+        }
+        setFloorPlanOriginal(nextFloorPlan);
       }
 
       if (success === true) {
@@ -398,13 +461,13 @@ const PropertyForm = () => {
       )}
 
       {!!saveError && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center" onClick={() => setSaveError('')}>
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center" onClick={dismissSaveError}>
           <div className="bg-white rounded-2xl p-8 text-center shadow-2xl animate-bounce-in max-w-sm" onClick={e => e.stopPropagation()}>
             <div className="text-5xl mb-4">⚠️</div>
-            <h3 className="text-lg font-bold text-amber-600">Não foi possível salvar</h3>
+            <h3 className="text-lg font-bold text-amber-600">{saveErrorTitle || 'Não foi possível salvar'}</h3>
             <p className="text-xs text-slate-500 mt-2 leading-relaxed">{saveError}</p>
             <button
-              onClick={() => setSaveError('')}
+              onClick={dismissSaveError}
               className="mt-6 w-full py-3 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 transition-colors shadow-lg shadow-amber-500/20"
             >
               Entendido
@@ -913,6 +976,37 @@ const PropertyForm = () => {
             <p className="text-[10px] text-slate-400 mt-2">
               Cole o link do PDF (Google Drive, Dropbox, etc.). Será exibido como book incorporado na página do imóvel.
             </p>
+          </div>
+
+          <div className="mt-4">
+            <label htmlFor="floorPlanUrl" className="block text-xs font-bold text-slate-500 mb-2">
+              Planta baixa <span className="font-normal text-slate-400">— liberada só depois que o visitante deixa o contato</span>
+            </label>
+            <div className="relative flex items-center">
+              <LockKeyhole className="absolute left-3 text-[var(--primary-color)] shrink-0" size={16} />
+              <input
+                id="floorPlanUrl"
+                type="url"
+                name="floorPlanUrl"
+                value={floorPlanUrl}
+                onChange={e => { floorPlanTouched.current = true; setFloorPlanUrl(e.target.value); }}
+                disabled={!floorPlanAvailable}
+                className="w-full pl-9 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[var(--primary-color)] outline-none transition-colors text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                placeholder="https://drive.google.com/file/d/.../view"
+              />
+            </div>
+            {floorPlanAvailable ? (
+              <p className="text-[10px] text-slate-400 mt-2">
+                Cole o link do PDF ou da imagem (Google Drive, Dropbox, etc.). O link não aparece na página do imóvel:
+                o visitante informa nome e WhatsApp, o contato entra na aba Leads e só então a planta abre.
+                No Google Drive, deixe o arquivo como &quot;Qualquer pessoa com o link&quot;. Para remover a planta, apague o link e salve.
+              </p>
+            ) : (
+              <p className="text-[10px] text-amber-600 mt-2">
+                Campo indisponível: o banco de dados ainda não recebeu a atualização da planta baixa
+                (migração 20261115190000_floor_plan_leads.sql).
+              </p>
+            )}
           </div>
         </section>
 
