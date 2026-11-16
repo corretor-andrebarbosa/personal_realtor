@@ -76,6 +76,10 @@ create trigger trg_sync_has_floor_plan
   after insert or update or delete on public.property_floor_plans
   for each row execute function public.sync_has_floor_plan();
 
+-- É função de trigger: não precisa (nem deve) ficar exposta na API.
+-- O trigger continua disparando normalmente para quem grava na tabela.
+revoke all on function public.sync_has_floor_plan() from public, anon, authenticated;
+
 -- 3) Dados estruturados do lead -----------------------------------------------
 alter table public.leads add column if not exists email text;
 alter table public.leads add column if not exists source text;
