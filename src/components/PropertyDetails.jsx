@@ -30,6 +30,7 @@ import PriceDisplay from './common/PriceDisplay';
 import { extractIdFromSlug } from '../lib/slug';
 import { trackAdsConversion } from '../lib/adsConversions';
 import FloorPlanAccess from './FloorPlanAccess';
+import { safeUrl } from '../lib/safeUrl';
 
 const isValidSession = () => {
   try {
@@ -639,7 +640,8 @@ const PropertyDetails = () => {
             || rawUrl.match(/[?&]id=([^&]+)/)?.[1];
           const openUrl = fileId
             ? `https://drive.google.com/file/d/${fileId}/view`
-            : rawUrl;
+            : safeUrl(rawUrl);
+          if (!openUrl) return null;
           return (
             <div className="mb-8">
               <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2">

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { safeUrl } from '../../lib/safeUrl';
 
 const RANK_STYLES = {
   1: { ring: 'ring-2 ring-blue-500', badge: 'bg-blue-50 text-blue-800', num: 'bg-blue-50 text-blue-800' },
@@ -24,7 +25,7 @@ const FONTE_STYLES = {
 export function ResultadoCard({ imovel, rank }) {
   const s = RANK_STYLES[rank] ?? RANK_STYLES[3];
   const temCatalogo = imovel.catalogoId && imovel.catalogoId !== 'null';
-  const temUrl = imovel.url && imovel.url !== 'null';
+  const temUrl = Boolean(safeUrl(imovel.url));
   const fonteStyle = FONTE_STYLES[imovel.fonte] ?? 'bg-gray-50 text-gray-600 border-gray-100';
 
   return (
@@ -46,7 +47,7 @@ export function ResultadoCard({ imovel, rank }) {
                 {imovel.nome}
               </Link>
             ) : temUrl ? (
-              <a href={imovel.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-blue-700 hover:underline">
+              <a href={safeUrl(imovel.url)} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-blue-700 hover:underline">
                 {imovel.nome}
               </a>
             ) : (
@@ -103,7 +104,7 @@ export function ResultadoCard({ imovel, rank }) {
           </>
         ) : temUrl ? (
           <a
-            href={imovel.url}
+            href={safeUrl(imovel.url)}
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"

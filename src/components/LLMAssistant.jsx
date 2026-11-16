@@ -4,6 +4,7 @@ import { Send, Sparkles, Loader2, AlertCircle } from 'lucide-react';
 import { useProperties } from '../contexts/PropertyContext';
 import { systemConfig } from '../system-config';
 import { useSiteSettings } from '../hooks/useSiteSettings';
+import { supabase } from '../lib/supabaseClient';
 
 const LLMAssistant = () => {
     const { properties } = useProperties();
@@ -56,9 +57,14 @@ const LLMAssistant = () => {
         let responseText = '';
 
         try {
+            // O endpoint só atende o admin logado (senão qualquer um gastaria a cota da chave)
+            const { data: { session } } = await supabase.auth.getSession();
             const res = await fetch('/api/kaleb', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+                },
                 body: JSON.stringify({ prompt: fullPrompt }),
             });
             const data = await res.json();

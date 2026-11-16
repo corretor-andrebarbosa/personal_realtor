@@ -30,9 +30,24 @@ export default {
       return new Response("Method not allowed", { status: 405 });
     }
 
+    // Só o próprio site usa o buscador (evita que terceiros gastem a cota de Groq/Serper)
+    if (origin && corsHeaders["Access-Control-Allow-Origin"] !== origin) {
+      return new Response(JSON.stringify({ error: "Origem não permitida" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+    const ip = request.headers.get("CF-Connecting-IP") || "?";
+    if (isRateLimited(ip)) {
+      return new Response(JSON.stringify({ error: "Muitas buscas seguidas. Aguarde um minuto." }), {
+        status: 429,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
     let params: BuscaParams;
     try {
-      params = await request.json();
+      params = sanitizeParams(await request.json());
     } catch {
       return new Response(JSON.stringify({ error: "Payload inválido" }), {
         status: 400,
@@ -70,6 +85,41 @@ export default {
     });
   },
 };
+
+// ─── Limites ──────────────────────────────────────────────────────────────────
+
+// Limite simples por IP (memória do isolate): 6 buscas por minuto
+const hits = new Map<string, number[]>();
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const recent = (hits.get(ip) || []).filter((t) => now - t < 60_000);
+  recent.push(now);
+  hits.set(ip, recent);
+  if (hits.size > 5000) hits.clear();
+  return recent.length > 6;
+}
+
+const txt = (v: unknown, max: number) => String(v ?? "").replace(/[\u0000-\u001f]/g, " ").slice(0, max);
+const num = (v: unknown) => Math.min(5, Math.max(0, Number(v) || 0));
+
+// Corta tamanhos e tipos do que vem do navegador antes de ir para o prompt
+function sanitizeParams(raw: unknown): BuscaParams {
+  const p = (raw && typeof raw === "object" ? raw : {}) as Record<string, any>;
+  return {
+    tipo: txt(p.tipo, 40),
+    cidade: txt(p.cidade, 80),
+    finalidade: txt(p.finalidade, 20),
+    preco: txt(p.preco, 40),
+    quartos: txt(p.quartos, 10),
+    area: txt(p.area, 20),
+    diferenciais: Array.isArray(p.diferenciais) ? p.diferenciais.slice(0, 12).map((d) => txt(d, 40)) : [],
+    prioridades: {
+      p1: num(p.prioridades?.p1), p2: num(p.prioridades?.p2),
+      p3: num(p.prioridades?.p3), p4: num(p.prioridades?.p4),
+    },
+    obs: txt(p.obs, 500),
+  };
+}
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 

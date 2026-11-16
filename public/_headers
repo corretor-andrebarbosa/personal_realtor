@@ -3,19 +3,22 @@
 # Controla cache, segurança e CORS para andrebarbosaimoveis.com
 # ============================================================
 
+# Segurança em TODAS as rotas (antes só / e /index.html tinham)
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000
+  Permissions-Policy: camera=(), microphone=(), payment=(), usb=(), geolocation=(self)
+  Content-Security-Policy: frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self' https:
+
 # HTML principal — sem cache (garante que SPA sempre sirva index.html fresco)
 /
   Cache-Control: no-store, must-revalidate
-  X-Content-Type-Options: nosniff
-  X-Frame-Options: DENY
-  Referrer-Policy: strict-origin-when-cross-origin
 
 # SPA fallback — sem cache no HTML
 /index.html
   Cache-Control: no-store, must-revalidate
-  X-Content-Type-Options: nosniff
-  X-Frame-Options: DENY
-  Referrer-Policy: strict-origin-when-cross-origin
 
 # Assets imutáveis do Vite (têm hash no nome)
 /assets/*

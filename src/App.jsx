@@ -36,7 +36,7 @@ import { config } from './config';
 import Maintenance from './components/public/Maintenance';
 import MaintenancePage from './components/MaintenancePage';
 import { supabase } from './lib/supabaseClient';
-import { applySettingsToLocal } from './hooks/useSiteSettings';
+import { applySettingsToLocal, PUBLIC_SETTINGS_COLUMNS } from './hooks/useSiteSettings';
 import { getTodayStatus } from './lib/scripturalCalendar';
 
 // Rota antiga: leva à landing page estática nova.
@@ -83,11 +83,18 @@ const App = () => {
         // Garante que WhatsApp, redes sociais e APIs nunca somem mesmo após limpeza de cache
         supabase
             .from('site_settings')
-            .select('*')
+            .select(PUBLIC_SETTINGS_COLUMNS)
             .eq('id', 'default')
             .maybeSingle()
             .then(({ data }) => { if (data) applySettingsToLocal(data); })
             .catch(() => {}); // silencioso se tabela ainda não existe
+
+        // Versões antigas gravavam as chaves de LLM no navegador de todo visitante: limpa
+        supabase.auth.getSession().then(({ data }) => {
+            if (!data?.session) {
+                ['ab-gemini-key', 'ab-groq-key', 'ab-system-prompt'].forEach((k) => localStorage.removeItem(k));
+            }
+        }).catch(() => {});
 
         // 1) Verifica sessão + calendário escritural em paralelo
         Promise.all([
