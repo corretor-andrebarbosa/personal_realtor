@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase, getKeys } from '../lib/supabaseClient';
 import { buildPropertySlug } from '../lib/slug';
+import { saveFloorPlanUrl } from '../lib/floorPlan';
 
 const PropertyContext = createContext();
 
@@ -307,7 +308,7 @@ export const PropertyProvider = ({ children }) => {
         }
     }, [properties, loading]);
 
-    const syncItem = useCallback(async (localProp) => {
+    const syncItem = useCallback(async (localProp, options = {}) => {
         if (!supabase) return false;
         let cols = dbSchema || await discoverSchema();
 
@@ -339,6 +340,9 @@ export const PropertyProvider = ({ children }) => {
                     images: Array.isArray(inserted.images) ? inserted.images : (Array.isArray(inserted.gallery) ? inserted.gallery : [])
                 };
                 setProperties(prev => prev.map(p => p.id === localProp.id ? synced : p));
+                // Quem chamou pode precisar do id real gerado pelo banco
+                // (ex.: o formulário grava a planta baixa logo depois de criar o imóvel).
+                if (typeof options.onSynced === 'function') options.onSynced(inserted);
                 return true;
             }
             if (error) {
@@ -363,11 +367,11 @@ export const PropertyProvider = ({ children }) => {
         return { success: successCount === localProps.length, count: successCount };
     }, [properties, syncItem]);
 
-    const addProperty = async (property) => {
+    const addProperty = async (property, options = {}) => {
         const tempId = `local-${Date.now()}`;
         const newProp = { ...property, id: tempId, _isLocal: true, created_at: new Date().toISOString() };
         setProperties(prev => [newProp, ...prev]);
-        return await syncItem(newProp);
+        return await syncItem(newProp, options);
     };
 
     const updateProperty = async (id, updated) => {
@@ -419,8 +423,20 @@ export const PropertyProvider = ({ children }) => {
         }
     };
 
+    // Planta baixa: o link fica em outra tabela (property_floor_plans), que o visitante
+    // não lê. Aqui só reflete na lista local a marcação pública `has_floor_plan`,
+    // que no banco é mantida por trigger. Devolve true ou a mensagem de erro.
+    const saveFloorPlan = async (propertyId, url) => {
+        const result = await saveFloorPlanUrl(propertyId, url);
+        if (result === true) {
+            const hasFloorPlan = !!String(url ?? '').trim();
+            setProperties(prev => prev.map(p => String(p.id) === String(propertyId) ? { ...p, has_floor_plan: hasFloorPlan } : p));
+        }
+        return result;
+    };
+
     return (
-        <PropertyContext.Provider value={{ properties, loading, isSyncing, dbSchema, addProperty, updateProperty, deleteProperty, refreshProperties: loadProperties, syncItem, syncAllLocal }}>
+        <PropertyContext.Provider value={{ properties, loading, isSyncing, dbSchema, addProperty, updateProperty, deleteProperty, saveFloorPlan, refreshProperties: loadProperties, syncItem, syncAllLocal }}>
             {children}
         </PropertyContext.Provider>
     );

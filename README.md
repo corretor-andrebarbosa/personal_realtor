@@ -68,6 +68,16 @@ Acesse: **http://localhost:5173**
 3. Adicione URLs do Instagram e LinkedIn
 4. **Salvar Alterações**
 
+## 📐 Planta baixa com captura de lead
+
+Cada imóvel pode ter uma planta baixa que só abre depois que o visitante deixa nome e WhatsApp. O contato entra na aba **Leads** com a marcação "Planta baixa" e o imóvel de origem.
+
+- **Cadastro:** em **Imóveis** → editar → seção "Fotos e Vídeo", campo **Planta baixa** (link do PDF ou da imagem). Para remover, apague o link e salve.
+- **Como a trava funciona:** o link fica na tabela `property_floor_plans`, que o visitante não consegue ler. A página pública só recebe `properties.has_floor_plan` (verdadeiro/falso). O link sai apenas pela função `request_floor_plan`, que grava o lead antes de devolvê-lo.
+- **Banco:** a estrutura está em `supabase/migrations/20261115190000_floor_plan_leads.sql`. Em um banco novo, rode esse arquivo no SQL Editor do Supabase (pode ser executado mais de uma vez sem efeito colateral).
+- **Código:** `src/components/FloorPlanAccess.jsx`, `src/lib/floorPlan.js` e `src/lib/floorPlanUtils.js`.
+- **Testes das regras (telefone, e-mail, links):** `npm test`.
+
 ## 🚀 Deploy na Vercel (Grátis)
 
 ```bash

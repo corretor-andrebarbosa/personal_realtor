@@ -1,7 +1,39 @@
 
 import React, { useState } from 'react';
-import { Phone, MessageCircle, Calendar, User, Tag, PlusCircle, X, Save, Trash2, Loader2, RotateCcw } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Phone, MessageCircle, Calendar, User, Tag, PlusCircle, X, Save, Trash2, Loader2, RotateCcw, Mail, Building2 } from 'lucide-react';
 import { useLeads } from '../contexts/LeadContext';
+
+// Origem do lead (coluna `source`) → rótulo mostrado no cartão
+const SOURCE_LABELS = { planta_baixa: 'Planta baixa' };
+
+// Leads que chegam pelos formulários do site não têm foto: mostra as iniciais
+const getInitials = (name) =>
+    String(name || '')
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((word) => word.charAt(0).toUpperCase())
+        .join('') || '?';
+
+// 83996828008 → (83) 99682-8008 | 5583996828008 → +55 (83) 99682-8008 | outros → +dígitos
+const formatPhone = (phone) => {
+    const raw = String(phone || '').trim();
+    const digits = raw.replace(/\D/g, '');
+    if (!digits) return 'N/D';
+    const local = digits.match(/^(\d{2})(\d{4,5})(\d{4})$/);
+    if (local) return `(${local[1]}) ${local[2]}-${local[3]}`;
+    const withCountry = digits.match(/^55(\d{2})(\d{4,5})(\d{4})$/);
+    if (withCountry) return `+55 (${withCountry[1]}) ${withCountry[2]}-${withCountry[3]}`;
+    return `+${digits}`;
+};
+
+const formatReceivedAt = (iso) => {
+    if (!iso) return '';
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+};
 
 const Leads = () => {
     const { leads, loading, addLead, updateLead, deleteLead, refreshLeads } = useLeads();
@@ -37,11 +69,11 @@ const Leads = () => {
 
     const handleWhatsApp = (lead) => {
         const text = `Olá ${lead.name}! Tudo bem? Entro em contato sobre: ${lead.interest || 'nossos imóveis'}`;
-        window.open(`https://wa.me/${lead.phone.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`, '_blank');
+        window.open(`https://wa.me/${String(lead.phone || '').replace(/\D/g, '')}?text=${encodeURIComponent(text)}`, '_blank');
     };
 
     const handleCall = (lead) => {
-        window.open(`tel:+${lead.phone.replace(/\D/g, '')}`);
+        window.open(`tel:+${String(lead.phone || '').replace(/\D/g, '')}`);
     };
 
     const handleSchedule = (lead) => {
@@ -116,17 +148,59 @@ const Leads = () => {
 
                 {filteredLeads.map((lead) => (
                     <div key={lead.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-3">
-                        <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-3">
-                                <img src={lead.avatar} alt={lead.name} className="w-10 h-10 rounded-full" />
-                                <div>
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-3 min-w-0">
+                                {lead.avatar ? (
+                                    <img src={lead.avatar} alt={lead.name} className="w-10 h-10 rounded-full shrink-0" />
+                                ) : (
+                                    <div className="w-10 h-10 rounded-full shrink-0 bg-slate-200 text-slate-600 flex items-center justify-center text-sm font-bold" aria-hidden="true">
+                                        {getInitials(lead.name)}
+                                    </div>
+                                )}
+                                <div className="min-w-0">
                                     <h3 className="font-bold text-slate-800">{lead.name}</h3>
                                     <p className="text-xs text-slate-500 flex items-center gap-1">
-                                        <Tag size={12} /> Interessado em: {lead.interest || 'N/D'}
+                                        <Tag size={12} className="shrink-0" /> Interessado em: {lead.interest || 'N/D'}
                                     </p>
+                                    {/* Dados de contato do lead */}
+                                    <p className="text-xs text-slate-600 flex items-center gap-x-3 gap-y-0.5 flex-wrap mt-1">
+                                        <span className="flex items-center gap-1">
+                                            <Phone size={12} className="shrink-0" /> {formatPhone(lead.phone)}
+                                        </span>
+                                        {lead.email && (
+                                            <a href={`mailto:${lead.email}`} className="flex items-center gap-1 hover:underline break-all">
+                                                <Mail size={12} className="shrink-0" /> {lead.email}
+                                            </a>
+                                        )}
+                                    </p>
+                                    {(SOURCE_LABELS[lead.source] || (lead.lang && lead.lang !== 'pt') || lead.property_id) && (
+                                        <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                                            {SOURCE_LABELS[lead.source] && (
+                                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-blue-100 text-[var(--primary-color)]">
+                                                    {SOURCE_LABELS[lead.source]}
+                                                </span>
+                                            )}
+                                            {lead.lang && lead.lang !== 'pt' && (
+                                                <span
+                                                    className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-violet-100 text-violet-700"
+                                                    title="Idioma em que o visitante navegava"
+                                                >
+                                                    {lead.lang}
+                                                </span>
+                                            )}
+                                            {lead.property_id && (
+                                                <Link
+                                                    to={`/properties/${lead.property_id}`}
+                                                    className="text-[10px] font-bold text-[var(--primary-color)] flex items-center gap-1 hover:underline"
+                                                >
+                                                    <Building2 size={11} /> Ver imóvel
+                                                </Link>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                            <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${getStatusColor(lead.status)}`}>
+                            <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase shrink-0 ${getStatusColor(lead.status)}`}>
                                 {lead.status}
                             </span>
                         </div>
@@ -134,7 +208,11 @@ const Leads = () => {
                         <div className="flex items-center gap-4 text-xs text-slate-500 bg-slate-50 p-2 rounded-lg">
                             <span>Orçamento: <strong>{lead.budget || 'N/D'}</strong></span>
                             <span>•</span>
-                            <span>Último: {lead.lastContact}</span>
+                            <span>
+                                {lead.lastContact
+                                    ? `Último: ${lead.lastContact}`
+                                    : `Recebido: ${formatReceivedAt(lead.created_at) || 'N/D'}`}
+                            </span>
                         </div>
 
                         <div className="flex gap-2 pt-2 border-t border-slate-50">

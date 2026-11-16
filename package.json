@@ -10,7 +10,8 @@
     "deploy:busca": "node scripts/deploy-busca.mjs",
     "build": "vite build",
     "preview": "vite preview",
-    "optimize:images": "node tools/optimize-images.mjs"
+    "optimize:images": "node tools/optimize-images.mjs",
+    "test": "node --test tests/floorPlanUtils.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",
