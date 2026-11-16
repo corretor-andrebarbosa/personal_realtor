@@ -4,6 +4,9 @@ import { supabase } from '../lib/supabaseClient';
 const TABLE = 'site_settings';
 const ROW_ID = 'default';
 
+// Colunas que visitantes podem ler (as chaves de LLM e o prompt ficam só para o admin)
+export const PUBLIC_SETTINGS_COLUMNS = 'id,updated_at,whatsapp,telegram,socials,primary_color';
+
 export const DEFAULT_SITE_SETTINGS = {
   whatsapp: '',
   telegram: '',
@@ -43,9 +46,10 @@ export const useSiteSettings = () => {
   useEffect(() => {
     (async () => {
       try {
+        const { data: { session } } = await supabase.auth.getSession();
         const { data, error } = await supabase
           .from(TABLE)
-          .select('*')
+          .select(session ? '*' : PUBLIC_SETTINGS_COLUMNS)
           .eq('id', ROW_ID)
           .maybeSingle();
 

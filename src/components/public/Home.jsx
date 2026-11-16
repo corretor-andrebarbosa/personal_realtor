@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useProperties } from '../../contexts/PropertyContext';
-import { useLeads } from '../../contexts/LeadContext';
+import { submitContactLead } from '../../lib/contactLead';
 
 import { MapPin, ArrowUpRight, Phone, Instagram, Linkedin, MessageCircle, PlayCircle, Star, ShieldCheck, BedDouble, Bath, Car, Menu, X, Facebook, Youtube, User, LayoutDashboard, Settings as SettingsIcon, LogOut, ChevronDown, Loader2, Building2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -35,7 +35,6 @@ const getYoutubeThumbnail = (url) => {
 
 const PublicHome = ({ defaultSegment = '', forcedLang = null }) => {
     const { properties, loading } = useProperties();
-    const { addLead } = useLeads();
     const navigate = useNavigate();
     const [mobileMenu, setMobileMenu] = useState(false);
     const [contactForm, setContactForm] = useState({ name: '', phone: '', interest: '' });
@@ -268,17 +267,12 @@ const PublicHome = ({ defaultSegment = '', forcedLang = null }) => {
         if (!contactForm.name.trim() || !contactForm.phone.trim()) return;
         setContactStatus('sending');
         try {
-            await addLead({
+            const result = await submitContactLead({
                 name: contactForm.name.trim(),
-                phone: contactForm.phone.trim().replace(/\D/g, ''),
+                phone: contactForm.phone.trim(),
                 interest: contactForm.interest.trim() || 'Site público',
-                status: 'Quente',
-                budget: '',
-                lastContact: 'Agora',
-                archived: false,
-                avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(contactForm.name.trim())}&background=cbd5e1&color=334155`,
-                source: 'site',
             });
+            if (!result.ok) throw new Error(result.error);
             setContactStatus('sent');
             setContactForm({ name: '', phone: '', interest: '' });
             // Também abre WhatsApp para atendimento imediato

@@ -6,6 +6,7 @@ import { usePartners } from '../../contexts/PartnerContext';
 import TranslatedText from '../common/TranslatedText';
 import { translations } from '../../translations';
 import { systemConfig } from '../../system-config';
+import { safeUrl } from '../../lib/safeUrl';
 
 const languages = [
     { code: 'pt', label: 'Português', flag: 'https://flagcdn.com/w40/br.png' },
@@ -198,9 +199,9 @@ const PartnersPage = () => {
                                 )}
 
                                 <div className="mt-auto flex border-t border-slate-50 pt-3 px-5 pb-5 gap-2">
-                                    {partner.website_url && (
+                                    {safeUrl(partner.website_url) && (
                                         <a
-                                            href={partner.website_url}
+                                            href={safeUrl(partner.website_url)}
                                             target="_blank"
                                             rel="noreferrer"
                                             className="flex-1 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:border-[#166b9c] hover:text-[#166b9c] flex items-center justify-center gap-1.5 transition-colors"

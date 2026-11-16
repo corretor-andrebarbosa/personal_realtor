@@ -28,6 +28,9 @@ export async function onRequest(context) {
     const params = await request.json();
     const supabaseUrl = env.VITE_SUPABASE_URL;
     const supabaseKey = env.VITE_SUPABASE_ANON_KEY;
+    // As chaves de LLM não são mais legíveis pela chave pública: use variáveis de ambiente
+    // ou a service role (nunca exposta ao navegador)
+    const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY || '';
 
     if (!supabaseUrl || !supabaseKey) {
       return json({ error: 'Configuração do servidor incompleta.' }, 500);
@@ -38,14 +41,16 @@ export async function onRequest(context) {
     // Busca imóveis e chaves de API em paralelo
     const [propRes, settingsRes] = await Promise.all([
       fetch(`${supabaseUrl}/rest/v1/properties?select=id,title,type,address,salePrice,rentalPrice,price,rooms,area,description&limit=100`, { headers: sbHeaders }),
-      fetch(`${supabaseUrl}/rest/v1/site_settings?id=eq.default&select=groq_key,gemini_key`, { headers: sbHeaders }),
+      serviceKey
+        ? fetch(`${supabaseUrl}/rest/v1/site_settings?id=eq.default&select=groq_key,gemini_key`, { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } })
+        : Promise.resolve(new Response('[{}]')),
     ]);
 
     const properties = await propRes.json().catch(() => []);
     const [settings] = await settingsRes.json().catch(() => [{}]);
 
-    const groqKey = settings?.groq_key || env.GROQ_API_KEY || '';
-    const geminiKey = settings?.gemini_key || env.GEMINI_API_KEY || '';
+    const groqKey = env.GROQ_API_KEY || settings?.groq_key || '';
+    const geminiKey = env.GEMINI_API_KEY || settings?.gemini_key || '';
 
     if (!groqKey && !geminiKey) {
       return json({ error: 'Chave de API não configurada. Vá em Configurações → Treinar Kaleb e salve a chave do Groq ou Gemini.' }, 400);
